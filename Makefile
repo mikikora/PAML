@@ -1,7 +1,7 @@
 SOURCES = modal.ml modal.mli
 CMFILES = modal.cma modal.cmi
 
-all: modal.cma modal.cmi
+all: format modal.cma modal.cmi
 
 build: $(SOURCES)
 	rm -f $(CMFILES)
@@ -19,3 +19,6 @@ clean:
 
 run: modal.cma modal.cmi
 	utop modal.cma
+
+format:
+	ls $(SOURCES) | xargs ocamlformat -i 

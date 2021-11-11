@@ -1,5 +1,6 @@
 type proposition =
   | P
+  | Var of string
   | Imp of proposition * proposition
   | Box of proposition
   | Dia of proposition
@@ -7,6 +8,7 @@ type proposition =
 let rec string_of_prop p =
   match p with
   | P -> "P"
+  | Var x -> x
   | Imp (a, b) -> (
       match (a, b) with
       | Imp (_, _), Imp (_, _) ->
@@ -19,175 +21,103 @@ let rec string_of_prop p =
 
 let pp_print_prop fmtr f = Format.pp_print_string fmtr (string_of_prop f)
 
-type proof_term =
-  | Varx of string
-  | Abs of string * proposition * proof_term
-  | App of proof_term * proof_term
-  | Boxp of proof_term
-  | LetBox of string * proof_term * proof_term
-  | Diap of proof_expr
+type jmnt = True of proposition | Valid of proposition | Poss of proposition
 
-and proof_expr =
-  | I of proof_term
-  | LetDiae of string * proof_term * proof_expr
-  | LetBoxe of string * proof_term * proof_expr
-
-type context = C of (string * proposition) list
-
-type tru_jmnt = TJ of context * context * proof_term * proposition
-
-type pos_jmnt = PJ of context * context * proof_expr * proposition
-
-(*let true_context_t (tjmnt : tru_jmnt) =
-    match tjmnt with
-    | TJ(_, c, _, _) -> c
-
-  let valid_context_t (tjmnt : tru_jmnt) =
-    match tjmnt with
-    | TJ(c, _, _, _) -> c
-
-  let true_context_p (pjmnt : pos_jmnt) =
-    match pjmnt with
-    | PJ(_, c, _, _) -> c
-
-  let valid_context_p (pjmnt : pos_jmnt) =
-    match pjmnt with
-    | PJ(c, _, _, _) -> c
-*)
-
-let rec pp_print_proof_term fmtr pt =
+let pp_print_jmnt fmtr jmnt =
   let open Format in
-  pp_open_hvbox fmtr 2;
-  match pt with
-  | Varx x -> pp_print_string fmtr x
-  | Abs (x, a, m) ->
-      pp_print_string fmtr ("λ" ^ x ^ ":");
-      pp_print_prop fmtr a;
-      pp_print_string fmtr ".";
-      pp_print_proof_term fmtr m
-  | App (m1, m2) ->
-      pp_print_proof_term fmtr m1;
-      pp_print_proof_term fmtr m2
-  | Boxp m ->
-      pp_print_string fmtr "box ";
-      pp_print_proof_term fmtr m
-  | LetBox (x, m1, m2) ->
-      pp_print_string fmtr ("let box " ^ x ^ " =");
-      pp_print_proof_term fmtr m1;
-      pp_print_string fmtr " in ";
-      pp_print_proof_term fmtr m2
-  | Diap e ->
-      pp_print_string fmtr "dia ";
-      pp_print_proof_expression fmtr e
-
-and pp_print_proof_expression fmtr e =
-  let open Format in
-  pp_open_hvbox fmtr 2;
-  match e with
-  | I m -> pp_print_proof_term fmtr m
-  | LetDiae (x, m, e) ->
-      pp_print_string fmtr ("let dia " ^ x ^ " = ");
-      pp_print_proof_term fmtr m;
-      pp_print_string fmtr " in ";
-      pp_print_proof_expression fmtr e
-  | LetBoxe (x, m, e) ->
-      pp_print_string fmtr ("let box " ^ x ^ " = ");
-      pp_print_proof_term fmtr m;
-      pp_print_string fmtr " in ";
-      pp_print_proof_expression fmtr e
-
-let pp_print_jmnt fmtr jmnt print_jmnt str =
-  let (vc, tc, pte, prop) = jmnt in
-  let open Format in
-  pp_open_hvbox fmtr 2;
-  let rec print_context ctx dots =
-    match ctx with
-    | C [] -> pp_print_string fmtr "•"
-    | C ((v, p) :: tl) ->
-        pp_print_string fmtr (v ^ dots);
-        pp_print_prop fmtr p;
-        pp_print_string fmtr ", ";
-        print_context (C tl) dots
-  in
-  print_context vc "::";
-  pp_print_string fmtr "; ";
-  print_context tc ":";
-  pp_print_string fmtr "⊢";
-  print_jmnt fmtr pte;
-  pp_print_string fmtr str;
-  pp_print_prop fmtr prop
-
-let pp_print_tru_jmnt fmtr tjmnt =
-  let TJ (vc, tc, pt, prop) = tjmnt in
-  pp_print_jmnt fmtr (vc, tc, pt, prop) pp_print_proof_term " : "
-
-let pp_print_pos_jmnt fmtr pjmnt =
-  let (PJ (vc, tc, pe, prop)) = pjmnt in
-  pp_print_jmnt fmtr (vc, tc, pe, prop) pp_print_proof_expression " ÷ "
+  match jmnt with
+  | True p ->
+      pp_print_prop fmtr p;
+      pp_print_string fmtr " true"
+  | Valid p ->
+      pp_print_prop fmtr p;
+      pp_print_string fmtr " valid"
+  | Poss p ->
+      pp_print_prop fmtr p;
+      pp_print_string fmtr " poss"
 
 type theorem =
-  | Hyp of tru_jmnt
-  | ImpI of theorem * tru_jmnt
-  | ImpE of theorem * theorem * tru_jmnt
-  | HypS of tru_jmnt
-  | BoxI of theorem * tru_jmnt
-  | BoxE of theorem * theorem * tru_jmnt
-  | BoxEp of theorem * theorem * pos_jmnt
-  | DiaI of theorem * tru_jmnt
-  | DiaE of theorem * theorem * pos_jmnt
-  | PosI of theorem * pos_jmnt
+  | Hyp of jmnt list * jmnt list * jmnt
+  | ImpI of theorem * (jmnt list * jmnt list * jmnt)
+  | ImpE of theorem * theorem * (jmnt list * jmnt list * jmnt)
+  | HypS of jmnt list * jmnt list * jmnt
+  | BoxI of theorem * (jmnt list * jmnt list * jmnt)
+  | BoxE of theorem * (jmnt list * jmnt list * jmnt)
+  | BoxEp of theorem * theorem * (jmnt list * jmnt list * jmnt)
+  | DiaI of theorem * (jmnt list * jmnt list * jmnt)
+  | DiaE of theorem * theorem * (jmnt list * jmnt list * jmnt)
+  | PosI of theorem * (jmnt list * jmnt list * jmnt)
 
-let tjmnt_of_th th = 
-   match th with
-  | Hyp(tj) 
-  | ImpI(_, tj)
-  | ImpE(_, _, tj)
-  | HypS(tj)
-  | BoxI(_, tj)
-  | BoxE(_, _, tj)
-  | DiaI(_, tj) -> Some(tj)
-  | _ -> None
-
-let pjmnt_of_th th =
+let assumption_valid th =
   match th with
-  | BoxEp(_,_,pj)
-  | DiaE(_,_,pj) -> Some(pj)
-  | _ -> None
+  | Hyp (l, _, _)
+  | ImpI (_, (l, _, _))
+  | ImpE (_, _, (l, _, _))
+  | HypS (l, _, _)
+  | BoxI (_, (l, _, _))
+  | BoxE (_, (l, _, _))
+  | BoxEp (_, _, (l, _, _))
+  | DiaI (_, (l, _, _))
+  | DiaE (_, _, (l, _, _))
+  | PosI (_, (l, _, _)) ->
+      l
 
-let pp_print_theorem fmtr th = 
-  match tjmnt_of_th th with 
-  | Some(tj) -> pp_print_tru_jmnt fmtr tj
-  | None -> match pjmnt_of_th th with 
-            | Some(pj) -> pp_print_pos_jmnt fmtr pj
-            | None -> failwith "absurd"
+let assumption_true th =
+  match th with
+  | Hyp (_, l, _)
+  | ImpI (_, (_, l, _))
+  | ImpE (_, _, (_, l, _))
+  | HypS (_, l, _)
+  | BoxI (_, (_, l, _))
+  | BoxE (_, (_, l, _))
+  | BoxEp (_, _, (_, l, _))
+  | DiaI (_, (_, l, _))
+  | DiaE (_, _, (_, l, _))
+  | PosI (_, (_, l, _)) ->
+      l
 
+let consequence th =
+  match th with
+  | Hyp (_, _, x)
+  | ImpI (_, (_, _, x))
+  | ImpE (_, _, (_, _, x))
+  | HypS (_, _, x)
+  | BoxI (_, (_, _, x))
+  | BoxE (_, (_, _, x))
+  | BoxEp (_, _, (_, _, x))
+  | DiaI (_, (_, _, x))
+  | DiaE (_, _, (_, _, x))
+  | PosI (_, (_, _, x)) ->
+      x
 
-let tru2pos th =
-  match tjmnt_of_th th with
-  | Some (TJ (c1, c2, pt, prop)) -> 
-    PosI(th, PJ(c1, c2, I(pt), prop))
-  | None -> failwith "can't use this rule for this case"
+let pp_print_theorem fmtr th =
+  let open Format in
+  pp_open_hvbox fmtr 2;
+  let rec print_assm ass =
+    match ass with
+    | [] -> pp_print_string fmtr "•"
+    | h :: tl ->
+        pp_print_jmnt fmtr h;
+        pp_print_string fmtr ", ";
+        print_assm tl
+  in
+  print_assm @@ assumption_valid th;
+  pp_print_string fmtr "; ";
+  print_assm @@ assumption_true th;
+  pp_print_string fmtr "⊢";
+  pp_print_jmnt fmtr @@ consequence th
 
-let hyp jmnt =
-  let (TJ (vc, C tc, m, a)) = jmnt in
-  let x = match m with Varx x -> x | _ -> failwith "invalid judgment" in
-  if List.exists (function v, a1 -> v = x && a1 = a) tc then Hyp jmnt
-  else failwith "invalid judgment"
+let posi th =
+  match consequence th with
+  | True prop -> PosI (th, (assumption_valid th, assumption_true th, Poss prop))
+  | _ -> failwith "can't use posi here"
 
-let hyps jmnt = 
-  let (TJ(C vc, tc, m, a)) = jmnt in
-  let x = match m with Varx x -> x | _ -> failwith "invalid judgment" in
-  if List.exists (function v, a1 -> v = x && a1 = a) vc then HypS jmnt
-  else failwith "invalid judgment"
+let hyp del gam prop =
+  if List.exists (function True p -> p = prop | _ -> failwith "absurd") gam
+  then Hyp (del, gam, True prop)
+  else failwith "can't use hyp here"
 
-let impi th str =
-  match tjmnt_of_th th with
-  | Some(TJ(c1, C(c2), pt, prop1)) ->
-    (match List.find_opt (function var, _ -> var = str) c2 with
-    | Some(var, prop) ->
-        ImpI(th, TJ(c1, 
-          C(List.filter (function var, _ -> var <> str) c2),
-          Abs(var, prop, pt), Imp(prop, prop1)))
-    | None -> failwith "var is not in context")
-  | None -> failwith "can't use this rule for this case"
-
+let hyps del gam prop =
+  if List.exists (function Valid p -> p = prop | _ -> failwith "absurd") del
+  then HypS (del, gam, True prop)
+  else failwith "can't use hyps here"
