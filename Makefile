@@ -16,3 +16,6 @@ modal.cmi: build
 clean:
 	rm -f $(CMFILES)
 	ocamlbuild -clean
+
+run: modal.cma modal.cmi
+	utop modal.cma
