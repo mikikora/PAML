@@ -1,7 +1,7 @@
-SOURCES = modal.ml modal.mli
-CMFILES = modal.cma modal.cmi
+SOURCES = modal.ml modal.mli proof.ml proof.mli modal.mllib
+CMFILES = modal.cma modal.cmi proof.cmi
 
-all: format modal.cma modal.cmi
+all: format modal.cma modal.cmi proof.cmi
 
 build: $(SOURCES)
 	rm -f $(CMFILES)
@@ -13,11 +13,14 @@ modal.cma: build
 modal.cmi: build
 	cp _build/$@ $@
 
+proof.cmi: build
+	cp _build/$@ $@
+
 clean:
 	rm -f $(CMFILES)
 	ocamlbuild -clean
 
-run: modal.cma modal.cmi
+run: all
 	utop modal.cma
 
 format:

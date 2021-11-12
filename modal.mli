@@ -12,20 +12,20 @@ type jmnt = True of proposition | Valid of proposition | Poss of proposition
 val pp_print_jmnt : Format.formatter -> jmnt -> unit
 
 type theorem =
-  | Hyp of jmnt list * jmnt list * jmnt
-  | ImpI of theorem * (jmnt list * jmnt list * jmnt)
-  | ImpE of theorem * theorem * (jmnt list * jmnt list * jmnt)
-  | HypS of jmnt list * jmnt list * jmnt
-  | BoxI of theorem * (jmnt list * jmnt list * jmnt)
-  | BoxE of theorem * (jmnt list * jmnt list * jmnt)
-  | BoxEp of theorem * theorem * (jmnt list * jmnt list * jmnt)
-  | DiaI of theorem * (jmnt list * jmnt list * jmnt)
-  | DiaE of theorem * theorem * (jmnt list * jmnt list * jmnt)
-  | PosI of theorem * (jmnt list * jmnt list * jmnt)
+  | Hyp of proposition list * proposition list * jmnt
+  | ImpI of theorem * (proposition list * proposition list * jmnt)
+  | ImpE of theorem * theorem * (proposition list * proposition list * jmnt)
+  | HypS of proposition list * proposition list * jmnt
+  | BoxI of theorem * (proposition list * proposition list * jmnt)
+  | BoxE of theorem * (proposition list * proposition list * jmnt)
+  | BoxEp of theorem * theorem * (proposition list * proposition list * jmnt)
+  | DiaI of theorem * (proposition list * proposition list * jmnt)
+  | DiaE of theorem * theorem * (proposition list * proposition list * jmnt)
+  | PosI of theorem * (proposition list * proposition list * jmnt)
 
-val assumption_valid : theorem -> jmnt list
+val assumption_valid : theorem -> proposition list
 
-val assumption_true : theorem -> jmnt list
+val assumption_true : theorem -> proposition list
 
 val consequence : theorem -> jmnt
 
@@ -33,6 +33,12 @@ val pp_print_theorem : Format.formatter -> theorem -> unit
 
 val posi : theorem -> theorem
 
-val hyp : jmnt list -> jmnt list -> proposition -> theorem
+val hyp : proposition list -> proposition list -> proposition -> theorem
 
-val hyps : jmnt list -> jmnt list -> proposition -> theorem
+val hyps : proposition list -> proposition list -> proposition -> theorem
+
+val impi : theorem -> proposition -> theorem
+
+val impe : theorem -> theorem -> theorem
+
+val boxi : theorem -> proposition list -> theorem

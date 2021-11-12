@@ -37,16 +37,16 @@ let pp_print_jmnt fmtr jmnt =
       pp_print_string fmtr " poss"
 
 type theorem =
-  | Hyp of jmnt list * jmnt list * jmnt
-  | ImpI of theorem * (jmnt list * jmnt list * jmnt)
-  | ImpE of theorem * theorem * (jmnt list * jmnt list * jmnt)
-  | HypS of jmnt list * jmnt list * jmnt
-  | BoxI of theorem * (jmnt list * jmnt list * jmnt)
-  | BoxE of theorem * (jmnt list * jmnt list * jmnt)
-  | BoxEp of theorem * theorem * (jmnt list * jmnt list * jmnt)
-  | DiaI of theorem * (jmnt list * jmnt list * jmnt)
-  | DiaE of theorem * theorem * (jmnt list * jmnt list * jmnt)
-  | PosI of theorem * (jmnt list * jmnt list * jmnt)
+  | Hyp of proposition list * proposition list * jmnt
+  | ImpI of theorem * (proposition list * proposition list * jmnt)
+  | ImpE of theorem * theorem * (proposition list * proposition list * jmnt)
+  | HypS of proposition list * proposition list * jmnt
+  | BoxI of theorem * (proposition list * proposition list * jmnt)
+  | BoxE of theorem * (proposition list * proposition list * jmnt)
+  | BoxEp of theorem * theorem * (proposition list * proposition list * jmnt)
+  | DiaI of theorem * (proposition list * proposition list * jmnt)
+  | DiaE of theorem * theorem * (proposition list * proposition list * jmnt)
+  | PosI of theorem * (proposition list * proposition list * jmnt)
 
 let assumption_valid th =
   match th with
@@ -90,6 +90,14 @@ let consequence th =
   | PosI (_, (_, _, x)) ->
       x
 
+let destruct_th th = (assumption_valid th, assumption_true th, consequence th)
+
+let rec remove_duplicates lst =
+  match lst with
+  | [] -> []
+  | hd :: tl ->
+      hd :: (List.filter (function el -> el <> hd) @@ remove_duplicates tl)
+
 let pp_print_theorem fmtr th =
   let open Format in
   pp_open_hvbox fmtr 2;
@@ -97,7 +105,7 @@ let pp_print_theorem fmtr th =
     match ass with
     | [] -> pp_print_string fmtr "•"
     | h :: tl ->
-        pp_print_jmnt fmtr h;
+        pp_print_prop fmtr h;
         pp_print_string fmtr ", ";
         print_assm tl
   in
@@ -113,11 +121,45 @@ let posi th =
   | _ -> failwith "can't use posi here"
 
 let hyp del gam prop =
-  if List.exists (function True p -> p = prop | _ -> failwith "absurd") gam
-  then Hyp (del, gam, True prop)
+  if List.exists (function p -> p = prop) gam then Hyp (del, gam, True prop)
   else failwith "can't use hyp here"
 
 let hyps del gam prop =
-  if List.exists (function Valid p -> p = prop | _ -> failwith "absurd") del
-  then HypS (del, gam, True prop)
+  if List.exists (function p -> p = prop) del then HypS (del, gam, True prop)
   else failwith "can't use hyps here"
+
+let impi th prop =
+  let del, gam, jmnt = destruct_th th in
+  match jmnt with
+  | True p ->
+      if List.exists (function p -> p = prop) gam then
+        ImpI
+          ( th,
+            ( del,
+              List.filter (function p -> p <> prop) gam,
+              True (Imp (prop, p)) ) )
+      else failwith "can't use impi with this proposition here"
+  | _ -> failwith "can't use impi on not true judgment"
+
+let impe th1 th2 =
+  let del1, gam1, p1 = destruct_th th1 in
+  let del2, gam2, p2 = destruct_th th2 in
+  match p1 with
+  | True (Imp (p11, p12)) ->
+      if p2 = True p11 then
+        ImpE
+          ( th1,
+            th2,
+            ( remove_duplicates @@ del1 @ del2,
+              remove_duplicates @@ gam1 @ gam2,
+              True p12 ) )
+      else failwith "can't use impe here"
+  | _ -> failwith "left proposition isn't true implication"
+
+let boxi th new_gam =
+  let del, gam, jmnt = destruct_th th in
+  match jmnt with
+  | True p ->
+      if [] = gam then BoxI (th, (del, new_gam, True (Box p)))
+      else failwith "boxi requires empty true hypotheses set"
+  | _ -> failwith "boxi requires true judgment"
