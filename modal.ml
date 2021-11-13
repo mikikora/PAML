@@ -42,8 +42,7 @@ type theorem =
   | ImpE of theorem * theorem * (proposition list * proposition list * jmnt)
   | HypS of proposition list * proposition list * jmnt
   | BoxI of theorem * (proposition list * proposition list * jmnt)
-  | BoxE of theorem * (proposition list * proposition list * jmnt)
-  | BoxEp of theorem * theorem * (proposition list * proposition list * jmnt)
+  | BoxE of theorem * theorem * (proposition list * proposition list * jmnt)
   | DiaI of theorem * (proposition list * proposition list * jmnt)
   | DiaE of theorem * theorem * (proposition list * proposition list * jmnt)
   | PosI of theorem * (proposition list * proposition list * jmnt)
@@ -55,8 +54,7 @@ let assumption_valid th =
   | ImpE (_, _, (l, _, _))
   | HypS (l, _, _)
   | BoxI (_, (l, _, _))
-  | BoxE (_, (l, _, _))
-  | BoxEp (_, _, (l, _, _))
+  | BoxE (_, _, (l, _, _))
   | DiaI (_, (l, _, _))
   | DiaE (_, _, (l, _, _))
   | PosI (_, (l, _, _)) ->
@@ -69,8 +67,7 @@ let assumption_true th =
   | ImpE (_, _, (_, l, _))
   | HypS (_, l, _)
   | BoxI (_, (_, l, _))
-  | BoxE (_, (_, l, _))
-  | BoxEp (_, _, (_, l, _))
+  | BoxE (_, _, (_, l, _))
   | DiaI (_, (_, l, _))
   | DiaE (_, _, (_, l, _))
   | PosI (_, (_, l, _)) ->
@@ -83,8 +80,7 @@ let consequence th =
   | ImpE (_, _, (_, _, x))
   | HypS (_, _, x)
   | BoxI (_, (_, _, x))
-  | BoxE (_, (_, _, x))
-  | BoxEp (_, _, (_, _, x))
+  | BoxE (_, _, (_, _, x))
   | DiaI (_, (_, _, x))
   | DiaE (_, _, (_, _, x))
   | PosI (_, (_, _, x)) ->
@@ -128,7 +124,7 @@ let hyps del gam prop =
   if List.exists (function p -> p = prop) del then HypS (del, gam, True prop)
   else failwith "can't use hyps here"
 
-let impi th prop =
+let impi prop th =
   let del, gam, jmnt = destruct_th th in
   match jmnt with
   | True p ->
@@ -154,12 +150,41 @@ let impe th1 th2 =
               remove_duplicates @@ gam1 @ gam2,
               True p12 ) )
       else failwith "can't use impe here"
-  | _ -> failwith "left proposition isn't true implication"
+  | _ -> failwith "left judgment isn't true implication"
 
-let boxi th new_gam =
+let boxi new_gam th =
   let del, gam, jmnt = destruct_th th in
   match jmnt with
   | True p ->
       if [] = gam then BoxI (th, (del, new_gam, True (Box p)))
       else failwith "boxi requires empty true hypotheses set"
   | _ -> failwith "boxi requires true judgment"
+
+let boxe th1 th2 =
+  let del1, gam1, p1 = destruct_th th1 and del2, gam2, p2 = destruct_th th2 in
+  match p1 with
+  | True (Box p11) ->
+      if List.exists (function v -> v = p11) del2 then
+        let del22 = List.filter (function v -> v <> p11) del2 in
+        BoxE
+          ( th1,
+            th2,
+            ( remove_duplicates @@ del1 @ del22,
+              remove_duplicates @@ gam1 @ gam2,
+              p2 ) )
+      else failwith "no valid assumption in right theorem"
+  | _ -> failwith "left judgment is not true box"
+
+let diai th =
+  match destruct_th th with
+  | del, gam, Poss prop -> DiaI (th, (del, gam, True (Dia prop)))
+  | _ -> failwith "can't use diai here"
+
+let diae th1 th2 =
+  let del1, gam1, p1 = destruct_th th1 and del2, gam2, p2 = destruct_th th2 in
+  match (p1, p2) with
+  | True (Dia p11), Poss p22 ->
+      if gam2 = [ p11 ] then
+        DiaE (th1, th2, (remove_duplicates @@ del1 @ del2, gam1, p2))
+      else failwith "can't use diae here"
+  | _, _ -> failwith "can't use diae here"

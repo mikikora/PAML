@@ -33,3 +33,21 @@ val unfocus : goal -> proof
 val next : goal -> goal
 
 val focus : int -> proof -> goal
+
+val intro : string -> goal -> goal
+
+val apply : jmnt -> goal -> goal
+
+val apply_modal : jmnt -> string -> goal -> goal
+
+val apply_thm : theorem -> goal -> proof
+
+val apply_tru_assm : string -> goal -> proof
+
+val apply_val_assm : string -> goal -> proof
+
+val from_true : goal -> goal
+
+val valid : goal -> goal
+
+val possible : goal -> goal

@@ -17,8 +17,7 @@ type theorem =
   | ImpE of theorem * theorem * (proposition list * proposition list * jmnt)
   | HypS of proposition list * proposition list * jmnt
   | BoxI of theorem * (proposition list * proposition list * jmnt)
-  | BoxE of theorem * (proposition list * proposition list * jmnt)
-  | BoxEp of theorem * theorem * (proposition list * proposition list * jmnt)
+  | BoxE of theorem * theorem * (proposition list * proposition list * jmnt)
   | DiaI of theorem * (proposition list * proposition list * jmnt)
   | DiaE of theorem * theorem * (proposition list * proposition list * jmnt)
   | PosI of theorem * (proposition list * proposition list * jmnt)
@@ -37,8 +36,14 @@ val hyp : proposition list -> proposition list -> proposition -> theorem
 
 val hyps : proposition list -> proposition list -> proposition -> theorem
 
-val impi : theorem -> proposition -> theorem
+val impi : proposition -> theorem -> theorem
 
 val impe : theorem -> theorem -> theorem
 
-val boxi : theorem -> proposition list -> theorem
+val boxi : proposition list -> theorem -> theorem
+
+val boxe : theorem -> theorem -> theorem
+
+val diai : theorem -> theorem
+
+val diae : theorem -> theorem -> theorem
