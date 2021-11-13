@@ -71,7 +71,7 @@ let rec next gl =
         | Left (father, right, f) ->
             go_up (Goal (Node2 (pf, right, f), father)) true
         | Right (father, left, f) ->
-            go_down (Goal (Node2 (pf, left, f), father))
+            go_down (Goal (Node2 (left, pf, f), father))
         | Mid (father, f) -> go_down (Goal (Node1 (pf, f), father)))
   and go_down = function
     | Goal (pf, path) -> (
@@ -80,14 +80,14 @@ let rec next gl =
         | Left (father, right, f) ->
             go_up (Goal (Node2 (pf, right, f), father)) true
         | Right (father, left, f) ->
-            go_down (Goal (Node2 (pf, left, f), father))
+            go_down (Goal (Node2 (left, pf, f), father))
         | Mid (father, f) -> go_down (Goal (Node1 (pf, f), father)))
   in
   let (Goal (pf, path)) = gl in
   match path with
   | Root -> go_up gl false
   | Left (father, right, f) -> go_up (Goal (Node2 (pf, right, f), father)) true
-  | Right (father, left, f) -> go_down (Goal (Node2 (pf, left, f), father))
+  | Right (father, left, f) -> go_down (Goal (Node2 (left, pf, f), father))
   | Mid (father, f) -> go_up (Goal (Node1 (pf, f), father)) false
 
 let focus n pf =
