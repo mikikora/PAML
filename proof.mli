@@ -51,3 +51,7 @@ val from_true : goal -> goal
 val valid : goal -> goal
 
 val possible : goal -> goal
+
+val pp_print_proof : Format.formatter -> proof -> unit
+
+val pp_print_goal : Format.formatter -> goal -> unit

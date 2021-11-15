@@ -98,7 +98,7 @@ let focus n pf =
     else if acc > len then failwith "too big number"
     else aux (next g) (acc + 1)
   in
-  aux g0 0
+  aux g0 1
 
 let intro name = function
   | Goal (pf, path) -> (
@@ -143,10 +143,13 @@ let apply_modal f name gl =
           Goal
             ( Empty (del, gam, True (Box p)),
               Left (path, Empty ((name, p) :: del, gam, jmnt), boxe) )
-      | True (Dia p) ->
-          Goal
-            ( Empty (del, gam, True (Dia p)),
-              Left (path, Empty (del, [ (name, p) ], jmnt), diae) )
+      | True (Dia p) -> (
+          match jmnt with
+          | Poss pos ->
+              Goal
+                ( Empty (del, gam, True (Dia p)),
+                  Left (path, Empty (del, [ (name, p) ], jmnt), diae) )
+          | _ -> failwith "judgment must be possible")
       | _ -> failwith "can't apply this judgment here")
 
 let apply_thm thm gl =
@@ -203,3 +206,54 @@ let possible gl =
       match jmnt with
       | True (Dia p) -> Goal (Empty (del, gam, Poss p), Mid (path, diai))
       | _ -> failwith "can't use valid on not true box judgment")
+
+let pp_print_proof fmtr pf =
+  let open Format in
+  let ngoals = numGoals pf and goals = goals pf in
+  if ngoals = 0 then pp_print_string fmtr "No more subgoals"
+  else (
+    pp_open_vbox fmtr (-100);
+    pp_open_hbox fmtr ();
+    pp_print_string fmtr "There are ";
+    pp_print_int fmtr ngoals;
+    pp_print_string fmtr " subgoal:";
+    pp_close_box fmtr ();
+    pp_print_cut fmtr ();
+    List.iteri
+      (fun n (_, _, f) ->
+        pp_print_cut fmtr ();
+        pp_open_hbox fmtr ();
+        pp_print_int fmtr (n + 1);
+        pp_print_string fmtr " : ";
+        pp_print_jmnt fmtr f;
+        pp_close_box fmtr ())
+      goals;
+    pp_close_box fmtr ())
+
+let pp_print_goal fmtr gl =
+  let (Goal (pf, path)) = gl in
+  match pf with
+  | Node1 (_, _) | Node2 (_, _, _) | Leaf _ -> ()
+  | Empty (del, gam, jmnt) ->
+      let open Format in
+      pp_open_vbox fmtr (-100);
+      let print_context ctx =
+        List.iter
+          (fun (name, f) ->
+            pp_print_cut fmtr ();
+            pp_open_hbox fmtr ();
+            pp_print_string fmtr (name ^ " : ");
+            pp_print_prop fmtr f;
+            pp_close_box fmtr ())
+          ctx
+      in
+      print_context del;
+      pp_print_cut fmtr ();
+      pp_print_string fmtr (String.make 40 '-');
+      pp_print_cut fmtr ();
+      print_context gam;
+      pp_print_cut fmtr ();
+      pp_print_string fmtr (String.make 40 '=');
+      pp_print_cut fmtr ();
+      pp_print_jmnt fmtr jmnt;
+      pp_close_box fmtr ()
