@@ -176,7 +176,7 @@ let apply_val_assm name gl =
       let (Goal (_, new_path)) = apply (True prop) gl in
       let delta = List.map (function name, value -> value) del
       and gamma = List.map (function name, value -> value) gam in
-      unfocus (Goal (Leaf (Modal.hyp delta gamma prop), new_path))
+      unfocus (Goal (Leaf (Modal.hyps delta gamma prop), new_path))
 
 let from_true gl =
   let (Goal (pf, path)) = gl in
