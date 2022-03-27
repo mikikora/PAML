@@ -23,27 +23,15 @@ type theorem =
   | PosI of theorem * (proposition list * proposition list * jmnt)
 
 val assumption_valid : theorem -> proposition list
-
 val assumption_true : theorem -> proposition list
-
 val consequence : theorem -> jmnt
-
 val pp_print_theorem : Format.formatter -> theorem -> unit
-
 val posi : theorem -> theorem
-
 val hyp : proposition list -> proposition list -> proposition -> theorem
-
 val hyps : proposition list -> proposition list -> proposition -> theorem
-
 val impi : proposition -> theorem -> theorem
-
 val impe : theorem -> theorem -> theorem
-
 val boxi : proposition list -> theorem -> theorem
-
 val boxe : theorem -> theorem -> theorem
-
 val diai : theorem -> theorem
-
 val diae : theorem -> theorem -> theorem
