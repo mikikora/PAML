@@ -102,3 +102,5 @@ env_list:
     { [f] }
     | f=form SEMICOLON tl=env_list
     { f :: tl }
+
+Proof K = {box p -> p} where [p] true and [x] valid.

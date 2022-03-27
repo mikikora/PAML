@@ -1,7 +1,6 @@
 open Modal
 
 type context = (string * proposition) list
-
 type goalDesc = context * context * jmnt
 
 type proof =

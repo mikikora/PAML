@@ -34,7 +34,5 @@ type raw_statement =
   | Unfocus
 
 and form = Var of string | Imp of form * form | Box of form | Dia of form
-
 and env = form list
-
 and statement = raw_statement located
