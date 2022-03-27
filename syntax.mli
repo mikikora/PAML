@@ -1,7 +1,7 @@
 open Format
 
 type prop =
-  | P
+  | F
   | Var of string
   | Con of prop * prop
   | Alt of prop * prop
@@ -10,19 +10,12 @@ type prop =
   | Dia of prop
 
 type world = string
-         
-
 type relation = world * world
-
-
-type judgement =
-  | J of world * prop
-  | R of relation
-
+type judgement = J of world * prop | R of relation
 type assumptions = judgement list
-                 
-              
+
 type theorem =
+  | FalseE of theorem * (assumptions * judgement)
   | Hyp of assumptions * judgement
   | ConI of theorem * theorem * (assumptions * judgement)
   | ConE of theorem * (assumptions * judgement)
@@ -34,3 +27,12 @@ type theorem =
   | BoxE of theorem * theorem * (assumptions * judgement)
   | DiaI of theorem * theorem * (assumptions * judgement)
   | DiaE of theorem * theorem * (assumptions * judgement)
+
+(* supporting functions *)
+val assumptions : theorem -> assumptions
+val consequence : theorem -> judgement
+val destruct_th : theorem -> assumptions * judgement
+
+(* printers *)
+val pp_print_theorem : Format.formatter -> theorem -> unit
+val print_theorem : theorem -> unit
