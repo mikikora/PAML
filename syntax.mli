@@ -36,3 +36,4 @@ val destruct_th : theorem -> assumptions * judgement
 (* printers *)
 val pp_print_theorem : Format.formatter -> theorem -> unit
 val print_theorem : theorem -> unit
+val print_judgement : judgement -> unit

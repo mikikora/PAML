@@ -144,3 +144,4 @@ and pp_print_atom_prop fmtr = function
       pp_close_box fmtr ()
 
 let print_theorem th = pp_print_theorem std_formatter th
+let print_judgement jgmt = pp_print_judgement std_formatter jgmt
