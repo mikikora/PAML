@@ -2,6 +2,22 @@ open Syntax
 open Core
 
 type context = (string * judgement) list
+let add_to_ctx ?name ctx jgmt =
+  match name with
+  | Some n ->
+    if List.exists (function str, _ -> str = n) ctx then
+      failwith (n ^ " is already in the context")
+    else (n, jgmt) :: ctx
+  | None -> 
+    let rec generate_name n acc ->
+      let name = n ^ (string_of_int acc) in
+      if List.exists (function str, _ -> str = name) ctx then
+        generate_name n (acc + 1)
+      else name
+    in
+    generate_name "H" 0
+
+
 type goal_desc = context * judgement
 
 type proof =
@@ -86,7 +102,8 @@ let focus n gl =
         if n1 >= acc then build_goal acc (Left3 (path, pf2, pf3, f)) pf1
         else
           let n2 = no_goals pf3 in
-          if n1 + n2 >= acc then build_goal (acc - n1) (Mid3 (path, pf1, pf3, f)) pf2
+          if n1 + n2 >= acc then
+            build_goal (acc - n1) (Mid3 (path, pf1, pf3, f)) pf2
           else build_goal (acc - (n1 + n2)) (Right3 (path, pf1, pf2, f)) pf3
     | Empty gd -> (Empty gd, path)
     | Leaf _ -> failwith "cannot build goal on leaf"
@@ -102,32 +119,43 @@ let intro name = function
       | Empty (ctx, jgmt) -> (
           match jgmt with
           | J (x, Imp (p1, p2)) ->
-              if List.exists (function str, _ -> str = name) ctx then
-                failwith (name ^ " is already in the context")
-              else (Empty (((name, J(x, p1)) :: ctx), J(x, p2)), Mid (path, impi (J(x, p1))))
+            let new_ctx = add_to_ctx ~name:name ctx J(x, p1) in
+            (Empty(new_ctx, J(x, p2)), Mid(path, impi (J(x,p1))))
           | _ -> failwith "Nothing to intro")
       | _ -> failwith "Not in empty goal")
 
-(* implication elimination *)
-let rec apply f (pf, path) =
+(* implication and conjunction elimination *)
+let rec apply ?names f (pf, path) =
   match pf with
   | Empty (ctx, jgmt) -> (
       if f = jgmt then (pf, path)
       else
-        match f with
-        | J (x, Imp (l, r)) -> (
-            match jgmt with
-            | J (y, prop) ->
-                if x = y then
-                  if r = prop then
-                    (Empty (ctx, f), Left (path, Empty (ctx, J (x, l)), impe))
-                  else
-                    let pf_father, path_father = apply (J (x, r)) (pf, path) in
-                    ( Empty (ctx, f),
-                      Left (path_father, Empty (ctx, J (x, r)), impe) )
-                else failwith "This judgment describes other world"
-            | _ -> failwith "can't apply to this judgement")
-        | _ -> failwith "Can't apply this judgement")
+        match (jgmt, f) with
+        | J (y, prop), J (x, Imp (l, r)) ->
+            if x = y then
+              if r = prop then
+                (Empty (ctx, f), Left (path, Empty (ctx, J (x, l)), impe))
+              else
+                let pf_father, path_father = apply (J (x, r)) (pf, path) in
+                (Empty (ctx, f), Left (path_father, Empty (ctx, J (x, r)), impe))
+            else failwith "This judgment describes other world"
+        | J (y, prop), J (x, Con (p1, p2)) ->
+            if x = y then
+              if prop = p1 then (Empty (ctx, f), Mid (path, cone1))
+              else if prop = p2 then (Empty (ctx, f), Mid (path, cone2))
+              else failwith "Conjunction must have prop on either side"
+            else failwith "Can't apply conjunction from different world"
+        | J(y, prop), J(x, Alt(p1, p2)) ->
+          if x = y then (
+            match name with
+            | Some(n1, n2) -> 
+              let new_ctx1 = add_to_ctx ~name:n1 ctx (J(x, p1))
+              and new_ctx2 = add_to_ctx ~name:n2 ctx (J(x, p2)) in
+              (Empty(ctx, f),
+              Left3(path, Empty(new_ctx1, jgmt), Empty(new_ctx2, jgmt), alte))
+          )
+          else failwith "Can't apply alternative from different world"
+            )
   | _ -> failwith "Not in empty goal"
 
 (* hyp *)
@@ -135,15 +163,40 @@ let rec apply f (pf, path) =
 let apply_assm name (pf, path) =
   match pf with
   | Empty (ctx, jgmt) ->
-    let jgmt_to_apply = List.assoc name ctx in
-    let (_, new_path) = apply jgmt_to_apply (pf, path) in
-    let ass = List.map (function name, value -> value) ctx in
-    unfocus (Leaf (hyp ass jgmt_to_apply), new_path)
+      let jgmt_to_apply = List.assoc name ctx in
+      let _, new_path = apply jgmt_to_apply (pf, path) in
+      let ass = List.map (function name, value -> value) ctx in
+      unfocus (Leaf (hyp ass jgmt_to_apply), new_path)
   | _ -> failwith "Not in empty goal"
 
 (* False  *)
 let contra world (pf, path) =
   match pf with
-  | Empty (ctx, jgmt) ->
-    (Empty (ctx, J(world, F)), Mid (path, falsee jgmt))
+  | Empty (ctx, jgmt) -> (Empty (ctx, J (world, F)), Mid (path, falsee jgmt))
+  | _ -> failwith "Not in empty goal"
+
+(* conjunction introduction *)
+let split (pf, path) =
+  match pf with
+  | Empty (ctx, jgmt) -> (
+      match jgmt with
+      | J (x, Con (p1, p2)) ->
+          (Empty (ctx, J (x, p1)), Left (path, Empty (ctx, J (x, p2)), coni))
+      | J (_, _) -> failwith "Goal is not conjunction"
+      | R (_, _) -> failwith "Can't use split in this goal")
+  | _ -> failwith "Not in empty goal"
+
+(* alternative introductions *)
+let left (pf, path) =
+  match pf with
+  | Empty(ctx, J(x, Alt(p1, p2))) ->
+    (Empty(ctx, J(x, p1)), Mid(path, alti1))
+  | Empty(_, _) -> failwith "Goal must be alternative"
+  | _ -> failwith "Not in empty goal"
+
+let right (pf, path) =
+  match pf with
+  | Empty(ctx, J(x, Alt(p1, p2))) ->
+    (Empty(ctx, J(x, p2)), Mid(path, alti1))
+  | Empty(_, _) -> failwith "Goal must be alternative"
   | _ -> failwith "Not in empty goal"

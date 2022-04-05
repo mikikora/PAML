@@ -12,9 +12,9 @@ let hyp ass jgmt =
 
 let falsee new_jgmt th =
   let ass, jgmt = destruct_th th in
-  match jgmt, new_jgmt with
-  | J(_, F), J(_, _) -> FalseE(th, (ass, new_jgmt))
-  | J(_,_), _ -> failwith "False is not in the judgement"
+  match (jgmt, new_jgmt) with
+  | J (_, F), J (_, _) -> FalseE (th, (ass, new_jgmt))
+  | J (_, _), _ -> failwith "False is not in the judgement"
   | _, _ -> failwith "Can't use it on relation judgement"
 
 let coni th1 th2 =
@@ -78,7 +78,8 @@ let impi left_jgmt th =
       if List.exists (function v -> v = left_jgmt) ass && x = y then
         ImpI
           ( th,
-            (List.filter (function v -> v <> left_jgmt) ass, J (x, Imp (prop, p))) )
+            ( List.filter (function v -> v <> left_jgmt) ass,
+              J (x, Imp (prop, p)) ) )
       else failwith "can't use impi with this proposition"
   | _ -> failwith "can't use impi on this judgement"
 
