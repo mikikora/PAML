@@ -2,7 +2,7 @@ open Syntax
 open Format
 
 type context = (string * judgement) list
-type goal_desc = context * judgement
+type goal_desc = relation * context * judgement
 
 type proof =
   | Empty of goal_desc

@@ -19,3 +19,4 @@ clean:
 	rm -f *.cmo *.cmi $(target)
 	rm -rdf _build
 
+install: clean all

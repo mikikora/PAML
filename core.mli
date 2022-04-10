@@ -1,6 +1,6 @@
 open Syntax
 
-val hyp : assumptions -> judgement -> theorem
+val hyp : relation -> assumptions -> judgement -> theorem
 val coni : theorem -> theorem -> theorem
 val cone1 : theorem -> theorem
 val cone2 : theorem -> theorem

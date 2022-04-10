@@ -2,7 +2,7 @@ open Syntax
 open Format
 
 type context = (string * judgement) list
-type goal_desc = context * judgement
+type goal_desc = relation * context * judgement
 
 type proof =
   | Empty of goal_desc
@@ -70,48 +70,53 @@ let rec goals pf =
   | Node2 (pf1, pf2, _) -> goals pf1 @ goals pf2
   | Node3 (pf1, pf2, pf3, _) -> goals pf1 @ goals pf2 @ goals pf3
 
-
-
 (* Printers *)
 let pp_print_unfocused_proof fmtr pf =
   let ngoals = no_goals pf and goals = goals pf in
   if ngoals = 0 then pp_print_string fmtr "No more subgoals."
-  else
-    pp_open_vbox fmtr (-100);
-    pp_open_hbox fmtr ();
-    pp_print_string fmtr "There are ";
-    pp_print_int fmtr ngoals;
-    pp_print_string fmtr " subgoals:";
-    pp_close_box fmtr ();
-    pp_print_cut fmtr ();
-    List.iteri (fun n (_,f) ->
+  else pp_open_vbox fmtr (-100);
+  pp_open_hbox fmtr ();
+  pp_print_string fmtr "There are ";
+  pp_print_int fmtr ngoals;
+  pp_print_string fmtr " subgoals:";
+  pp_close_box fmtr ();
+  pp_print_cut fmtr ();
+  List.iteri
+    (fun n (_, _, f) ->
       pp_print_cut fmtr ();
       pp_open_hbox fmtr ();
-      pp_print_int fmtr (n+1);
+      pp_print_int fmtr (n + 1);
       pp_print_string fmtr " : ";
       pp_print_judgement fmtr f;
-      pp_close_box fmtr ()) goals;
-    pp_close_box fmtr ()
+      pp_close_box fmtr ())
+    goals;
+  pp_close_box fmtr ()
 
-let pp_print_current_goal fmtr = function pf, path ->
-  match pf with
-  | Empty(ctx, jgmt) ->
-    pp_open_vbox fmtr (-100);
-    let print_context ctx =
-      List.iter (function name, f ->
-        pp_print_cut fmtr ();
-        pp_open_hbox fmtr ();
-        pp_print_string fmtr (name ^ ": ");
-        pp_print_judgement fmtr f;
-        pp_close_box fmtr ()) ctx 
-    in
-    print_context ctx;
-    pp_print_cut fmtr ();
-    pp_print_string fmtr (String.make 40 '=');
-    pp_print_cut fmtr ();
-    pp_print_judgement fmtr jgmt;
-    pp_close_box fmtr ()
-  | _ -> pp_print_string fmtr "This path is not a subgoal. Focus to proper subgoal"
+let pp_print_current_goal fmtr = function
+  | pf, path -> (
+      match pf with
+      | Empty (rel, ctx, jgmt) ->
+          pp_open_vbox fmtr (-100);
+          let print_context ctx =
+            List.iter
+              (function
+                | name, f ->
+                    pp_print_cut fmtr ();
+                    pp_open_hbox fmtr ();
+                    pp_print_string fmtr (name ^ ": ");
+                    pp_print_judgement fmtr ~r:rel f;
+                    pp_close_box fmtr ())
+              ctx
+          in
+          print_context ctx;
+          pp_print_cut fmtr ();
+          pp_print_string fmtr (String.make 40 '=');
+          pp_print_cut fmtr ();
+          pp_print_judgement fmtr ~r:rel jgmt;
+          pp_close_box fmtr ()
+      | _ ->
+          pp_print_string fmtr
+            "This path is not a subgoal. Focus to proper subgoal")
 
 let print_unfocused_proof = pp_print_unfocused_proof std_formatter
 let print_current_goal = pp_print_current_goal std_formatter
