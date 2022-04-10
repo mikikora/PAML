@@ -1,75 +1,8 @@
 open Syntax
 open Core
+open Proof_syntax
 
-type context = (string * judgement) list
-let add_to_ctx ?name ctx jgmt =
-  match name with
-  | Some n ->
-    if List.exists (function str, _ -> str = n) ctx then
-      failwith (n ^ " is already in the context")
-    else (n, jgmt) :: ctx
-  | None -> 
-    let rec generate_name n acc ->
-      let name = n ^ (string_of_int acc) in
-      if List.exists (function str, _ -> str = name) ctx then
-        generate_name n (acc + 1)
-      else name
-    in
-    generate_name "H" 0
-
-
-type goal_desc = context * judgement
-
-type proof =
-  | Empty of goal_desc
-  | Node1 of proof * (theorem -> theorem)
-  | Node2 of proof * proof * (theorem -> theorem -> theorem)
-  | Node3 of proof * proof * proof * (theorem -> theorem -> theorem -> theorem)
-  | Leaf of theorem
-
-type path =
-  | Root
-  | Left of path * proof * (theorem -> theorem -> theorem)
-  | Right of path * proof * (theorem -> theorem -> theorem)
-  | Mid of path * (theorem -> theorem)
-  (*
-     In 3 node proofs always goes: left, mid, right (without the one from the constructor)
-     Sof of example in Left3 it goes: mid, right and in Right3: left, mid
-  *)
-  | Left3 of path * proof * proof * (theorem -> theorem -> theorem -> theorem)
-  | Mid3 of path * proof * proof * (theorem -> theorem -> theorem -> theorem)
-  | Right3 of path * proof * proof * (theorem -> theorem -> theorem -> theorem)
-
-type goal = proof * path
-
-let rec qed pf =
-  match pf with
-  | Leaf x -> x
-  | Node1 (pf, f) -> f @@ qed pf
-  | Node2 (pf1, pf2, f) ->
-      let res1 = qed pf1 and res2 = qed pf2 in
-      f res1 res2
-  | Node3 (pf1, pf2, pf3, f) ->
-      let res1 = qed pf1 and res2 = qed pf2 and res3 = qed pf3 in
-      f res1 res2 res3
-  | Empty _ -> failwith "Can't build unfinished proof"
-
-let rec no_goals pf =
-  match pf with
-  | Empty _ -> 1
-  | Leaf _ -> 0
-  | Node1 (pf, _) -> no_goals pf
-  | Node2 (pf1, pf2, _) -> no_goals pf1 + no_goals pf2
-  | Node3 (pf1, pf2, pf3, _) -> no_goals pf1 + no_goals pf2 + no_goals pf3
-
-let rec goals pf =
-  match pf with
-  | Empty x -> [ x ]
-  | Leaf _ -> []
-  | Node1 (pf, _) -> goals pf
-  | Node2 (pf1, pf2, _) -> goals pf1 @ goals pf2
-  | Node3 (pf1, pf2, pf3, _) -> goals pf1 @ goals pf2 @ goals pf3
-
+(* Functions for creating and navigating proof *)
 let proof ctx jgmt = (Empty (ctx, jgmt), Root)
 
 let goal_desc = function
@@ -90,7 +23,7 @@ let rec unfocus = function
       | Right3 (father, left, mid, f) ->
           unfocus (Node3 (left, mid, pf, f), father))
 
-let focus n gl =
+let focus n pf =
   let rec build_goal acc path = function
     | Node1 (pf, f) -> build_goal acc (Mid (path, f)) pf
     | Node2 (pf1, pf2, f) ->
@@ -108,9 +41,23 @@ let focus n gl =
     | Empty gd -> (Empty gd, path)
     | Leaf _ -> failwith "cannot build goal on leaf"
   in
-  let pf, path = gl in
   if n < 1 || n > no_goals pf then failwith "There is no goal on given number"
-  else build_goal n path pf
+  else build_goal n Root pf
+
+
+  let rec qed pf =
+    match pf with
+    | Leaf x -> x
+    | Node1 (pf, f) -> f @@ qed pf
+    | Node2 (pf1, pf2, f) ->
+        let res1 = qed pf1 and res2 = qed pf2 in
+        f res1 res2
+    | Node3 (pf1, pf2, pf3, f) ->
+        let res1 = qed pf1 and res2 = qed pf2 and res3 = qed pf3 in
+        f res1 res2 res3
+    | Empty _ -> failwith "Can't build unfinished proof"
+(* ------------------------------------------------------------------------- *)
+(* Rules *)
 
 (* implication introduction *)
 let intro name = function
@@ -119,12 +66,12 @@ let intro name = function
       | Empty (ctx, jgmt) -> (
           match jgmt with
           | J (x, Imp (p1, p2)) ->
-            let new_ctx = add_to_ctx ~name:name ctx J(x, p1) in
-            (Empty(new_ctx, J(x, p2)), Mid(path, impi (J(x,p1))))
+              let new_ctx = add_to_ctx ~name ctx (J (x, p1)) in
+              (Empty (new_ctx, J (x, p2)), Mid (path, impi (J (x, p1))))
           | _ -> failwith "Nothing to intro")
       | _ -> failwith "Not in empty goal")
 
-(* implication and conjunction elimination *)
+(* implication, conjunction and box elimination *)
 let rec apply ?names f (pf, path) =
   match pf with
   | Empty (ctx, jgmt) -> (
@@ -145,17 +92,26 @@ let rec apply ?names f (pf, path) =
               else if prop = p2 then (Empty (ctx, f), Mid (path, cone2))
               else failwith "Conjunction must have prop on either side"
             else failwith "Can't apply conjunction from different world"
-        | J(y, prop), J(x, Alt(p1, p2)) ->
-          if x = y then (
-            match name with
-            | Some(n1, n2) -> 
-              let new_ctx1 = add_to_ctx ~name:n1 ctx (J(x, p1))
-              and new_ctx2 = add_to_ctx ~name:n2 ctx (J(x, p2)) in
-              (Empty(ctx, f),
-              Left3(path, Empty(new_ctx1, jgmt), Empty(new_ctx2, jgmt), alte))
-          )
-          else failwith "Can't apply alternative from different world"
-            )
+        | J (y, prop), J (x, Alt (p1, p2)) ->
+            if x = y then
+              let new_ctx1, new_ctx2 =
+                match names with
+                | Some (n1, n2) ->
+                    ( add_to_ctx ~name:n1 ctx (J (x, p1)),
+                      add_to_ctx ~name:n2 ctx (J (x, p2)) )
+                | None ->
+                    (add_to_ctx ctx (J (x, p1)), add_to_ctx ctx (J (x, p2)))
+              in
+              ( Empty (ctx, f),
+                Left3
+                  (path, Empty (new_ctx1, jgmt), Empty (new_ctx2, jgmt), alte)
+              )
+            else failwith "Can't apply alternative from different world"
+        | J (y, p), J (x, Box bp) ->
+            if bp = p then
+              (Empty (ctx, f), Left (path, Empty (ctx, R (x, y)), boxe x))
+            else failwith "Prop doesn't match"
+        | _ -> failwith "Can't use apply on this judgement")
   | _ -> failwith "Not in empty goal"
 
 (* hyp *)
@@ -189,14 +145,61 @@ let split (pf, path) =
 (* alternative introductions *)
 let left (pf, path) =
   match pf with
-  | Empty(ctx, J(x, Alt(p1, p2))) ->
-    (Empty(ctx, J(x, p1)), Mid(path, alti1))
-  | Empty(_, _) -> failwith "Goal must be alternative"
+  | Empty (ctx, J (x, Alt (p1, p2))) ->
+      (Empty (ctx, J (x, p1)), Mid (path, alti1 p2))
+  | Empty (_, _) -> failwith "Goal must be alternative"
   | _ -> failwith "Not in empty goal"
 
 let right (pf, path) =
   match pf with
-  | Empty(ctx, J(x, Alt(p1, p2))) ->
-    (Empty(ctx, J(x, p2)), Mid(path, alti1))
-  | Empty(_, _) -> failwith "Goal must be alternative"
+  | Empty (ctx, J (x, Alt (p1, p2))) ->
+      (Empty (ctx, J (x, p2)), Mid (path, alti2 p1))
+  | Empty (_, _) -> failwith "Goal must be alternative"
   | _ -> failwith "Not in empty goal"
+
+(* box introduction *)
+let intro_box name world = function
+  | pf, path -> (
+      match pf with
+      | Empty (ctx, jgmt) -> (
+          match jgmt with
+          | J (x, Box p) ->
+              if world = x || world_in_context world ctx then
+                failwith "World must not occur in this context"
+              else
+                ( Empty (add_to_ctx ~name ctx (R (x, world)), J (world, p)),
+                  Mid (path, boxi world) )
+          | _ -> failwith "Can't use intro_box on this judgement")
+      | _ -> failwith "Not in empty goal")
+
+(* diamond introduction *)
+let intro_diamond world = function
+  | pf, path -> (
+      match pf with
+      | Empty (ctx, jgmt) -> (
+          match jgmt with
+          | J (x, Dia p) ->
+              ( Empty (ctx, J (world, p)),
+                Left (path, Empty (ctx, R (x, world)), diai world) )
+          | _ -> failwith "Can't use intro_diamond in this judgement")
+      | _ -> failwith "not in empty goal")
+
+(* diamond elimination *)
+let apply_diamond name1 name2 world f = function
+  | pf, path -> (
+      match pf with
+      | Empty (ctx, jgmt) -> (
+          match (jgmt, f) with
+          | J (z, b), J (x, Dia a) ->
+              if world = z || world = x || world_in_context world ctx then
+                failwith "world must not occur in this context"
+              else
+                let new_ctx =
+                  add_to_ctx ~name:name1
+                    (add_to_ctx ~name:name2 ctx (R (x, world)))
+                    (J (world, a))
+                in
+                ( Empty (ctx, f),
+                  Left (path, Empty (new_ctx, J (z, b)), diae world) )
+          | _ -> failwith "can't use apply_diamond on this judgement")
+      | _ -> failwith "not in empty goal")

@@ -38,13 +38,13 @@ let cone2 thm =
   | J (x, Con (a, b)) -> ConE (thm, (ass, J (x, b)))
   | _ -> failwith "can't use cone on this judgement"
 
-let alti1 thm prop =
+let alti1 prop thm =
   let ass, jgmt = destruct_th thm in
   match jgmt with
   | J (x, p) -> AltI (thm, (ass, J (x, Alt (p, prop))))
   | _ -> failwith "can't use alti on this judgement"
 
-let alti2 thm prop =
+let alti2 prop thm =
   let ass, jgmt = destruct_th thm in
   match jgmt with
   | J (x, p) -> AltI (thm, (ass, J (x, Alt (prop, p))))
@@ -92,22 +92,17 @@ let impe thm1 thm2 =
       else failwith "can't use impe with this judgement"
   | _ -> failwith "can't use impe on this judgement"
 
-let boxi thm world =
-  let world_in_assumption world assumption =
-    match assumption with
-    | R (w1, w2) -> world = w1 || world = w2
-    | J (w, _) -> w = world
-  in
+let boxi world thm =
   let ass, jgmt = destruct_th thm in
   match jgmt with
   | J (y, p) ->
-      let matching_assumptions = List.filter (world_in_assumption y) ass in
+      let matching_assumptions = assumptions_with_world y ass in
       if matching_assumptions = [ R (world, y) ] then
         BoxI (thm, (ass, J (world, p)))
       else failwith "can't use boxi with this assumptions"
   | _ -> failwith " can't use boxi on this judgement"
 
-let boxe thm1 thm2 world =
+let boxe world thm1 thm2 =
   let ass1, jgmt1 = destruct_th thm1 and ass2, jgmt2 = destruct_th thm2 in
   match (jgmt1, jgmt2) with
   | J (x, Box p), R (y, world) ->
@@ -116,7 +111,7 @@ let boxe thm1 thm2 world =
       else failwith "worlds don't match"
   | _ -> failwith "can't use boxe here"
 
-let diai thm1 thm2 world =
+let diai world thm1 thm2 =
   let ass1, jgmt1 = destruct_th thm1 and ass2, jgmt2 = destruct_th thm2 in
   match (jgmt1, jgmt2) with
   | J (y, p), R (world, z) ->
@@ -125,16 +120,11 @@ let diai thm1 thm2 world =
       else failwith "worlds don't match"
   | _ -> failwith "can't use diai here"
 
-let diae thm1 thm2 y =
-  let world_in_assumption world assumption =
-    match assumption with
-    | R (w1, w2) -> world = w1 || world = w2
-    | J (w, _) -> w = world
-  in
+let diae y thm1 thm2 =
   let ass1, jgmt1 = destruct_th thm1 and ass2, jgmt2 = destruct_th thm2 in
   match (jgmt1, jgmt2) with
   | J (x, Dia a), J (z, b) ->
-      let matching_assumptions = List.filter (world_in_assumption y) ass2 in
+      let matching_assumptions = assumptions_with_world y ass2 in
       if
         List.length matching_assumptions = 2
         && List.exists (function v -> v = R (x, y)) matching_assumptions

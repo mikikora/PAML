@@ -32,8 +32,10 @@ type theorem =
 val assumptions : theorem -> assumptions
 val consequence : theorem -> judgement
 val destruct_th : theorem -> assumptions * judgement
+val assumptions_with_world : world -> assumptions -> judgement list
 
 (* printers *)
-val pp_print_theorem : Format.formatter -> theorem -> unit
+val pp_print_theorem : formatter -> theorem -> unit
+val pp_print_judgement : formatter -> judgement -> unit
 val print_theorem : theorem -> unit
 val print_judgement : judgement -> unit

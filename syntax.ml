@@ -62,6 +62,16 @@ let consequence = function
 
 let destruct_th th = (assumptions th, consequence th)
 
+(* For modal rules function assumptions_with_world will be helpful *)
+let assumptions_with_world world assumptions =
+  List.filter
+    (function
+      | ass -> (
+          match ass with
+          | R (w1, w2) -> world = w1 || world = w2
+          | J (w, _) -> w = world))
+    assumptions
+
 (* printers *)
 
 let rec pp_print_theorem fmtr th =
@@ -143,5 +153,5 @@ and pp_print_atom_prop fmtr = function
       pp_print_string fmtr ")";
       pp_close_box fmtr ()
 
-let print_theorem th = pp_print_theorem std_formatter th
-let print_judgement jgmt = pp_print_judgement std_formatter jgmt
+let print_theorem = pp_print_theorem std_formatter
+let print_judgement = pp_print_judgement std_formatter
