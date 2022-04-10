@@ -1,1 +1,0 @@
-proof [] [] (True (Imp ((Box (Var "p")), (Box (Box (Var "p")))))) |> focus 1 |> intro "H" |> apply_modal (True (Box (Var "p"))) "P" |> apply_tru_assm "H" |> focus 1 |> valid |> valid |> apply_val_assm "P" |> qed;;
