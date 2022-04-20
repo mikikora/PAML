@@ -3,35 +3,53 @@
   open Parser
   open Lexing
   open Ast
-  open Error
-
-  type token = Parser.token
-
-  exception InvalidToken of Ast.location * string
-
-  let handleError lexbuf =
-    let pos = (Lexing.lexeme_start_p lexbuf, Lexing.lexeme_end_p lexbuf) in
-    let token = Lexing.lexeme lexbuf in
-    let exc = InvalidToken (mkLocation pos, token) in
-    raise exc
 
   exception Eof
 
+  let global_lexbuf = ref @@ Lexing.from_channel stdin
+
+  let create stream =
+    let lex = Lexing.from_channel stream in
+    global_lexbuf := lex; lex
+  
+  let create_from_file in_file =
+    let stream = open_in in_file in 
+    create stream
+
+  let create_from_stdin () =
+    create stdin
+
+  let locate x = 
+    let pos = Lexing.lexeme_start_p !global_lexbuf in
+    let fn = pos.pos_fname 
+    and l = pos.pos_lnum
+    and c = pos.pos_bol in
+    let loc = {loc_file=fn; loc_char=c; loc_line=l} in
+    {v=x; l=loc}
+
+  exception InvalidToken of string Ast.located * string
+
+  let handleError lexbuf msg =
+    let token = Lexing.lexeme lexbuf in
+    let exc = InvalidToken (locate token, msg) in
+    raise exc
+
+
   let reserved_keywords = [
     (* keywords *)
-    ("Rel", REL_KW);
-    ("Seriality", PROPERITY Seriality);
-    ("Ser", PROPERITY Seriality);
-    ("Reflexivity", PROPERITY Reflexivity);
-    ("Refl", PROPERITY Reflexivity);
-    ("Symmetry", PROPERITY Symmetry);
-    ("Symm", PROPERITY Symmetry);
-    ("Transitivity", PROPERITY Transitivity);
-    ("Trans", PROPERITY Transitivity);
-    ("Euclideanness", PROPERITY Euclideanness);
-    ("Eucl", PROPERITY Euclideanness);
-    ("Directedness", PROPERITY Directedness);
-    ("Direct", PROPERITY Directedness);
+    ("Relation", RELATION);
+    ("Seriality", PROPERTY Seriality);
+    ("Ser", PROPERTY Seriality);
+    ("Reflexivity", PROPERTY Reflexivity);
+    ("Refl", PROPERTY Reflexivity);
+    ("Symmetry", PROPERTY Symmetry);
+    ("Symm", PROPERTY Symmetry);
+    ("Transitivity", PROPERTY Transitivity);
+    ("Trans", PROPERTY Transitivity);
+    ("Euclideanness", PROPERTY Euclideanness);
+    ("Eucl", PROPERTY Euclideanness);
+    ("Directedness", PROPERTY Directedness);
+    ("Direct", PROPERTY Directedness);
     ("Proof", PROOF);
     ("Theorem", THEOREM);
     ("And", AND);
@@ -40,18 +58,34 @@
     ("or", OR);
     ("Box", BOX);
     ("box", BOX);
-    ("dia", DIAMOND);
-    ("Dia", DIAMON);
-    ("diamond", DIAMOND);
-    ("Diamond", DIAMOND);
+    ("dia", DIA);
+    ("Dia", DIA);
+    ("diamond", DIA);
+    ("Diamond", DIA);
     ("False", FALSE);
-    ("F", FALSE)
+    ("F", FALSE);
+    ("as", AS);
+    ("As", AS);
+    ("split", SPLIT);
+    ("Split", SPLIT);
+    ("left", LEFT);
+    ("Left", LEFT);
+    ("Right", RIGHT);
+    ("right", RIGHT);
+    ("apply", APPLY);
+    ("Apply", APPLY);
+    ("apply_assm", APPLY_ASSM);
+    ("Apply_assm", APPLY_ASSM);
+    ("Apply_assumption", APPLY_ASSM);
+    ("Intro", INTRO);
+    ("intro", INTRO);
+    ("with", WITH)
   ]
 
   let (symbolTable : (string, Parser.token) Hashtbl.t) = Hashtbl.create 1024
 
   let () =
-    List.iter (function (str, t) -> Hashtbl.add symbolTable str t) reservedWords
+    List.iter (function (str, t) -> Hashtbl.add symbolTable str t) reserved_keywords
     
   let createID str =
     try 
@@ -60,16 +94,11 @@
       ID str
 }
 
-
-let number = ['0' - '9']+
 let identifier = ['_' 'a'-'z' 'A'-'Z']['_' 'A'-'Z' 'a'-'z' '0'-'9' ''']*
 
 rule token = parse
   | ['\n']
-  { new_line lexbuf; token lexbuf}
-
-  | "//"
-  { line_comment lexbuf }
+  { token lexbuf}
 
   | eof 
   { raise Eof }
@@ -77,46 +106,47 @@ rule token = parse
   | ['\t' ' ' '\r']
   { token lexbuf }
 
-  | number ['a'-'z' 'A'-'Z' ''' '_'] 
-  { handleError lexbuf }
+  | "*)" 
+  { handleError lexbuf "Unmatched end of comment"}
 
-  | "*/" 
-  { error (info lexbuf) "Unmatched end of comment" }
-
-  | "/*" 
-  { startLex := info lexbuf; comment lexbuf; main lexbuf }
+  | "(*" 
+  { comment lexbuf }
 
   | identifier
   {
-    createID (text lexbuf)
+    createID (Lexing.lexeme lexbuf)
   }
 
   | '.' { DOT }
   | ',' {COMMA}
   | ':' {COLON}
-  | '(' {LPAR}
-  | ')' {RPAR}
-  | "->" {AROOW}
 
-and line_comment = parse
-  | '\n'
-  { new_line lexbuf; token lexbuf }
+  | '('
+  | '['
+  {LPAR}
 
-  | eof
-  { raise Eof }
+  | ')' 
+  | ']'
+  {RPAR}
+
+  | "->" {IMPL}
+  | "[]" {BOX}
+  | "<>" {DIA}
+  | "/\\" {AND}
+  | "\\/" {OR}
 
   | _ 
-  { line_comment lexbuf }
+  { handleError lexbuf "Forbidden character" }
 
 and comment = parse
-  | "*/"
-  { }
+  | "*)"
+  { token lexbuf }
   
   | eof
-  { error (!startLex) "Comment not terminated" }
+  { handleError lexbuf "Comment not terminated" }
 
   | '\n'
-  { newline lexbuf; comment lexbuf }
+  { comment lexbuf }
   
   | _
   { comment lexbuf }

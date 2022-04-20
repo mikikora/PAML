@@ -11,7 +11,7 @@ val focus : int -> proof -> goal
 
 (* Rules for building proof *)
 val intro : ?name:string -> goal -> goal
-val apply : ?names:string * string -> judgement -> goal -> goal
+val apply : ?name1:string -> ?name2:string -> judgement -> goal -> goal
 val apply_assm : string -> goal -> proof
 val split : goal -> goal
 val left : goal -> goal

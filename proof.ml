@@ -78,7 +78,7 @@ let intro ?name = function
       | _ -> failwith "Not in empty goal")
 
 (* implication, conjunction and box elimination *)
-let rec apply ?names f (pf, path) =
+let rec apply ?name1 ?name2 f (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) -> (
       if f = jgmt then (pf, path) (* To prove p with p we must prove p *)
@@ -103,12 +103,13 @@ let rec apply ?names f (pf, path) =
         | J (y, prop), J (x, Alt (p1, p2)) ->
             if x = y then
               let new_ctx1, new_ctx2 =
-                match names with
+                match name1, name2 with
                 | Some (n1, n2) ->
                     ( add_to_ctx ~name:n1 ctx (J (x, p1)),
                       add_to_ctx ~name:n2 ctx (J (x, p2)) )
-                | None ->
+                | None, None ->
                     (add_to_ctx ctx (J (x, p1)), add_to_ctx ctx (J (x, p2)))
+                | _ -> failwith "Two assumptions will be added. Not enugh names."
               in
               ( Empty (rel, ctx, f),
                 Left3
