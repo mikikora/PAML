@@ -1,8 +1,8 @@
 open Syntax
-open Core
+open Format
 
 type context = (string * judgement) list
-type goal_desc = context * judgement
+type goal_desc = relation * context * judgement
 
 type proof =
   | Empty of goal_desc
@@ -26,9 +26,13 @@ type path =
 
 type goal = proof * path
 
-val qed : proof -> theorem
+val add_to_ctx : ?name:string -> context -> judgement -> context
+val world_in_context : world -> context -> bool
 val no_goals : proof -> int
 val goals : proof -> goal_desc list
-val proof : context -> judgement -> goal
-val goal_desc : goal -> goal_desc
-val unfocus : goal -> proof
+
+(* printers *)
+val pp_print_unfocused_proof : formatter -> proof -> unit
+val pp_print_current_goal : formatter -> goal -> unit
+val print_unfocused_proof : proof -> unit
+val print_current_goal : goal -> unit

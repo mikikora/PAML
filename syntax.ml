@@ -9,86 +9,128 @@ type prop =
   | Box of prop
   | Dia of prop
 
+type relation = {
+  name : string;
+  seriality : bool;
+  reflexivity : bool;
+  symmetry : bool;
+  transitivity : bool;
+  euclideanness : bool;
+  directedness : bool;
+}
+
 type world = string
-type relation = world * world
-type judgement = J of world * prop | R of relation
+type judgement = J of world * prop | R of world * world
 type assumptions = judgement list
+type theorem_context = relation * assumptions * judgement
 
 type theorem =
-  | FalseE of theorem * (assumptions * judgement)
-  | Hyp of assumptions * judgement
-  | ConI of theorem * theorem * (assumptions * judgement)
-  | ConE of theorem * (assumptions * judgement)
-  | AltI of theorem * (assumptions * judgement)
-  | AltE of theorem * theorem * theorem * (assumptions * judgement)
-  | ImpI of theorem * (assumptions * judgement)
-  | ImpE of theorem * theorem * (assumptions * judgement)
-  | BoxI of theorem * (assumptions * judgement)
-  | BoxE of theorem * theorem * (assumptions * judgement)
-  | DiaI of theorem * theorem * (assumptions * judgement)
-  | DiaE of theorem * theorem * (assumptions * judgement)
+  | FalseE of theorem * theorem_context
+  | Hyp of theorem_context
+  | ConI of theorem * theorem * theorem_context
+  | ConE of theorem * theorem_context
+  | AltI of theorem * theorem_context
+  | AltE of theorem * theorem * theorem * theorem_context
+  | ImpI of theorem * theorem_context
+  | ImpE of theorem * theorem * theorem_context
+  | BoxI of theorem * theorem_context
+  | BoxE of theorem * theorem * theorem_context
+  | DiaI of theorem * theorem * theorem_context
+  | DiaE of theorem * theorem * theorem_context
 
 (* supporting functions *)
 
+let relation = function
+  | FalseE (_, (r, _, _))
+  | Hyp (r, _, _)
+  | ConI (_, _, (r, _, _))
+  | ConE (_, (r, _, _))
+  | AltI (_, (r, _, _))
+  | AltE (_, _, _, (r, _, _))
+  | ImpI (_, (r, _, _))
+  | ImpE (_, _, (r, _, _))
+  | BoxI (_, (r, _, _))
+  | BoxE (_, _, (r, _, _))
+  | DiaI (_, _, (r, _, _))
+  | DiaE (_, _, (r, _, _)) ->
+      r
+
 let assumptions = function
-  | FalseE (_, (l, _))
-  | Hyp (l, _)
-  | ConI (_, _, (l, _))
-  | ConE (_, (l, _))
-  | AltI (_, (l, _))
-  | AltE (_, _, _, (l, _))
-  | ImpI (_, (l, _))
-  | ImpE (_, _, (l, _))
-  | BoxI (_, (l, _))
-  | BoxE (_, _, (l, _))
-  | DiaI (_, _, (l, _))
-  | DiaE (_, _, (l, _)) ->
+  | FalseE (_, (_, l, _))
+  | Hyp (_, l, _)
+  | ConI (_, _, (_, l, _))
+  | ConE (_, (_, l, _))
+  | AltI (_, (_, l, _))
+  | AltE (_, _, _, (_, l, _))
+  | ImpI (_, (_, l, _))
+  | ImpE (_, _, (_, l, _))
+  | BoxI (_, (_, l, _))
+  | BoxE (_, _, (_, l, _))
+  | DiaI (_, _, (_, l, _))
+  | DiaE (_, _, (_, l, _)) ->
       l
 
 let consequence = function
-  | FalseE (_, (_, x))
-  | Hyp (_, x)
-  | ConI (_, _, (_, x))
-  | ConE (_, (_, x))
-  | AltI (_, (_, x))
-  | AltE (_, _, _, (_, x))
-  | ImpI (_, (_, x))
-  | ImpE (_, _, (_, x))
-  | BoxI (_, (_, x))
-  | BoxE (_, _, (_, x))
-  | DiaI (_, _, (_, x))
-  | DiaE (_, _, (_, x)) ->
+  | FalseE (_, (_, _, x))
+  | Hyp (_, _, x)
+  | ConI (_, _, (_, _, x))
+  | ConE (_, (_, _, x))
+  | AltI (_, (_, _, x))
+  | AltE (_, _, _, (_, _, x))
+  | ImpI (_, (_, _, x))
+  | ImpE (_, _, (_, _, x))
+  | BoxI (_, (_, _, x))
+  | BoxE (_, _, (_, _, x))
+  | DiaI (_, _, (_, _, x))
+  | DiaE (_, _, (_, _, x)) ->
       x
 
-let destruct_th th = (assumptions th, consequence th)
+let destruct_th th = (relation th, assumptions th, consequence th)
+
+(* For modal rules function assumptions_with_world will be helpful *)
+let assumptions_with_world world assumptions =
+  List.filter
+    (function
+      | ass -> (
+          match ass with
+          | R (w1, w2) -> world = w1 || world = w2
+          | J (w, _) -> w = world))
+    assumptions
 
 (* printers *)
 
 let rec pp_print_theorem fmtr th =
-  let ass, jgmt = destruct_th th in
+  let r, ass, jgmt = destruct_th th in
   pp_open_hvbox fmtr 0;
-  pp_print_assumptions fmtr ass;
+  pp_print_assumptions fmtr th;
   pp_print_space fmtr ();
   pp_print_string fmtr "⊢";
   pp_print_space fmtr ();
-  pp_print_judgement fmtr jgmt;
+  pp_print_judgement fmtr ~r jgmt;
   pp_close_box fmtr ()
 
-and pp_print_assumptions fmtr ass =
+and pp_print_assumptions fmtr th =
+  let r, ass, _ = destruct_th th in
   if ass = [] then pp_print_string fmtr "•" else pp_open_hvbox fmtr 0;
   List.iter
     (function
       | a ->
-          pp_print_judgement fmtr a;
+          pp_print_judgement fmtr ~r a;
           pp_print_string fmtr ";";
           pp_print_space fmtr ())
     ass;
   pp_close_box fmtr ()
 
-and pp_print_judgement fmtr = function
+and pp_print_judgement fmtr ?r = function
   | R (x, y) ->
+      let name =
+        match r with
+        | None -> failwith "relation needed to print judgement"
+        | Some r -> r.name
+      in
+
       pp_print_string fmtr x;
-      pp_print_string fmtr "R";
+      pp_print_string fmtr name;
       pp_print_string fmtr y
   | J (world, p) ->
       pp_open_hvbox fmtr 0;
@@ -143,5 +185,5 @@ and pp_print_atom_prop fmtr = function
       pp_print_string fmtr ")";
       pp_close_box fmtr ()
 
-let print_theorem th = pp_print_theorem std_formatter th
-let print_judgement jgmt = pp_print_judgement std_formatter jgmt
+let print_theorem = pp_print_theorem std_formatter
+let print_judgement = pp_print_judgement std_formatter

@@ -2,64 +2,93 @@
     open Ast
     open Syntax
 
-    let locate loc x = {loc = mkLocation loc; v=x}
+    let locate = Lexer.locate
 %}
 
-%type <Ast.statement>statement
-
-%token REL_KW
+%token RELATION
 %token <string>ID
-%token <Ast.rel_properties>PROPERITY
+%token <Ast.rel_properties>PROPERTY
 %token DOT
-%token COLON
-%token COMMA
-%token THEOREM
+%token UNSET // Not relation property 
+%token ABANDON
+%token QED
+%token THEOREM 
 %token PROOF
-%token FALSE
-%token ARROW
-%token OR
-%token AND
-%token BOX
-%token DIAMOND
+%token WITH
+%token AND OR IMPL BOX DIA FALSE
+%token INTRO
+%token APPLY
+%token APPLY_ASSM
+%token SPLIT
+%token LEFT
+%token RIGHT
 %token LPAR
 %token RPAR
+%token COMMA
+%token COLON
+%token AS
+
+%type <Ast.statement>statement
+%type <Syntax.prop>alt_prop
+%type <Syntax.prop>atom_prop
+%type <Syntax.prop>con_prop
+%type <Syntax.prop>imp_prop
+%type <Ast.command>command
+%type <Syntax.judgement>judgement
+%type <string option>option(ID)
+%type <Ast.statement_raw>statement_raw
+%type <Ast.rel_properties list>list(PROPERTY)
+
 
 %start statement
 
 %%
 
 statement:
-    | rel_declaration DOT 
-    { locate $loc $1 }
-    | proof_statement DOT
-    { locate $loc $1 }
+    statement_raw DOT 
+    { locate $1 }
 
-rel_declaration:
-    | REL_KW id=ID 
-    { Rel (id, []) }
-    | REL_KW id=ID COLON list=properity_list
-    { Rel (id, list) }
+statement_raw:
+    | RELATION ID list(PROPERTY)//relation_properties_list
+    { RelDecl ($2, $3) }
+    | ID list(PROPERTY)//relation_properties_list
+    { RelProperties ($1, $2) }
+    | ID UNSET list(PROPERTY)//relation_properties_list
+    { RelRmProperties ($1, $3) }
+    | THEOREM id=ID WITH rel=ID COMMA jgmt=judgement
+    { TheoremDecl (id, rel, jgmt) }
+    | command
+    { Command $1 }
 
-properity_list:
-    | p=PROPERITY option(COMMA)
-    { [p] }
-    | p=PROPERITY COMMA list=properity_list
-    { p :: list }
+command:
+    | PROOF     { ProofCmd }
+    | QED       { QedCmd }
+    | ABANDON   { AbandonCmd }
+    | RIGHT     { RightCmd }
+    | LEFT      { LeftCmd }
+    | SPLIT     { SplitCmd }
 
-proof_statement:
-    | THEOREM id=ID COMMA rel_id=ID COMMA jgmt=judgement
-    { Theorem (id, rel_id, jgmt) }
-    | PROOF
-    { Proof }
-    (* Tutaj dalej będą kolejne rzeczy, 
-    jak będę miał gotowy proces budowania dowodu w tył *)
+    | APPLY_ASSM asm=ID
+    { ApplyAssmCmd asm }
+    | INTRO name=option(ID)
+    { IntroCmd (name, None) }
+    | INTRO name=option(ID) WITH world=ID
+    { IntroCmd (name, Some world) }
+    | APPLY jgmt=judgement 
+    { ApplyCmd (None, None, None, jgmt) } 
+    | APPLY jgmt=judgement WITH world=ID
+    { ApplyCmd (None, None, Some world, jgmt) }
+    | APPLY jgmt=judgement AS name1=ID COMMA name2=ID
+    { ApplyCmd (Some name1, Some name2, None, jgmt) }
+    | APPLY jgmt=judgement WITH world=ID AS name1=ID COMMA name2=ID
+    { ApplyCmd (Some name1, Some name2, Some world, jgmt) }
 
 judgement:
     | world=ID COLON prop=imp_prop
-    { J(world, prop) }
+    { J (world, prop) }
 
 imp_prop:
-    | alt_prop ARROW imp_prop
+    | alt_prop IMPL imp_prop
     { Imp ($1, $3) }
     | alt_prop { $1 }
 
@@ -78,7 +107,7 @@ atom_prop:
     | ID { Var $1 }
     | BOX atom_prop
     { Box $2 }
-    | DIAMOND atom_prop
+    | DIA atom_prop
     { Dia $2 }
     | LPAR imp_prop RPAR
     { $2 }

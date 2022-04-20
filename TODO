@@ -1,0 +1,8 @@
+add rules for relation properties in core
+add rules for relation properties in proof
+finish parser and lexer
+make main
+
+Additions:
+replace failwiths with exceptions
+add file reading
