@@ -95,6 +95,8 @@
 }
 
 let identifier = ['_' 'a'-'z' 'A'-'Z']['_' 'A'-'Z' 'a'-'z' '0'-'9' ''']*
+let number = ['0' - '9']+
+
 
 rule token = parse
   | ['\n']
@@ -111,6 +113,12 @@ rule token = parse
 
   | "(*" 
   { comment lexbuf }
+
+  | number ['a'-'z' 'A'-'Z' ''' '_'] 
+  { handleError lexbuf "Forbidden token"}
+
+  | number as num
+  { NUM (int_of_stream num) }
 
   | identifier
   {

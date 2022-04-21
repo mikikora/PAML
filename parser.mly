@@ -27,6 +27,8 @@
 %token COMMA
 %token COLON
 %token AS
+%token FOCUS
+%token <int>NUM
 
 %type <Ast.statement>statement
 %type <Syntax.prop>alt_prop
@@ -67,7 +69,9 @@ command:
     | RIGHT     { RightCmd }
     | LEFT      { LeftCmd }
     | SPLIT     { SplitCmd }
-
+    
+    | FOCUS n=NUM
+    { FocusCmd n }
     | APPLY_ASSM asm=ID
     { ApplyAssmCmd asm }
     | INTRO name=option(ID)

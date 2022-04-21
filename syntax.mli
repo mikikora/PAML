@@ -1,4 +1,5 @@
 open Format
+open Relation
 
 type prop =
   | F
@@ -9,15 +10,6 @@ type prop =
   | Box of prop
   | Dia of prop
 
-type relation = {
-  name : string;
-  seriality : bool;
-  reflexivity : bool;
-  symmetry : bool;
-  transitivity : bool;
-  euclideanness : bool;
-  directedness : bool;
-}
 
 type world = string
 type judgement = J of world * prop | R of world * world

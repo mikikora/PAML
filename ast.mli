@@ -13,6 +13,7 @@ type command =
   | AbandonCmd
   | QedCmd
   | ProofCmd
+  | FocusCmd of int
 
 type rel_properties =
   | Seriality
