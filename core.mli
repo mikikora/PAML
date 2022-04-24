@@ -1,4 +1,5 @@
 open Syntax
+open Relation
 
 val hyp : relation -> assumptions -> judgement -> theorem
 val coni : theorem -> theorem -> theorem

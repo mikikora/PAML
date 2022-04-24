@@ -1,7 +1,10 @@
 obj = \
-      syntax.cmo ast.cmo lexer.cmo parser.cmo main.cmo #core.cmo proof_syntax.cmo proof.cmo
+      relation.cmo syntax.cmo ast.cmo lexer.cmo parser.cmo core.cmo \
+	  proof_syntax.cmo proof.cmo commands.cmo main.cmo 
 target = modal_proover
-SOURCES = syntax.ml syntax.mli core.ml core.mli proof.ml proof.mli proof_syntax.ml proof_syntax.mli
+SOURCES = \
+	syntax.ml syntax.mli core.ml core.mli proof.ml proof.mli proof_syntax.ml proof_syntax.mli \
+	ast.mli commands.ml commands.mli main.ml relation.ml relation.mli lexer.mli
 
 all: $(target)
 
@@ -22,7 +25,7 @@ format:
 
 parser.ml parser.mli: parser.mly 
 	@rm -f parser.ml parser.mli parser.automaton parser.conflicts
-	menhir --dump --explain parser.mly
+	menhir parser.mly
 
 parser.cmo: parser.ml parser.cmi lexer.cmi
 	ocamlc -c $<

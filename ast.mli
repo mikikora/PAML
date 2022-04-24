@@ -1,7 +1,8 @@
 open Syntax
+open Relation
 
-type location = {loc_file : string; loc_char : int; loc_line : int}
-type 'a located = {v : 'a; l : location}
+type location = { loc_file : string; loc_char : int; loc_line : int }
+type 'a located = { v : 'a; l : location }
 
 type command =
   | IntroCmd of string option * world option
@@ -14,14 +15,7 @@ type command =
   | QedCmd
   | ProofCmd
   | FocusCmd of int
-
-type rel_properties =
-  | Seriality
-  | Reflexivity
-  | Symmetry
-  | Transitivity
-  | Euclideanness
-  | Directedness
+  | UnfocusCmd
 
 type statement_raw =
   | RelDecl of string * rel_properties list

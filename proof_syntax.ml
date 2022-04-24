@@ -1,5 +1,6 @@
 open Syntax
 open Format
+open Relation
 
 type context = (string * judgement) list
 type goal_desc = relation * context * judgement
@@ -26,6 +27,16 @@ type path =
 
 type goal = proof * path
 
+(* For modal rules function world_in_context will be helpful *)
+let world_in_context world ctx =
+  List.exists
+    (function
+      | _, jgmt -> (
+          match jgmt with
+          | J (x, _) -> x = world
+          | R (x, y) -> x = world || y = world))
+    ctx
+
 (* Supproting function for context *)
 
 let add_to_ctx ?name ctx jgmt =
@@ -38,20 +49,17 @@ let add_to_ctx ?name ctx jgmt =
       let rec generate_name n acc =
         let name = n ^ string_of_int acc in
         if List.exists (function str, _ -> str = name) ctx then
-          generate_name n (acc + 1)
+          generate_name n (succ acc)
         else name
       in
       (generate_name "H" 0, jgmt) :: ctx
 
-(* For modal rules function world_in_context will be helpful *)
-let world_in_context world ctx =
-  List.exists
-    (function
-      | _, jgmt -> (
-          match jgmt with
-          | J (x, _) -> x = world
-          | R (x, y) -> x = world || y = world))
-    ctx
+let create_fresh_world_name ctx =
+  let rec generate_name n acc =
+    let name = n ^ string_of_int acc in
+    if world_in_context name ctx then generate_name n (succ acc) else name
+  in
+  generate_name "x" 0
 
 (* Destructors for proof type *)
 let rec no_goals pf =
@@ -82,12 +90,12 @@ let pp_print_unfocused_proof fmtr pf =
   pp_close_box fmtr ();
   pp_print_cut fmtr ();
   List.iteri
-    (fun n (_, _, f) ->
+    (fun n (r, _, f) ->
       pp_print_cut fmtr ();
       pp_open_hbox fmtr ();
       pp_print_int fmtr (n + 1);
       pp_print_string fmtr " : ";
-      pp_print_judgement fmtr f;
+      pp_print_judgement fmtr ~r f;
       pp_close_box fmtr ())
     goals;
   pp_close_box fmtr ()

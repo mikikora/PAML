@@ -1,5 +1,6 @@
 open Syntax
 open Format
+open Relation
 
 type context = (string * judgement) list
 type goal_desc = relation * context * judgement
@@ -26,10 +27,11 @@ type path =
 
 type goal = proof * path
 
-val add_to_ctx : ?name:string -> context -> judgement -> context
 val world_in_context : world -> context -> bool
+val add_to_ctx : ?name:string -> context -> judgement -> context
 val no_goals : proof -> int
 val goals : proof -> goal_desc list
+val create_fresh_world_name : context -> world
 
 (* printers *)
 val pp_print_unfocused_proof : formatter -> proof -> unit

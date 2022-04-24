@@ -1,13 +1,19 @@
-open Ast
+type rel_properties =
+  | Seriality
+  | Reflexivity
+  | Symmetry
+  | Transitivity
+  | Euclideanness
+  | Directedness
 
 type relation = {
   name : string;
-  seriality : ref bool;
-  reflexivity : ref bool;
-  symmetry : ref bool;
-  transitivity : ref bool;
-  euclideanness : ref bool;
-  directedness : ref bool;
+  seriality : bool ref;
+  reflexivity : bool ref;
+  symmetry : bool ref;
+  transitivity : bool ref;
+  euclideanness : bool ref;
+  directedness : bool ref;
 }
 
 val add_new_relation : string -> rel_properties list -> unit

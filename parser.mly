@@ -1,4 +1,5 @@
 %{
+    open Relation
     open Ast
     open Syntax
 
@@ -7,7 +8,7 @@
 
 %token RELATION
 %token <string>ID
-%token <Ast.rel_properties>PROPERTY
+%token <Relation.rel_properties>PROPERTY
 %token DOT
 %token UNSET // Not relation property 
 %token ABANDON
@@ -29,6 +30,7 @@
 %token AS
 %token FOCUS
 %token <int>NUM
+%token UNFOCUS
 
 %type <Ast.statement>statement
 %type <Syntax.prop>alt_prop
@@ -39,7 +41,8 @@
 %type <Syntax.judgement>judgement
 %type <string option>option(ID)
 %type <Ast.statement_raw>statement_raw
-%type <Ast.rel_properties list>list(PROPERTY)
+%type <Relation.rel_properties list>property_list
+%type <Relation.rel_properties list>not_empty_property_list
 
 
 %start statement
@@ -51,16 +54,28 @@ statement:
     { locate $1 }
 
 statement_raw:
-    | RELATION ID list(PROPERTY)//relation_properties_list
+    | RELATION ID property_list
     { RelDecl ($2, $3) }
-    | ID list(PROPERTY)//relation_properties_list
+    | ID not_empty_property_list
     { RelProperties ($1, $2) }
-    | ID UNSET list(PROPERTY)//relation_properties_list
+    | ID UNSET property_list
     { RelRmProperties ($1, $3) }
     | THEOREM id=ID WITH rel=ID COMMA jgmt=judgement
     { TheoremDecl (id, rel, jgmt) }
     | command
     { Command $1 }
+
+property_list:
+    // empty
+    { [] }
+    | not_empty_property_list
+    { $1 }
+    
+not_empty_property_list:
+    | PROPERTY 
+    { [$1] }
+    | PROPERTY COMMA property_list
+    { $1::$3 }
 
 command:
     | PROOF     { ProofCmd }
@@ -69,10 +84,11 @@ command:
     | RIGHT     { RightCmd }
     | LEFT      { LeftCmd }
     | SPLIT     { SplitCmd }
+    | UNFOCUS   { UnfocusCmd }
     
     | FOCUS n=NUM
     { FocusCmd n }
-    | APPLY_ASSM asm=ID
+    | APPLY asm=ID
     { ApplyAssmCmd asm }
     | INTRO name=option(ID)
     { IntroCmd (name, None) }

@@ -1,9 +1,10 @@
 open Syntax
 open Core
 open Proof_syntax
+open Relation
 
 (* Functions for creating and navigating proof *)
-let proof rel ctx jgmt = (Empty (rel, ctx, jgmt), Root)
+let proof rel ctx jgmt = Empty (rel, ctx, jgmt)
 
 (* let goal_desc = function
    | Empty rel, x, path -> x
@@ -59,8 +60,8 @@ let rec qed pf =
 (* ------------------------------------------------------------------------- *)
 (* Rules *)
 
-(* implication introduction *)
-let intro ?name = function
+(* box, diamond and implication introduction *)
+let intro ?(name = None) ?(world = None) = function
   | pf, path -> (
       match pf with
       | Empty (rel, ctx, jgmt) -> (
@@ -74,11 +75,34 @@ let intro ?name = function
                   (J (x, p1))
               in
               (Empty (rel, new_ctx, J (x, p2)), Mid (path, impi (J (x, p1))))
+          | J (x, Box p) ->
+              let w =
+                match world with
+                | None -> create_fresh_world_name ctx
+                | Some w -> w
+              in
+              if w = x || world_in_context w ctx then
+                failwith "World must not occur in this context"
+              else
+                let new_ctx =
+                  (match name with
+                  | Some name -> add_to_ctx ~name
+                  | None -> (add_to_ctx : context -> judgement -> context))
+                    ctx
+                    (R (x, w))
+                in
+                (Empty (rel, new_ctx, J (w, p)), Mid (path, boxi x))
+          | J (x, Dia p) -> (
+              match world with
+              | None -> failwith "You must specify world"
+              | Some w ->
+                  ( Empty (rel, ctx, J (w, p)),
+                    Left (path, Empty (rel, ctx, R (x, w)), diai w) ))
           | _ -> failwith "Nothing to intro")
       | _ -> failwith "Not in empty goal")
 
 (* implication, conjunction and box elimination *)
-let rec apply ?name1 ?name2 f (pf, path) =
+let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) -> (
       if f = jgmt then (pf, path) (* To prove p with p we must prove p *)
@@ -103,13 +127,14 @@ let rec apply ?name1 ?name2 f (pf, path) =
         | J (y, prop), J (x, Alt (p1, p2)) ->
             if x = y then
               let new_ctx1, new_ctx2 =
-                match name1, name2 with
-                | Some (n1, n2) ->
+                match (name1, name2) with
+                | Some n1, Some n2 ->
                     ( add_to_ctx ~name:n1 ctx (J (x, p1)),
                       add_to_ctx ~name:n2 ctx (J (x, p2)) )
                 | None, None ->
                     (add_to_ctx ctx (J (x, p1)), add_to_ctx ctx (J (x, p2)))
-                | _ -> failwith "Two assumptions will be added. Not enugh names."
+                | _ ->
+                    failwith "Two assumptions will be added. Not enugh names."
               in
               ( Empty (rel, ctx, f),
                 Left3
@@ -123,6 +148,28 @@ let rec apply ?name1 ?name2 f (pf, path) =
               ( Empty (rel, ctx, f),
                 Left (path, Empty (rel, ctx, R (x, y)), boxe x) )
             else failwith "Prop doesn't match"
+        | J (z, b), J (x, Dia a) ->
+            let w =
+              match world with
+              | None -> create_fresh_world_name ctx
+              | Some w -> w
+            in
+            if w = z || w = x || world_in_context w ctx then
+              failwith "World must not occur in context"
+            else
+              let new_ctx =
+                match (name1, name2) with
+                | Some name1, Some name2 ->
+                    add_to_ctx ~name:name1
+                      (add_to_ctx ~name:name2 ctx (R (x, w)))
+                      (J (w, a))
+                | None, None ->
+                    add_to_ctx (add_to_ctx ctx (R (x, w))) (J (w, a))
+                | _ ->
+                    failwith "Two assumptions will be added. Not enugh names."
+              in
+              ( Empty (rel, ctx, f),
+                Left (path, Empty (rel, new_ctx, J (z, b)), diae w) )
         | _ -> failwith "Can't use apply on this judgement")
   | _ -> failwith "Not in empty goal"
 

@@ -3,6 +3,7 @@
   open Parser
   open Lexing
   open Ast
+  open Relation
 
   exception Eof
 
@@ -19,12 +20,15 @@
   let create_from_stdin () =
     create stdin
 
-  let locate x = 
+  let get_location () =
     let pos = Lexing.lexeme_start_p !global_lexbuf in
     let fn = pos.pos_fname 
     and l = pos.pos_lnum
     and c = pos.pos_bol in
-    let loc = {loc_file=fn; loc_char=c; loc_line=l} in
+    {loc_file=fn; loc_char=c; loc_line=l}
+
+  let locate x = 
+    let loc = get_location () in
     {v=x; l=loc}
 
   exception InvalidToken of string Ast.located * string
@@ -79,7 +83,14 @@
     ("Apply_assumption", APPLY_ASSM);
     ("Intro", INTRO);
     ("intro", INTRO);
-    ("with", WITH)
+    ("with", WITH);
+    ("unfocus", UNFOCUS);
+    ("Unfocus", UNFOCUS);
+    ("focus", FOCUS);
+    ("Focus", FOCUS);
+    ("qed", QED);
+    ("Qed", QED);
+    ("QED", QED)
   ]
 
   let (symbolTable : (string, Parser.token) Hashtbl.t) = Hashtbl.create 1024
@@ -118,11 +129,11 @@ rule token = parse
   { handleError lexbuf "Forbidden token"}
 
   | number as num
-  { NUM (int_of_stream num) }
+  { NUM (int_of_string num) }
 
-  | identifier
+  | identifier as id
   {
-    createID (Lexing.lexeme lexbuf)
+    createID id
   }
 
   | '.' { DOT }
@@ -131,7 +142,7 @@ rule token = parse
 
   | '('
   | '['
-  {LPAR}
+  { LPAR}
 
   | ')' 
   | ']'

@@ -10,7 +10,6 @@ type prop =
   | Box of prop
   | Dia of prop
 
-
 type world = string
 type judgement = J of world * prop | R of world * world
 type assumptions = judgement list
