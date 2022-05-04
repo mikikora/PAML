@@ -6,17 +6,14 @@ type rel_properties =
   | Euclideanness
   | Directedness
 
-type relation = {
-  name : string;
-  seriality : bool ref;
-  reflexivity : bool ref;
-  symmetry : bool ref;
-  transitivity : bool ref;
-  euclideanness : bool ref;
-  directedness : bool ref;
-}
+type relation = { name : string; properties : rel_properties list }
+
+exception Error of string * string
+exception RelationDoesNotExist of string
 
 val add_new_relation : string -> rel_properties list -> unit
 val add_properties : string -> rel_properties list -> unit
 val remove_properties : string -> rel_properties list -> unit
 val get_relation : string -> relation
+val get_declared_relations : unit -> relation Seq.t
+val make_relation_unmutable : string -> unit

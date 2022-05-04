@@ -2,13 +2,10 @@ open Syntax
 open Core
 open Proof_syntax
 open Relation
+open Error
 
 (* Functions for creating and navigating proof *)
 let proof rel ctx jgmt = Empty (rel, ctx, jgmt)
-
-(* let goal_desc = function
-   | Empty rel, x, path -> x
-   | _ -> failwith "This is not an active goal" *)
 
 let rec unfocus = function
   | pf, path -> (
@@ -40,9 +37,10 @@ let focus n pf =
             build_goal (acc - n1) (Mid3 (path, pf1, pf3, f)) pf2
           else build_goal (acc - (n1 + n2)) (Right3 (path, pf1, pf2, f)) pf3
     | Empty gd -> (Empty gd, path)
-    | Leaf _ -> failwith "cannot build goal on leaf"
+    | Leaf _ -> raise (UnlocatedError "cannot build goal on leaf")
   in
-  if n < 1 || n > no_goals pf then failwith "There is no goal on given number"
+  if n < 1 || n > no_goals pf then
+    raise (UnlocatedError "There is no goal on given number")
   else build_goal n Root pf
 
 let rec qed pf =
@@ -55,7 +53,7 @@ let rec qed pf =
   | Node3 (pf1, pf2, pf3, f) ->
       let res1 = qed pf1 and res2 = qed pf2 and res3 = qed pf3 in
       f res1 res2 res3
-  | Empty _ -> failwith "Can't build unfinished proof"
+  | Empty _ -> raise (UnlocatedError "Can't build unfinished proof")
 
 (* ------------------------------------------------------------------------- *)
 (* Rules *)
@@ -82,7 +80,7 @@ let intro ?(name = None) ?(world = None) = function
                 | Some w -> w
               in
               if w = x || world_in_context w ctx then
-                failwith "World must not occur in this context"
+                raise (UnlocatedError "World must not occur in this context")
               else
                 let new_ctx =
                   (match name with
@@ -94,12 +92,12 @@ let intro ?(name = None) ?(world = None) = function
                 (Empty (rel, new_ctx, J (w, p)), Mid (path, boxi x))
           | J (x, Dia p) -> (
               match world with
-              | None -> failwith "You must specify world"
+              | None -> raise (UnlocatedError "You must specify world")
               | Some w ->
                   ( Empty (rel, ctx, J (w, p)),
                     Left (path, Empty (rel, ctx, R (x, w)), diai w) ))
-          | _ -> failwith "Nothing to intro")
-      | _ -> failwith "Not in empty goal")
+          | _ -> raise (UnlocatedError "Nothing to intro"))
+      | _ -> raise (UnlocatedError "Not in empty goal"))
 
 (* implication, conjunction and box elimination *)
 let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
@@ -117,13 +115,17 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
                 let pf_father, path_father = apply (J (x, r)) (pf, path) in
                 ( Empty (rel, ctx, f),
                   Left (path_father, Empty (rel, ctx, J (x, r)), impe) )
-            else failwith "This judgment describes other world"
+            else raise (UnlocatedError "This judgment describes other world")
         | J (y, prop), J (x, Con (p1, p2)) ->
             if x = y then
               if prop = p1 then (Empty (rel, ctx, f), Mid (path, cone1))
               else if prop = p2 then (Empty (rel, ctx, f), Mid (path, cone2))
-              else failwith "Conjunction must have prop on either side"
-            else failwith "Can't apply conjunction from different world"
+              else
+                raise
+                  (UnlocatedError "Conjunction must have prop on either side")
+            else
+              raise
+                (UnlocatedError "Can't apply conjunction from different world")
         | J (y, prop), J (x, Alt (p1, p2)) ->
             if x = y then
               let new_ctx1, new_ctx2 =
@@ -134,7 +136,9 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
                 | None, None ->
                     (add_to_ctx ctx (J (x, p1)), add_to_ctx ctx (J (x, p2)))
                 | _ ->
-                    failwith "Two assumptions will be added. Not enugh names."
+                    raise
+                      (UnlocatedError
+                         "Two assumptions will be added. Not enugh names.")
               in
               ( Empty (rel, ctx, f),
                 Left3
@@ -142,12 +146,14 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
                     Empty (rel, new_ctx1, jgmt),
                     Empty (rel, new_ctx2, jgmt),
                     alte ) )
-            else failwith "Can't apply alternative from different world"
+            else
+              raise
+                (UnlocatedError "Can't apply alternative from different world")
         | J (y, p), J (x, Box bp) ->
             if bp = p then
               ( Empty (rel, ctx, f),
                 Left (path, Empty (rel, ctx, R (x, y)), boxe x) )
-            else failwith "Prop doesn't match"
+            else raise (UnlocatedError "Prop doesn't match")
         | J (z, b), J (x, Dia a) ->
             let w =
               match world with
@@ -155,7 +161,7 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
               | Some w -> w
             in
             if w = z || w = x || world_in_context w ctx then
-              failwith "World must not occur in context"
+              raise (UnlocatedError "World must not occur in context")
             else
               let new_ctx =
                 match (name1, name2) with
@@ -166,12 +172,14 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
                 | None, None ->
                     add_to_ctx (add_to_ctx ctx (R (x, w))) (J (w, a))
                 | _ ->
-                    failwith "Two assumptions will be added. Not enugh names."
+                    raise
+                      (UnlocatedError
+                         "Two assumptions will be added. Not enugh names.")
               in
               ( Empty (rel, ctx, f),
                 Left (path, Empty (rel, new_ctx, J (z, b)), diae w) )
-        | _ -> failwith "Can't use apply on this judgement")
-  | _ -> failwith "Not in empty goal"
+        | _ -> raise (UnlocatedError "Can't use apply on this judgement"))
+  | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* hyp *)
 
@@ -182,14 +190,14 @@ let apply_assm name (pf, path) =
       let _, new_path = apply jgmt_to_apply (pf, path) in
       let ass = List.map (function name, value -> value) ctx in
       unfocus (Leaf (hyp rel ass jgmt_to_apply), new_path)
-  | _ -> failwith "Not in empty goal"
+  | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* False  *)
 let contra world (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) ->
       (Empty (rel, ctx, J (world, F)), Mid (path, falsee jgmt))
-  | _ -> failwith "Not in empty goal"
+  | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* conjunction introduction *)
 let split (pf, path) =
@@ -199,24 +207,24 @@ let split (pf, path) =
       | J (x, Con (p1, p2)) ->
           ( Empty (rel, ctx, J (x, p1)),
             Left (path, Empty (rel, ctx, J (x, p2)), coni) )
-      | J (_, _) -> failwith "Goal is not conjunction"
-      | R (_, _) -> failwith "Can't use split in this goal")
-  | _ -> failwith "Not in empty goal"
+      | J (_, _) -> raise (UnlocatedError "Goal is not conjunction")
+      | R (_, _) -> raise (UnlocatedError "Can't use split in this goal"))
+  | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* alternative introductions *)
 let left (pf, path) =
   match pf with
   | Empty (rel, ctx, J (x, Alt (p1, p2))) ->
       (Empty (rel, ctx, J (x, p1)), Mid (path, alti1 p2))
-  | Empty (_, _, _) -> failwith "Goal must be alternative"
-  | _ -> failwith "Not in empty goal"
+  | Empty (_, _, _) -> raise (UnlocatedError "Goal must be alternative")
+  | _ -> raise (UnlocatedError "Not in empty goal")
 
 let right (pf, path) =
   match pf with
   | Empty (rel, ctx, J (x, Alt (p1, p2))) ->
       (Empty (rel, ctx, J (x, p2)), Mid (path, alti2 p1))
-  | Empty (_, _, _) -> failwith "Goal must be alternative"
-  | _ -> failwith "Not in empty goal"
+  | Empty (_, _, _) -> raise (UnlocatedError "Goal must be alternative")
+  | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* box introduction *)
 let intro_box ?name world = function
@@ -226,7 +234,7 @@ let intro_box ?name world = function
           match jgmt with
           | J (x, Box p) ->
               if world = x || world_in_context world ctx then
-                failwith "World must not occur in this context"
+                raise (UnlocatedError "World must not occur in this context")
               else
                 let new_ctx =
                   (match name with
@@ -236,8 +244,8 @@ let intro_box ?name world = function
                     (R (x, world))
                 in
                 (Empty (rel, new_ctx, J (world, p)), Mid (path, boxi world))
-          | _ -> failwith "Can't use intro_box on this judgement")
-      | _ -> failwith "Not in empty goal")
+          | _ -> raise (UnlocatedError "Can't use intro_box on this judgement"))
+      | _ -> raise (UnlocatedError "Not in empty goal"))
 
 (* diamond introduction *)
 let intro_diamond world = function
@@ -248,8 +256,10 @@ let intro_diamond world = function
           | J (x, Dia p) ->
               ( Empty (rel, ctx, J (world, p)),
                 Left (path, Empty (rel, ctx, R (x, world)), diai world) )
-          | _ -> failwith "Can't use intro_diamond in this judgement")
-      | _ -> failwith "not in empty goal")
+          | _ ->
+              raise (UnlocatedError "Can't use intro_diamond in this judgement")
+          )
+      | _ -> raise (UnlocatedError "not in empty goal"))
 
 (* diamond elimination *)
 let apply_diamond ?names world f = function
@@ -259,7 +269,7 @@ let apply_diamond ?names world f = function
           match (jgmt, f) with
           | J (z, b), J (x, Dia a) ->
               if world = z || world = x || world_in_context world ctx then
-                failwith "world must not occur in this context"
+                raise (UnlocatedError "world must not occur in this context")
               else
                 let new_ctx =
                   match names with
@@ -272,5 +282,7 @@ let apply_diamond ?names world f = function
                 in
                 ( Empty (rel, ctx, f),
                   Left (path, Empty (rel, new_ctx, J (z, b)), diae world) )
-          | _ -> failwith "can't use apply_diamond on this judgement")
-      | _ -> failwith "not in empty goal")
+          | _ ->
+              raise (UnlocatedError "can't use apply_diamond on this judgement")
+          )
+      | _ -> raise (UnlocatedError "not in empty goal"))

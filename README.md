@@ -2,11 +2,10 @@
 Work in progress
 
 TODO:
-remove intro and apply for modals and merge it with normal
-add rules for relation properties in core
-add rules for relation properties in proof
-make main
+* add rules for relation properties in core
+* add rules for relation properties in proof
 
 Additions:
-replace failwiths with exceptions
-add file reading
+* add file reading
+* make apply assumption work with worlds
+* make possible to use apply, split etc. in assumptions

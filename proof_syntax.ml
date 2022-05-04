@@ -78,6 +78,8 @@ let rec goals pf =
   | Node2 (pf1, pf2, _) -> goals pf1 @ goals pf2
   | Node3 (pf1, pf2, pf3, _) -> goals pf1 @ goals pf2 @ goals pf3
 
+(* Exceptions *)
+
 (* Printers *)
 let pp_print_unfocused_proof fmtr pf =
   let ngoals = no_goals pf and goals = goals pf in
@@ -118,7 +120,7 @@ let pp_print_current_goal fmtr = function
           in
           print_context ctx;
           pp_print_cut fmtr ();
-          pp_print_string fmtr (String.make 40 '=');
+          pp_print_string fmtr (String.make 40 '-');
           pp_print_cut fmtr ();
           pp_print_judgement fmtr ~r:rel jgmt;
           pp_close_box fmtr ()

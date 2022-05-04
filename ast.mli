@@ -16,6 +16,8 @@ type command =
   | ProofCmd
   | FocusCmd of int
   | UnfocusCmd
+  | ContraCmd of world
+  | UndoCmd
 
 type statement_raw =
   | RelDecl of string * rel_properties list

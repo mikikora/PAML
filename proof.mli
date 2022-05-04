@@ -25,6 +25,4 @@ val apply_assm : string -> goal -> proof
 val split : goal -> goal
 val left : goal -> goal
 val right : goal -> goal
-(* val intro_box : ?name:string -> world -> goal -> goal *)
-(* val intro_diamond : world -> goal -> goal *)
-(* val apply_diamond : ?names:string * string -> world -> judgement -> goal -> goal *)
+val contra : world -> goal -> goal

@@ -24,7 +24,7 @@
     let pos = Lexing.lexeme_start_p !global_lexbuf in
     let fn = pos.pos_fname 
     and l = pos.pos_lnum
-    and c = pos.pos_bol in
+    and c = pos.pos_cnum - pos.pos_bol in
     {loc_file=fn; loc_char=c; loc_line=l}
 
   let locate x = 
@@ -39,59 +39,47 @@
     raise exc
 
 
-  let reserved_keywords = [
-    (* keywords *)
-    ("Relation", RELATION);
-    ("Seriality", PROPERTY Seriality);
-    ("Ser", PROPERTY Seriality);
-    ("Reflexivity", PROPERTY Reflexivity);
-    ("Refl", PROPERTY Reflexivity);
-    ("Symmetry", PROPERTY Symmetry);
-    ("Symm", PROPERTY Symmetry);
-    ("Transitivity", PROPERTY Transitivity);
-    ("Trans", PROPERTY Transitivity);
-    ("Euclideanness", PROPERTY Euclideanness);
-    ("Eucl", PROPERTY Euclideanness);
-    ("Directedness", PROPERTY Directedness);
-    ("Direct", PROPERTY Directedness);
-    ("Proof", PROOF);
-    ("Theorem", THEOREM);
-    ("And", AND);
-    ("and", AND);
-    ("Or", OR);
-    ("or", OR);
-    ("Box", BOX);
-    ("box", BOX);
-    ("dia", DIA);
-    ("Dia", DIA);
-    ("diamond", DIA);
-    ("Diamond", DIA);
-    ("False", FALSE);
-    ("F", FALSE);
-    ("as", AS);
-    ("As", AS);
-    ("split", SPLIT);
-    ("Split", SPLIT);
-    ("left", LEFT);
-    ("Left", LEFT);
-    ("Right", RIGHT);
-    ("right", RIGHT);
-    ("apply", APPLY);
-    ("Apply", APPLY);
-    ("apply_assm", APPLY_ASSM);
-    ("Apply_assm", APPLY_ASSM);
-    ("Apply_assumption", APPLY_ASSM);
-    ("Intro", INTRO);
-    ("intro", INTRO);
-    ("with", WITH);
-    ("unfocus", UNFOCUS);
-    ("Unfocus", UNFOCUS);
-    ("focus", FOCUS);
-    ("Focus", FOCUS);
-    ("qed", QED);
-    ("Qed", QED);
-    ("QED", QED)
-  ]
+  let reserved_keywords = 
+    List.map 
+      (fun (str, tkn) -> String.lowercase_ascii str, tkn) 
+      [
+        (* keywords *)
+        ("Relation", RELATION);
+        ("Seriality", PROPERTY Seriality);
+        ("Ser", PROPERTY Seriality);
+        ("Reflexivity", PROPERTY Reflexivity);
+        ("Refl", PROPERTY Reflexivity);
+        ("Symmetry", PROPERTY Symmetry);
+        ("Symm", PROPERTY Symmetry);
+        ("Transitivity", PROPERTY Transitivity);
+        ("Trans", PROPERTY Transitivity);
+        ("Euclideanness", PROPERTY Euclideanness);
+        ("Eucl", PROPERTY Euclideanness);
+        ("Directedness", PROPERTY Directedness);
+        ("Direct", PROPERTY Directedness);
+        ("Proof", PROOF);
+        ("Theorem", THEOREM);
+        ("and", AND);
+        ("or", OR);
+        ("box", BOX);
+        ("dia", DIA);
+        ("diamond", DIA);
+        ("False", FALSE);
+        ("F", FALSE);
+        ("as", AS);
+        ("split", SPLIT);
+        ("left", LEFT);
+        ("right", RIGHT);
+        ("apply", APPLY);
+        ("intro", INTRO);
+        ("with", WITH);
+        ("unfocus", UNFOCUS);
+        ("focus", FOCUS);
+        ("qed", QED);
+        ("abandon", ABANDON);
+        ("contra", CONTRA);
+        ("undo", UNDO);
+      ]
 
   let (symbolTable : (string, Parser.token) Hashtbl.t) = Hashtbl.create 1024
 
@@ -100,7 +88,7 @@
     
   let createID str =
     try 
-      Hashtbl.find symbolTable str
+      Hashtbl.find symbolTable (String.lowercase_ascii str)
     with _ ->
       ID str
 }

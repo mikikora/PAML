@@ -19,7 +19,6 @@
 %token AND OR IMPL BOX DIA FALSE
 %token INTRO
 %token APPLY
-%token APPLY_ASSM
 %token SPLIT
 %token LEFT
 %token RIGHT
@@ -31,6 +30,8 @@
 %token FOCUS
 %token <int>NUM
 %token UNFOCUS
+%token CONTRA
+%token UNDO
 
 %type <Ast.statement>statement
 %type <Syntax.prop>alt_prop
@@ -85,9 +86,14 @@ command:
     | LEFT      { LeftCmd }
     | SPLIT     { SplitCmd }
     | UNFOCUS   { UnfocusCmd }
-    
+    | UNDO      { UndoCmd }
+
+    | CONTRA WITH world=ID
+    { ContraCmd world }
     | FOCUS n=NUM
     { FocusCmd n }
+    | FOCUS
+    { FocusCmd 1 }
     | APPLY asm=ID
     { ApplyAssmCmd asm }
     | INTRO name=option(ID)
