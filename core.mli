@@ -15,3 +15,9 @@ val boxe : world -> theorem -> theorem -> theorem
 val diai : world -> theorem -> theorem -> theorem
 val diae : world -> theorem -> theorem -> theorem
 val falsee : judgement -> theorem -> theorem
+val seriality : world -> world -> theorem -> theorem
+val reflexivity : world -> theorem -> theorem
+val symmetry : theorem -> theorem -> theorem
+val transitivity : theorem -> theorem -> theorem -> theorem
+val euclideanness : theorem -> theorem -> theorem -> theorem
+val directedness : world -> theorem -> theorem -> theorem -> theorem

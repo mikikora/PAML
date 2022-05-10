@@ -11,6 +11,12 @@ type command =
   | SplitCmd
   | LeftCmd
   | RightCmd
+  | SerialCmd of string option * world option * world
+  | ReflCmd of string option * world
+  | SymmCmd of string option * world * world
+  | TransCmd of string option * world * world * world
+  | EuclCmd of string option * world * world * world
+  | DirectCmd of string option * world * world * world * world option
   | AbandonCmd
   | QedCmd
   | ProofCmd

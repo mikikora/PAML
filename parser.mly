@@ -8,7 +8,6 @@
 
 %token RELATION
 %token <string>ID
-%token <Relation.rel_properties>PROPERTY
 %token DOT
 %token UNSET // Not relation property 
 %token ABANDON
@@ -22,6 +21,12 @@
 %token SPLIT
 %token LEFT
 %token RIGHT
+%token SERIAL
+%token REFL
+%token SYMM
+%token TRANS
+%token EUCL
+%token DIRECT
 %token LPAR
 %token RPAR
 %token COMMA
@@ -44,6 +49,7 @@
 %type <Ast.statement_raw>statement_raw
 %type <Relation.rel_properties list>property_list
 %type <Relation.rel_properties list>not_empty_property_list
+%type <Relation.rel_properties>relation_property
 
 
 %start statement
@@ -73,10 +79,24 @@ property_list:
     { $1 }
     
 not_empty_property_list:
-    | PROPERTY 
+    | relation_property 
     { [$1] }
     | PROPERTY COMMA property_list
     { $1::$3 }
+
+relation_property:
+    | SERIAL
+    { Relation.Seriality }
+    | REFL
+    { Relation.Reflexivity }
+    | SYMM
+    { Relation.Symmetry }
+    | TRANS
+    { Relation.Transitivity }
+    | EUCL
+    { Relation.Euclideanness }
+    | DIRECT
+    { Relation.Directedness }
 
 command:
     | PROOF     { ProofCmd }

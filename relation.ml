@@ -49,3 +49,4 @@ let remove_properties name properties =
     Hashtbl.replace relation_map name new_r
 
 let get_declared_relations () = Hashtbl.to_seq_values relation_map
+let has_property property relation = List.mem property relation.properties

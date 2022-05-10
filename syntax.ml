@@ -28,6 +28,12 @@ type theorem =
   | BoxE of theorem * theorem * theorem_context
   | DiaI of theorem * theorem * theorem_context
   | DiaE of theorem * theorem * theorem_context
+  | D of theorem * theorem_context
+  | T of theorem * theorem_context
+  | B of theorem * theorem * theorem_context
+  | Four of theorem * theorem * theorem * theorem_context
+  | Five of theorem * theorem * theorem * theorem_context
+  | Two of theorem * theorem * theorem * theorem_context
 
 (* supporting functions *)
 
@@ -43,7 +49,13 @@ let relation = function
   | BoxI (_, (r, _, _))
   | BoxE (_, _, (r, _, _))
   | DiaI (_, _, (r, _, _))
-  | DiaE (_, _, (r, _, _)) ->
+  | DiaE (_, _, (r, _, _))
+  | D (_, (r, _, _))
+  | T (_, (r, _, _))
+  | B (_, _, (r, _, _))
+  | Four (_, _, _, (r, _, _))
+  | Five (_, _, _, (r, _, _))
+  | Two (_, _, _, (r, _, _)) ->
       r
 
 let assumptions = function
@@ -58,7 +70,13 @@ let assumptions = function
   | BoxI (_, (_, l, _))
   | BoxE (_, _, (_, l, _))
   | DiaI (_, _, (_, l, _))
-  | DiaE (_, _, (_, l, _)) ->
+  | DiaE (_, _, (_, l, _))
+  | D (_, (_, l, _))
+  | T (_, (_, l, _))
+  | B (_, _, (_, l, _))
+  | Four (_, _, _, (_, l, _))
+  | Five (_, _, _, (_, l, _))
+  | Two (_, _, _, (_, l, _)) ->
       l
 
 let consequence = function
@@ -73,7 +91,13 @@ let consequence = function
   | BoxI (_, (_, _, x))
   | BoxE (_, _, (_, _, x))
   | DiaI (_, _, (_, _, x))
-  | DiaE (_, _, (_, _, x)) ->
+  | DiaE (_, _, (_, _, x))
+  | D (_, (_, _, x))
+  | T (_, (_, _, x))
+  | B (_, _, (_, _, x))
+  | Four (_, _, _, (_, _, x))
+  | Five (_, _, _, (_, _, x))
+  | Two (_, _, _, (_, _, x)) ->
       x
 
 let destruct_th th = (relation th, assumptions th, consequence th)

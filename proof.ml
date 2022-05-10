@@ -225,3 +225,114 @@ let right (pf, path) =
       (Empty (rel, ctx, J (x, p2)), Mid (path, alti2 p1))
   | Empty (_, _, _) -> raise (UnlocatedError "Goal must be alternative")
   | _ -> raise (UnlocatedError "Not in empty goal")
+
+(* rules for relation properties *)
+let serial ?(name = None) ?(world = None) x (pf, path) =
+  match pf with
+  | Empty (rel, ctx, J (z, prop)) ->
+      if has_property Seriality rel then
+        let y =
+          match world with None -> create_fresh_world_name ctx | Some y -> y
+        in
+        if y = x || y = z || world_in_context y ctx then
+          raise (UnlocatedError (y ^ "must not occur in context"))
+        else
+          let new_ctx =
+            (match name with
+            | Some name -> add_to_ctx ~name ctx
+            | None -> add_to_ctx ctx)
+              (R (x, y))
+          in
+          (Empty (rel, new_ctx, J (z, prop)), Mid (path, seriality x y))
+      else raise (UnlocatedError "Relation has no seriality property")
+  | _ -> raise (UnlocatedError "Not in empty goal")
+
+let refl ?(name = None) world (pf, path) =
+  match pf with
+  | Empty (rel, ctx, jgmt) ->
+      if has_property Reflexivity rel then
+        let new_ctx =
+          (match name with Some name -> add_to_ctx ~name ctx | None -> add_to_ctx ctx)
+            (R (world, world))
+        in
+        (Empty (rel, new_ctx, jgmt), Mid (path, reflexivity world))
+      else raise (UnlocatedError "Relation has no reflexivity property")
+  | _ -> raise (UnlocatedError "Not in empty goal")
+
+let symm ?(name = None) world1 world2 (pf, path) =
+  match pf with
+  | Empty (rel, ctx, jgmt) ->
+      if has_property Symmetry rel then
+        let new_ctx =
+          (match name with Some name -> add_to_ctx ~name ctx | None -> add_to_ctx ctx)
+            (R (world2, world1))
+        in
+        ( Empty (rel, ctx, R (world1, world2)),
+          Left (path, Empty (rel, new_ctx, jgmt), symmetry) )
+      else raise (UnlocatedError "Relation has no symmetry property")
+  | _ -> raise (UnlocatedError "Not in empty goal")
+
+let trans ?(name = None) world1 world2 world3 (pf, path) =
+  match pf with
+  | Empty (rel, ctx, jgmt) ->
+      if has_property Transitivity rel then
+        let new_ctx =
+          (match name with Some name -> add_to_ctx ~name ctx | None -> add_to_ctx ctx)
+            (R (world1, world3))
+        in
+        ( Empty (rel, ctx, R (world1, world2)),
+          Left3
+            ( path,
+              Empty (rel, ctx, R (world2, world3)),
+              Empty (rel, new_ctx, jgmt),
+              transitivity ) )
+      else raise (UnlocatedError "Relation has no transitivity property")
+  | _ -> raise (UnlocatedError "Not in empty goal")
+
+let eucl ?(name = None) world1 world2 world3 (pf, path) =
+  match pf with
+  | Empty (rel, ctx, jgmt) ->
+      if has_property Euclideanness rel then
+        let new_ctx =
+          (match name with Some name -> add_to_ctx ~name ctx | None -> add_to_ctx ctx)
+            (R (world2, world3))
+        in
+        ( Empty (rel, ctx, R (world1, world2)),
+          Left3
+            ( path,
+              Empty (rel, ctx, R (world1, world3)),
+              Empty (rel, new_ctx, jgmt),
+              euclideanness ) )
+      else raise (UnlocatedError "Relation has no euclideanness property")
+  | _ -> raise (UnlocatedError "Not in empty goal")
+
+let direct ?(name1 = None) ?(name2 = None) x y z ?(world = None) (pf, path) =
+  match pf with
+  | Empty (rel, ctx, J (v, prop)) ->
+      if has_property Directedness rel then
+        let w =
+          match world with None -> create_fresh_world_name ctx | Some w -> w
+        in
+        if w = x || w = y || w = z || w = v || world_in_context w ctx then
+          raise (UnlocatedError (w ^ "must not occur in context"))
+        else
+          let new_ctx =
+            match (name1, name2) with
+            | Some name1, Some name2 ->
+                add_to_ctx ~name:name1
+                  (add_to_ctx ~name:name2 ctx (R (z, w)))
+                  (R (y, w))
+            | None, None -> add_to_ctx (add_to_ctx ctx (R (z, w))) (R (y, w))
+            | _ ->
+                raise
+                  (UnlocatedError
+                     "Two assumptions will be added. Not enugh names.")
+          in
+          ( Empty (rel, ctx, R (x, y)),
+            Left3
+              ( path,
+                Empty (rel, ctx, R (x, z)),
+                Empty (rel, new_ctx, J (v, prop)),
+                directedness w ) )
+      else raise (UnlocatedError "Relation has no directedness property")
+  | _ -> raise (UnlocatedError "Not in empty goal")
