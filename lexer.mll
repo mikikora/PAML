@@ -45,18 +45,18 @@
       [
         (* keywords *)
         ("Relation", RELATION);
-        ("Seriality", PROPERTY Seriality);
-        ("Ser", PROPERTY Seriality);
-        ("Reflexivity", PROPERTY Reflexivity);
-        ("Refl", PROPERTY Reflexivity);
-        ("Symmetry", PROPERTY Symmetry);
-        ("Symm", PROPERTY Symmetry);
-        ("Transitivity", PROPERTY Transitivity);
-        ("Trans", PROPERTY Transitivity);
-        ("Euclideanness", PROPERTY Euclideanness);
-        ("Eucl", PROPERTY Euclideanness);
-        ("Directedness", PROPERTY Directedness);
-        ("Direct", PROPERTY Directedness);
+        ("Seriality", SERIAL);
+        ("Ser", SERIAL);
+        ("Reflexivity", REFL);
+        ("Refl", REFL);
+        ("Symmetry", SYMM);
+        ("Symm", SYMM);
+        ("Transitivity", TRANS);
+        ("Trans", TRANS);
+        ("Euclideanness", EUCL);
+        ("Eucl", EUCL);
+        ("Directedness", DIRECT);
+        ("Direct", DIRECT);
         ("Proof", PROOF);
         ("Theorem", THEOREM);
         ("and", AND);

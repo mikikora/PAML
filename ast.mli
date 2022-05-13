@@ -16,7 +16,7 @@ type command =
   | SymmCmd of string option * world * world
   | TransCmd of string option * world * world * world
   | EuclCmd of string option * world * world * world
-  | DirectCmd of string option * world * world * world * world option
+  | DirectCmd of string option * string option * world * world * world * world option
   | AbandonCmd
   | QedCmd
   | ProofCmd
