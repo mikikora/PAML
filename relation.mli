@@ -6,6 +6,8 @@ type rel_properties =
   | Euclideanness
   | Directedness
 
+val property_to_string : rel_properties -> string
+
 type relation = { name : string; properties : rel_properties list }
 
 exception Error of string * string

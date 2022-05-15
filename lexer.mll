@@ -47,6 +47,7 @@
         ("Relation", RELATION);
         ("Seriality", SERIAL);
         ("Ser", SERIAL);
+        ("Serial", SERIAL);
         ("Reflexivity", REFL);
         ("Refl", REFL);
         ("Symmetry", SYMM);
@@ -79,6 +80,7 @@
         ("abandon", ABANDON);
         ("contra", CONTRA);
         ("undo", UNDO);
+        ("unset", UNSET);
       ]
 
   let (symbolTable : (string, Parser.token) Hashtbl.t) = Hashtbl.create 1024

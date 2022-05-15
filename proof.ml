@@ -32,7 +32,7 @@ let focus n pf =
         let n1 = no_goals pf1 in
         if n1 >= acc then build_goal acc (Left3 (path, pf2, pf3, f)) pf1
         else
-          let n2 = no_goals pf3 in
+          let n2 = no_goals pf2 in
           if n1 + n2 >= acc then
             build_goal (acc - n1) (Mid3 (path, pf1, pf3, f)) pf2
           else build_goal (acc - (n1 + n2)) (Right3 (path, pf1, pf2, f)) pf3
@@ -57,6 +57,30 @@ let rec qed pf =
 
 (* ------------------------------------------------------------------------- *)
 (* Rules *)
+
+(* helpers *)
+let ctx_to_ass : context -> assumptions =
+  List.map (function name, value -> value)
+
+type dummy_proof = Proof of goal | Dummy
+
+let _hyp_rel_jgmt (pf, path) : goal =
+  match pf with
+  | Empty (rel, ctx, (R (_, _) as jgmt)) -> (
+      let res =
+        List.fold_left
+          (fun acc elem ->
+            if acc <> Dummy then acc
+            else if snd elem = jgmt then
+              let ass = ctx_to_ass ctx in
+              Proof (Leaf (hyp rel ass (snd elem)), path)
+            else Dummy)
+          Dummy ctx
+      in
+      match res with
+      | Dummy -> raise (UnlocatedError "Relation assumption missing")
+      | Proof p -> p)
+  | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* box, diamond and implication introduction *)
 let intro ?(name = None) ?(world = None) = function
@@ -94,8 +118,10 @@ let intro ?(name = None) ?(world = None) = function
               match world with
               | None -> raise (UnlocatedError "You must specify world")
               | Some w ->
-                  ( Empty (rel, ctx, J (w, p)),
-                    Left (path, Empty (rel, ctx, R (x, w)), diai w) ))
+                  let left, _ =
+                    _hyp_rel_jgmt (Empty (rel, ctx, R (x, w)), path)
+                  in
+                  (Empty (rel, ctx, J (w, p)), Left (path, left, diai w)))
           | _ -> raise (UnlocatedError "Nothing to intro"))
       | _ -> raise (UnlocatedError "Not in empty goal"))
 
@@ -126,33 +152,29 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
             else
               raise
                 (UnlocatedError "Can't apply conjunction from different world")
-        | J (y, prop), J (x, Alt (p1, p2)) ->
-            if x = y then
-              let new_ctx1, new_ctx2 =
-                match (name1, name2) with
-                | Some n1, Some n2 ->
-                    ( add_to_ctx ~name:n1 ctx (J (x, p1)),
-                      add_to_ctx ~name:n2 ctx (J (x, p2)) )
-                | None, None ->
-                    (add_to_ctx ctx (J (x, p1)), add_to_ctx ctx (J (x, p2)))
-                | _ ->
-                    raise
-                      (UnlocatedError
-                         "Two assumptions will be added. Not enugh names.")
-              in
-              ( Empty (rel, ctx, f),
-                Left3
-                  ( path,
-                    Empty (rel, new_ctx1, jgmt),
-                    Empty (rel, new_ctx2, jgmt),
-                    alte ) )
-            else
-              raise
-                (UnlocatedError "Can't apply alternative from different world")
+        | _, J (x, Alt (p1, p2)) ->
+            let new_ctx1, new_ctx2 =
+              match (name1, name2) with
+              | Some n1, Some n2 ->
+                  ( add_to_ctx ~name:n1 ctx (J (x, p1)),
+                    add_to_ctx ~name:n2 ctx (J (x, p2)) )
+              | None, None ->
+                  (add_to_ctx ctx (J (x, p1)), add_to_ctx ctx (J (x, p2)))
+              | _ ->
+                  raise
+                    (UnlocatedError
+                       "Two assumptions will be added. Not enugh names.")
+            in
+            ( Empty (rel, ctx, f),
+              Left3
+                ( path,
+                  Empty (rel, new_ctx1, jgmt),
+                  Empty (rel, new_ctx2, jgmt),
+                  alte ) )
         | J (y, p), J (x, Box bp) ->
             if bp = p then
-              ( Empty (rel, ctx, f),
-                Left (path, Empty (rel, ctx, R (x, y)), boxe x) )
+              let left, _ = _hyp_rel_jgmt (Empty (rel, ctx, R (x, y)), path) in
+              (Empty (rel, ctx, f), Left (path, left, boxe x))
             else raise (UnlocatedError "Prop doesn't match")
         | J (z, b), J (x, Dia a) ->
             let w =
@@ -183,14 +205,18 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
 
 (* hyp *)
 
-let apply_assm name (pf, path) =
+let _apply_assm name (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) ->
       let jgmt_to_apply = List.assoc name ctx in
       let _, new_path = apply jgmt_to_apply (pf, path) in
       let ass = List.map (function name, value -> value) ctx in
-      unfocus (Leaf (hyp rel ass jgmt_to_apply), new_path)
+      (Leaf (hyp rel ass jgmt_to_apply), new_path)
   | _ -> raise (UnlocatedError "Not in empty goal")
+
+let apply_assm name goal =
+  let res = _apply_assm name goal in
+  unfocus res
 
 (* False  *)
 let contra world (pf, path) =
@@ -252,7 +278,9 @@ let refl ?(name = None) world (pf, path) =
   | Empty (rel, ctx, jgmt) ->
       if has_property Reflexivity rel then
         let new_ctx =
-          (match name with Some name -> add_to_ctx ~name ctx | None -> add_to_ctx ctx)
+          (match name with
+          | Some name -> add_to_ctx ~name ctx
+          | None -> add_to_ctx ctx)
             (R (world, world))
         in
         (Empty (rel, new_ctx, jgmt), Mid (path, reflexivity world))
@@ -264,11 +292,15 @@ let symm ?(name = None) world1 world2 (pf, path) =
   | Empty (rel, ctx, jgmt) ->
       if has_property Symmetry rel then
         let new_ctx =
-          (match name with Some name -> add_to_ctx ~name ctx | None -> add_to_ctx ctx)
+          (match name with
+          | Some name -> add_to_ctx ~name ctx
+          | None -> add_to_ctx ctx)
             (R (world2, world1))
         in
-        ( Empty (rel, ctx, R (world1, world2)),
-          Left (path, Empty (rel, new_ctx, jgmt), symmetry) )
+        let right, _ =
+          _hyp_rel_jgmt (Empty (rel, ctx, R (world1, world2)), path)
+        in
+        (Empty (rel, new_ctx, jgmt), Right (path, right, symmetry))
       else raise (UnlocatedError "Relation has no symmetry property")
   | _ -> raise (UnlocatedError "Not in empty goal")
 
@@ -277,15 +309,16 @@ let trans ?(name = None) world1 world2 world3 (pf, path) =
   | Empty (rel, ctx, jgmt) ->
       if has_property Transitivity rel then
         let new_ctx =
-          (match name with Some name -> add_to_ctx ~name ctx | None -> add_to_ctx ctx)
+          (match name with
+          | Some name -> add_to_ctx ~name ctx
+          | None -> add_to_ctx ctx)
             (R (world1, world3))
         in
-        ( Empty (rel, ctx, R (world1, world2)),
-          Left3
-            ( path,
-              Empty (rel, ctx, R (world2, world3)),
-              Empty (rel, new_ctx, jgmt),
-              transitivity ) )
+        let left3, _ = _hyp_rel_jgmt (Empty (rel, ctx, R (world1, world2)), path)
+        and mid3, _ =
+          _hyp_rel_jgmt (Empty (rel, ctx, R (world2, world3)), path)
+        in
+        (Empty (rel, new_ctx, jgmt), Right3 (path, left3, mid3, transitivity))
       else raise (UnlocatedError "Relation has no transitivity property")
   | _ -> raise (UnlocatedError "Not in empty goal")
 
@@ -294,21 +327,22 @@ let eucl ?(name = None) world1 world2 world3 (pf, path) =
   | Empty (rel, ctx, jgmt) ->
       if has_property Euclideanness rel then
         let new_ctx =
-          (match name with Some name -> add_to_ctx ~name ctx | None -> add_to_ctx ctx)
+          (match name with
+          | Some name -> add_to_ctx ~name ctx
+          | None -> add_to_ctx ctx)
             (R (world2, world3))
         in
-        ( Empty (rel, ctx, R (world1, world2)),
-          Left3
-            ( path,
-              Empty (rel, ctx, R (world1, world3)),
-              Empty (rel, new_ctx, jgmt),
-              euclideanness ) )
+        let left3, _ = _hyp_rel_jgmt (Empty (rel, ctx, R (world1, world2)), path)
+        and mid3, _ =
+          _hyp_rel_jgmt (Empty (rel, ctx, R (world1, world3)), path)
+        in
+        (Empty (rel, new_ctx, jgmt), Right3 (path, left3, mid3, euclideanness))
       else raise (UnlocatedError "Relation has no euclideanness property")
   | _ -> raise (UnlocatedError "Not in empty goal")
 
 let direct ?(name1 = None) ?(name2 = None) x y z ?(world = None) (pf, path) =
   match pf with
-  | Empty (rel, ctx, J (v, prop)) ->
+  | Empty (rel, ctx, (J (v, prop) as jgmt)) ->
       if has_property Directedness rel then
         let w =
           match world with None -> create_fresh_world_name ctx | Some w -> w
@@ -328,11 +362,28 @@ let direct ?(name1 = None) ?(name2 = None) x y z ?(world = None) (pf, path) =
                   (UnlocatedError
                      "Two assumptions will be added. Not enugh names.")
           in
-          ( Empty (rel, ctx, R (x, y)),
-            Left3
-              ( path,
-                Empty (rel, ctx, R (x, z)),
-                Empty (rel, new_ctx, J (v, prop)),
-                directedness w ) )
+          let left3, _ = _hyp_rel_jgmt (Empty (rel, ctx, R (x, y)), path)
+          and mid3, _ = _hyp_rel_jgmt (Empty (rel, ctx, R (x, z)), path) in
+          ( Empty (rel, new_ctx, jgmt),
+            Right3 (path, left3, mid3, directedness w) )
       else raise (UnlocatedError "Relation has no directedness property")
   | _ -> raise (UnlocatedError "Not in empty goal")
+
+(* Automatic tactics *)
+
+let _assumption (pf, path) =
+  match pf with
+  | Empty (rel, ctx, jgmt) -> (
+      let res =
+        List.fold_left
+          (fun acc elem ->
+            if acc <> Dummy then acc
+            else try Proof (_apply_assm (fst elem) (pf, path)) with _ -> Dummy)
+          Dummy ctx
+      in
+      match res with
+      | Dummy -> raise (UnlocatedError "Can't apply any assumption")
+      | Proof p -> p)
+  | _ -> raise (UnlocatedError "Not in empty goal")
+
+let assumption goal = unfocus (_assumption goal)

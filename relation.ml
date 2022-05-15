@@ -6,6 +6,14 @@ type rel_properties =
   | Euclideanness
   | Directedness
 
+let property_to_string = function
+  | Seriality -> "Seriality"
+  | Reflexivity -> "Reflexivity"
+  | Symmetry -> "Symmetry"
+  | Transitivity -> "Transitivity"
+  | Euclideanness -> "Euclideanness"
+  | Directedness -> "Directedness"
+
 type relation = { name : string; properties : rel_properties list }
 
 exception Error of string * string

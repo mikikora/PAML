@@ -46,4 +46,4 @@ clean:
 nuke: clean
 	rm -f $(target)
 
-install: nuke all
+install: nuke all clean

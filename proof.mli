@@ -41,3 +41,5 @@ val direct :
   ?world:world option ->
   goal ->
   goal
+
+val assumption : goal -> proof

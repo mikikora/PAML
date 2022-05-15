@@ -71,7 +71,9 @@ let alte th1 th2 th3 =
           && jgmt2 = jgmt3
         then
           let ass =
-            List.filter (function v -> v <> J (x, p1)) (ass2 @ ass3)
+            List.filter
+              (function v -> v <> J (x, p1) && v <> J (x, p2))
+              (ass2 @ ass3)
           in
           AltE (th1, th2, th3, (rel1, remove_duplicates @@ ass1 @ ass, jgmt2))
         else failwith "can't use alte with this assumptions"
@@ -113,7 +115,10 @@ let boxi world th =
   | J (y, p) ->
       let matching_assumptions = assumptions_with_world y ass in
       if matching_assumptions = [ R (world, y) ] then
-        BoxI (th, (rel, ass, J (world, p)))
+        let new_ass =
+          List.filter (function elem -> elem <> R (world, y)) ass
+        in
+        BoxI (th, (rel, new_ass, J (world, p)))
       else failwith "can't use boxi with this assumptions"
   | _ -> failwith " can't use boxi on this judgement"
 
@@ -183,7 +188,7 @@ let reflexivity x th =
   if Relation.has_property Relation.Reflexivity rel then
     match jgmt with
     | J (y, prop) ->
-        if assumptions_with_world x ass = [ R (x, x) ] then
+        if List.mem (R (x, x)) (assumptions_with_world x ass) then
           let new_ass = List.filter (function v -> v <> R (x, x)) ass in
           T (th, (rel, new_ass, jgmt))
         else
@@ -196,8 +201,8 @@ let symmetry th1 th2 =
   let rel1, ass1, jgmt1 = destruct_th th1
   and rel2, ass2, jgmt2 = destruct_th th2 in
   if rel1 = rel2 && Relation.has_property Relation.Symmetry rel1 then
-    match (jgmt1, jgmt2) with
-    | R (x, y), J (_, _) ->
+    match jgmt1 with
+    | R (x, y) ->
         if List.mem (R (y, x)) ass2 then
           let new_ass2 = List.filter (function v -> v <> R (y, x)) ass2 in
           let new_ass = remove_duplicates @@ ass1 @ new_ass2 in
@@ -205,7 +210,7 @@ let symmetry th1 th2 =
         else
           failwith
             "There is no symmetry assumption with this worlds in the scope"
-    | _, _ -> failwith "can't use symmetry here"
+    | _ -> failwith "can't use symmetry here"
   else
     failwith
       "Can't build theorem with different relations or with non symmetrical \
@@ -219,14 +224,14 @@ let transitivity th1 th2 th3 =
     rel1 = rel2 && rel2 = rel3
     && Relation.has_property Relation.Transitivity rel1
   then
-    match (jgmt1, jgmt2, jgmt3) with
-    | R (x, y1), R (y2, z), J (_, _) ->
+    match (jgmt1, jgmt2) with
+    | R (x, y1), R (y2, z) ->
         if y1 = y2 && List.mem (R (x, z)) ass3 then
           let new_ass3 = List.filter (function v -> v <> R (x, z)) ass3 in
           let new_ass = remove_duplicates @@ ass1 @ ass2 @ new_ass3 in
           Four (th1, th2, th3, (rel1, new_ass, jgmt3))
         else failwith "Premises can't build this rule"
-    | _, _, _ -> failwith "can't use transitivity here"
+    | _, _ -> failwith "can't use transitivity here"
   else
     failwith
       "Can't build theorem with different relations or with non transitive \
@@ -240,14 +245,14 @@ let euclideanness th1 th2 th3 =
     rel1 = rel2 && rel2 = rel3
     && Relation.has_property Relation.Euclideanness rel1
   then
-    match (jgmt1, jgmt2, jgmt3) with
-    | R (x1, y), R (x2, z), J (_, _) ->
+    match (jgmt1, jgmt2) with
+    | R (x1, y), R (x2, z) ->
         if x1 = x2 && List.mem (R (y, z)) ass3 then
           let new_ass3 = List.filter (function v -> v <> R (y, z)) ass3 in
           let new_ass = remove_duplicates @@ ass1 @ ass2 @ new_ass3 in
           Five (th1, th2, th3, (rel1, new_ass, jgmt3))
         else failwith "Premises can't build this rule"
-    | _, _, _ -> failwith "can't use euclideanness here"
+    | _, _ -> failwith "can't use euclideanness here"
   else
     failwith
       "Can't build theorem with different relations or with non euclidean \
@@ -259,11 +264,11 @@ let directedness w th1 th2 th3 =
   and rel3, ass3, jgmt3 = destruct_th th3 in
   if
     rel1 = rel2 && rel2 = rel3
-    && Relation.has_property Relation.Euclideanness rel1
+    && Relation.has_property Relation.Directedness rel1
   then
     match (jgmt1, jgmt2, jgmt3) with
     | R (x1, y), R (x2, z), J (v, _) ->
-        let matching_assumptions = assumptions_with_world v ass3 in
+        let matching_assumptions = assumptions_with_world w ass3 in
         if
           x1 = x2 && w <> x1 && w <> y && w <> z && w <> v
           && List.length matching_assumptions = 2

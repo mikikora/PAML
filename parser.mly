@@ -50,6 +50,10 @@
 %type <Relation.rel_properties list>property_list
 %type <Relation.rel_properties list>not_empty_property_list
 %type <Relation.rel_properties>relation_property
+%type <unit option>option(COMMA)
+%type <string option>option(preceded(AS, ID))
+%type <string option>option(preceded(COMMA, ID))
+%type <string option>option(preceded(WITH, ID))
 
 
 %start statement
@@ -65,10 +69,12 @@ statement_raw:
     { RelDecl ($2, $3) }
     | ID not_empty_property_list
     { RelProperties ($1, $2) }
-    | ID UNSET property_list
+    | ID UNSET not_empty_property_list
     { RelRmProperties ($1, $3) }
     | THEOREM id=ID WITH rel=ID COMMA jgmt=judgement
     { TheoremDecl (id, rel, jgmt) }
+    | THEOREM id=ID WITH rel=ID COMMA prop=imp_prop
+    { TheoremDecl (id, rel, J("x", prop)) }
     | command
     { Command $1 }
 
@@ -79,9 +85,7 @@ property_list:
     { $1 }
     
 not_empty_property_list:
-    | relation_property 
-    { [$1] }
-    | relation_property COMMA property_list
+    | relation_property option(COMMA) property_list
     { $1::$3 }
 
 relation_property:
@@ -116,27 +120,25 @@ command:
     { FocusCmd 1 }
     | APPLY asm=ID
     { ApplyAssmCmd asm }
-    | INTRO name=option(ID)
-    { IntroCmd (name, None) }
-    | INTRO name=option(ID) WITH world=ID
-    { IntroCmd (name, Some world) }
-    | APPLY jgmt=judgement world=preceded(WITH, option(ID))
+    | INTRO name=option(ID) world=option(preceded(WITH, ID))
+    { IntroCmd (name, world) }
+    | APPLY jgmt=judgement world=option(preceded(WITH, ID))
     { ApplyCmd (None, None, world, jgmt)}
-    | APPLY jgmt=judgement world=preceded(WITH, option(ID)) AS name1=ID COMMA name2=ID
+    | APPLY jgmt=judgement world=option(preceded(WITH, ID)) AS name1=ID COMMA name2=ID
     { ApplyCmd (Some name1, Some name2, world, jgmt) }
-    | SERIAL WITH world1=terminated(option(ID), COMMA) world2=ID name=preceded(AS, option(ID))
+    | SERIAL WITH world2=ID world1=option(preceded(COMMA, ID)) name=option(preceded(AS, ID))
     { SerialCmd (name, world1, world2) }
-    | REFL WITH world=ID name=preceded(AS, option(ID))
+    | REFL WITH world=ID name=option(preceded(AS, ID))
     { ReflCmd (name, world) }
-    | SYMM WITH world1=ID COMMA world2=ID name=preceded(AS, option(ID))
+    | SYMM WITH world1=ID COMMA world2=ID name=option(preceded(AS, ID))
     { SymmCmd (name, world1, world2) }
-    | TRANS WITH world1=ID COMMA world2=ID COMMA world3=ID name=preceded(AS, option(ID))
+    | TRANS WITH world1=ID COMMA world2=ID COMMA world3=ID name=option(preceded(AS, ID))
     { TransCmd (name, world1, world2, world3) }
-    | EUCL WITH world1=ID COMMA world2=ID COMMA world3=ID name=preceded(AS, option(ID))
+    | EUCL WITH world1=ID COMMA world2=ID COMMA world3=ID name=option(preceded(AS, ID))
     { EuclCmd (name, world1, world2, world3) }
-    | DIRECT WITH world1=ID COMMA world2=ID COMMA world3=ID world4=preceded(COMMA, option(ID)) 
+    | DIRECT WITH world1=ID COMMA world2=ID COMMA world3=ID world4=option(preceded(COMMA, ID))
     { DirectCmd (None, None, world1, world2, world3, world4) }
-    | DIRECT WITH world1=ID COMMA world2=ID COMMA world3=ID world4=preceded(COMMA, option(ID)) AS name1=ID COMMA name2=ID
+    | DIRECT WITH world1=ID COMMA world2=ID COMMA world3=ID world4=option(preceded(COMMA, ID)) AS name1=ID COMMA name2=ID
     { DirectCmd (Some name1, Some name2, world1, world2, world3, world4) }
 
 judgement:

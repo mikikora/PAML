@@ -28,16 +28,35 @@ let interpret_command cmd =
   | LeftCmd -> current_proof := G (left (get_goal ())) :: !current_proof
   | RightCmd -> current_proof := G (right (get_goal ())) :: !current_proof
   | ContraCmd w -> current_proof := G (contra w (get_goal ())) :: !current_proof
+  | SerialCmd (name, world, x) ->
+      current_proof := G (serial ~name ~world x (get_goal ())) :: !current_proof
+  | ReflCmd (name, world) ->
+      current_proof := G (refl ~name world (get_goal ())) :: !current_proof
+  | SymmCmd (name, world1, world2) ->
+      current_proof :=
+        G (symm ~name world1 world2 (get_goal ())) :: !current_proof
+  | TransCmd (name, world1, world2, world3) ->
+      current_proof :=
+        G (trans ~name world1 world2 world3 (get_goal ())) :: !current_proof
+  | EuclCmd (name, world1, world2, world3) ->
+      current_proof :=
+        G (eucl ~name world1 world2 world3 (get_goal ())) :: !current_proof
+  | DirectCmd (name1, name2, world1, world2, world3, world) ->
+      current_proof :=
+        G (direct ~name1 ~name2 world1 world2 world3 ~world (get_goal ()))
+        :: !current_proof
   | AbandonCmd ->
       current_proof := [];
       current_proof_name := None
   | QedCmd ->
-      let complete_theorem =
-        try
-          match List.hd !current_proof with
-          | P pf -> qed pf
-          | G _ -> raise (UnlocatedError "Proof is not complete")
+      let cur_th =
+        try List.hd !current_proof
         with Failure _ -> raise (UnlocatedError "No proof to complete")
+      in
+      let complete_theorem =
+        match cur_th with
+        | P pf -> qed pf
+        | G _ -> raise (UnlocatedError "Proof is not complete")
       in
       Hashtbl.add theorem_map (Option.get !current_proof_name) complete_theorem;
       current_proof := [];
@@ -122,6 +141,15 @@ let print_current_state () =
     Seq.iter
       (fun (relation : Relation.relation) ->
         print_string relation.name;
+        if relation.properties = [] then () else print_string " : ";
+        open_hbox ();
+        List.iter
+          (fun (property : Relation.rel_properties) ->
+            print_string @@ Relation.property_to_string property;
+            print_string ",";
+            print_space ())
+          relation.properties;
+        close_box ();
         print_cut ())
       (Relation.get_declared_relations ());
     print_string (String.make 40 '-');
