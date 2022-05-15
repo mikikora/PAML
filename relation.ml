@@ -6,6 +6,14 @@ type rel_properties =
   | Euclideanness
   | Directedness
 
+let property_to_string = function
+  | Seriality -> "Seriality"
+  | Reflexivity -> "Reflexivity"
+  | Symmetry -> "Symmetry"
+  | Transitivity -> "Transitivity"
+  | Euclideanness -> "Euclideanness"
+  | Directedness -> "Directedness"
+
 type relation = { name : string; properties : rel_properties list }
 
 exception Error of string * string
@@ -49,3 +57,4 @@ let remove_properties name properties =
     Hashtbl.replace relation_map name new_r
 
 let get_declared_relations () = Hashtbl.to_seq_values relation_map
+let has_property property relation = List.mem property relation.properties

@@ -45,18 +45,19 @@
       [
         (* keywords *)
         ("Relation", RELATION);
-        ("Seriality", PROPERTY Seriality);
-        ("Ser", PROPERTY Seriality);
-        ("Reflexivity", PROPERTY Reflexivity);
-        ("Refl", PROPERTY Reflexivity);
-        ("Symmetry", PROPERTY Symmetry);
-        ("Symm", PROPERTY Symmetry);
-        ("Transitivity", PROPERTY Transitivity);
-        ("Trans", PROPERTY Transitivity);
-        ("Euclideanness", PROPERTY Euclideanness);
-        ("Eucl", PROPERTY Euclideanness);
-        ("Directedness", PROPERTY Directedness);
-        ("Direct", PROPERTY Directedness);
+        ("Seriality", SERIAL);
+        ("Ser", SERIAL);
+        ("Serial", SERIAL);
+        ("Reflexivity", REFL);
+        ("Refl", REFL);
+        ("Symmetry", SYMM);
+        ("Symm", SYMM);
+        ("Transitivity", TRANS);
+        ("Trans", TRANS);
+        ("Euclideanness", EUCL);
+        ("Eucl", EUCL);
+        ("Directedness", DIRECT);
+        ("Direct", DIRECT);
         ("Proof", PROOF);
         ("Theorem", THEOREM);
         ("and", AND);
@@ -79,6 +80,7 @@
         ("abandon", ABANDON);
         ("contra", CONTRA);
         ("undo", UNDO);
+        ("unset", UNSET);
       ]
 
   let (symbolTable : (string, Parser.token) Hashtbl.t) = Hashtbl.create 1024

@@ -84,23 +84,24 @@ let rec goals pf =
 let pp_print_unfocused_proof fmtr pf =
   let ngoals = no_goals pf and goals = goals pf in
   if ngoals = 0 then pp_print_string fmtr "No more subgoals."
-  else pp_open_vbox fmtr (-100);
-  pp_open_hbox fmtr ();
-  pp_print_string fmtr "There are ";
-  pp_print_int fmtr ngoals;
-  pp_print_string fmtr " subgoals:";
-  pp_close_box fmtr ();
-  pp_print_cut fmtr ();
-  List.iteri
-    (fun n (r, _, f) ->
-      pp_print_cut fmtr ();
-      pp_open_hbox fmtr ();
-      pp_print_int fmtr (n + 1);
-      pp_print_string fmtr " : ";
-      pp_print_judgement fmtr ~r f;
-      pp_close_box fmtr ())
-    goals;
-  pp_close_box fmtr ()
+  else (
+    pp_open_vbox fmtr (-100);
+    pp_open_hbox fmtr ();
+    pp_print_string fmtr "There are ";
+    pp_print_int fmtr ngoals;
+    pp_print_string fmtr " subgoals:";
+    pp_close_box fmtr ();
+    pp_print_cut fmtr ();
+    List.iteri
+      (fun n (r, _, f) ->
+        pp_print_cut fmtr ();
+        pp_open_hbox fmtr ();
+        pp_print_int fmtr (n + 1);
+        pp_print_string fmtr " : ";
+        pp_print_judgement fmtr ~r f;
+        pp_close_box fmtr ())
+      goals;
+    pp_close_box fmtr ())
 
 let pp_print_current_goal fmtr = function
   | pf, path -> (

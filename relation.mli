@@ -6,6 +6,8 @@ type rel_properties =
   | Euclideanness
   | Directedness
 
+val property_to_string : rel_properties -> string
+
 type relation = { name : string; properties : rel_properties list }
 
 exception Error of string * string
@@ -17,3 +19,4 @@ val remove_properties : string -> rel_properties list -> unit
 val get_relation : string -> relation
 val get_declared_relations : unit -> relation Seq.t
 val make_relation_unmutable : string -> unit
+val has_property : rel_properties -> relation -> bool

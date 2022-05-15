@@ -28,6 +28,12 @@ type theorem =
   | BoxE of theorem * theorem * theorem_context
   | DiaI of theorem * theorem * theorem_context
   | DiaE of theorem * theorem * theorem_context
+  | D of theorem * theorem_context
+  | T of theorem * theorem_context
+  | B of theorem * theorem * theorem_context
+  | Four of theorem * theorem * theorem * theorem_context
+  | Five of theorem * theorem * theorem * theorem_context
+  | Two of theorem * theorem * theorem * theorem_context
 
 (* supporting functions *)
 val relation : theorem -> relation
