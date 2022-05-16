@@ -1,0 +1,35 @@
+{
+ R
+ Symmetry
+}
+;;
+{
+    for_b
+ImpI
+ BoxI
+  B
+   Hyp
+    xRy; x: A; ⊢ xRy
+   DiaI
+    Hyp
+     yRx; xRy; x: A; ⊢ x: A
+    Hyp
+     yRx; xRy; x: A; ⊢ yRx
+    yRx; xRy; x: A; ⊢ y: ◇A
+   xRy; x: A; ⊢ y: ◇A
+  x: A; ⊢ x: ◇A
+ •⊢ x: A ⊃ ◇A
+}
+;;
+first
+x: ◻(A ⊃ B) ⊃ ◻A ⊃ ◻B
+Intro None, Some y
+Intro None, None
+Intro None, None
+Proof 
+Assumption 
+Intro None, Some x
+Symm None, x, y
+Intro None, Some y
+Intro None, None
+Proof 

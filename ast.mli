@@ -25,6 +25,7 @@ type command =
   | UnfocusCmd
   | ContraCmd of world
   | UndoCmd
+  | AssumptionCmd
 
 type statement_raw =
   | RelDecl of string * rel_properties list
