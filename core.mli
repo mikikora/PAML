@@ -1,7 +1,7 @@
 open Syntax
 open Relation
 
-val hyp : relation -> assumptions -> judgement -> theorem
+val hyp : string -> assumptions -> judgement -> theorem
 val coni : theorem -> theorem -> theorem
 val cone1 : theorem -> theorem
 val cone2 : theorem -> theorem

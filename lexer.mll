@@ -81,12 +81,56 @@
         ("contra", CONTRA);
         ("undo", UNDO);
         ("unset", UNSET);
+        ("Assumption", ASSUMPTION);
       ]
+
+  let backup_reserved_keywords = [
+    ("FalsE", FALSEE);
+    ("Hyp", HYP);
+    ("ConI", CONI);
+    ("ConE", CONE);
+    ("AltI", ALTI);
+    ("AltE", ALTE);
+    ("ImpI", IMPI);
+    ("ImpE", IMPE);
+    ("BoxI", BOXI);
+    ("BoxE", BOXE);
+    ("DiaI", DIAI);
+    ("DiaE", DIAE);
+    ("RD", RD);
+    ("RT", RT);
+    ("RB", RB);
+    ("Four", FOUR);
+    ("Five", FIVE);
+    ("Two", TWO);
+    ("IntroCmd", INTROCMD);
+    ("ApplyCmd", APPLYCMD);
+    ("ApplyAssmCmd", APPLYASSMCMD);
+    ("SplitCmd", SPLITCMD);
+    ("LeftCmd", LEFTCMD);
+    ("RightCmd", RIGHTCMD);
+    ("SerialCmd", SERIALCMD);
+    ("ReflCmd", REFLCMD);
+    ("SymmCmd", SYMMCMD);
+    ("TransCmd", TRANSCMD);
+    ("EuclCmd", EUCLCMD);
+    ("DirectCmd", DIRECTCMD);
+    ("ProofCmd", PROOFCMD);
+    ("FocusCmd", FOCUSCMD);
+    ("UnfocusCmd", UNFOCUSCMD);
+    ("ContraCmd", CONTRACMD);
+    ("AssumptionCmd", ASSUMPTIONCMD);
+    ("None", NONE);
+    ("Some", SOME);
+  ]
 
   let (symbolTable : (string, Parser.token) Hashtbl.t) = Hashtbl.create 1024
 
   let () =
     List.iter (function (str, t) -> Hashtbl.add symbolTable str t) reserved_keywords
+
+  let () =
+    List.iter (function (str, t) -> Hashtbl.add symbolTable str t) backup_reserved_keywords
     
   let createID str =
     try 
@@ -129,6 +173,10 @@ rule token = parse
   | '.' { DOT }
   | ',' {COMMA}
   | ':' {COLON}
+  | ';' {SEMICOLON}
+  | '{' {LBRACE}
+  | '}' {RBRACE}
+  | '⊢' {VDASH}
 
   | '('
   | '['

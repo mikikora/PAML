@@ -8,7 +8,13 @@ type current_proof = P of proof | G of goal
 
 let current_proof : current_proof list ref = ref []
 let current_proof_name : string option ref = ref None
+let judgement_to_prove : Syntax.judgement option ref = ref None
+let command_history : command list ref = ref []
 let theorem_map : (string, Syntax.theorem) Hashtbl.t = Hashtbl.create 5
+let get_proven_theorems () = Hashtbl.to_seq theorem_map
+
+let get_current_proof_for_backup () =
+  (!current_proof_name, !judgement_to_prove, !command_history)
 
 let interpret_command cmd =
   let get_goal () =
@@ -47,7 +53,8 @@ let interpret_command cmd =
         :: !current_proof
   | AbandonCmd ->
       current_proof := [];
-      current_proof_name := None
+      current_proof_name := None;
+      command_history := []
   | QedCmd ->
       let cur_th =
         try List.hd !current_proof
@@ -60,7 +67,8 @@ let interpret_command cmd =
       in
       Hashtbl.add theorem_map (Option.get !current_proof_name) complete_theorem;
       current_proof := [];
-      current_proof_name := None
+      current_proof_name := None;
+      command_history := []
   | ProofCmd -> (
       try
         match List.hd !current_proof with
@@ -83,6 +91,8 @@ let interpret_command cmd =
       with Failure _ -> raise (UnlocatedError "Nothing to unfocus from"))
   | UndoCmd -> (
       try current_proof := List.tl !current_proof with Failure _ -> ())
+  | AssumptionCmd ->
+      current_proof := P (assumption (get_goal ())) :: !current_proof
 
 let interpret_statement statement =
   match !current_proof with
@@ -96,6 +106,7 @@ let interpret_statement statement =
         | RelRmProperties (name, properties) ->
             Relation.remove_properties name properties
         | TheoremDecl (name, rel, jgmt) ->
+            judgement_to_prove := Some jgmt;
             current_proof := [ P (proof (Relation.get_relation rel) [] jgmt) ];
             current_proof_name := Some name
         | _ ->
@@ -111,7 +122,12 @@ let interpret_statement statement =
   | _ -> (
       match statement.v with
       | Command c -> (
-          try interpret_command c
+          try
+            interpret_command c;
+            (if c = UndoCmd then
+             try command_history := List.tl !command_history with _ -> ());
+            if c <> QedCmd && c <> AbandonCmd && c <> UndoCmd then
+              command_history := c :: !command_history
           with UnlocatedError msg ->
             let loc = statement.l in
             raise (Error { v = msg; l = loc }))
@@ -158,8 +174,14 @@ let print_current_state () =
     print_cut ();
     Hashtbl.iter
       (fun name th ->
-        print_string (name ^ " [" ^ (Syntax.relation th).name ^ "]");
-        print_cut ())
+        match Syntax.consequence th with
+        | J (_, prop) ->
+            open_hbox ();
+            print_string (name ^ " [" ^ (Syntax.relation th).name ^ "] : ");
+            Syntax.print_prop prop;
+            close_box ();
+            print_cut ()
+        | _ -> failwith "Absurd")
       theorem_map;
     close_box ();
     print_command_prompt ()

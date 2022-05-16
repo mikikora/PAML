@@ -3,17 +3,16 @@ open Ast
 open Format
 open Commands
 open Error
+open File_handler
 
 exception ParseError of location
-
-let inFile : string option ref = ref None
-let outfile = "output.f"
 
 let rec read_eval () =
   let lexbuf = Lexer.create_from_stdin () in
   let parser_result =
     try Parser.statement Lexer.token lexbuf with
     | Lexer.Eof ->
+        let () = create_backup (Lexer.locate "backup.bck") in
         let () = print_endline "End" in
         exit 0
     | Parser.Error ->
@@ -31,7 +30,6 @@ let rec read_eval () =
         print_newline ();
         read_eval ()
   in
-
   Parsing.clear_parser ();
   parser_result
 

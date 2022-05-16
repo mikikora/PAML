@@ -4,7 +4,7 @@ open Proof_syntax
 open Relation
 
 val qed : proof -> theorem
-val proof : relation -> context -> judgement -> proof
+val proof : string -> context -> judgement -> proof
 
 (* val goal_desc : goal -> goal_desc *)
 val unfocus : goal -> proof

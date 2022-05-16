@@ -13,7 +13,7 @@ type prop =
 type world = string
 type judgement = J of world * prop | R of world * world
 type assumptions = judgement list
-type theorem_context = relation * assumptions * judgement
+type theorem_context = string * assumptions * judgement
 
 type theorem =
   | FalseE of theorem * theorem_context
@@ -115,10 +115,40 @@ let assumptions_with_world world assumptions =
 (* printers *)
 
 let rec pp_print_theorem fmtr th =
+  let print_theorems theorems name =
+    pp_print_string fmtr name;
+    List.iter
+      (function
+        | th ->
+            pp_print_cut fmtr ();
+            pp_print_theorem fmtr th)
+      theorems
+  in
+  pp_open_vbox fmtr 1;
+  (match th with
+  | FalseE (th, _) -> print_theorems [ th ] "FalseE"
+  | Hyp _ -> print_theorems [] "Hyp"
+  | ConI (th1, th2, _) -> print_theorems [ th1; th2 ] "ConI"
+  | ConE (th, _) -> print_theorems [ th ] "ConE"
+  | AltI (th, _) -> print_theorems [ th ] "AltI"
+  | AltE (th1, th2, th3, _) -> print_theorems [ th1; th2; th3 ] "AltE"
+  | ImpI (th, _) -> print_theorems [ th ] "ImpI"
+  | ImpE (th1, th2, _) -> print_theorems [ th1; th2 ] "ImpE"
+  | BoxI (th, _) -> print_theorems [ th ] "BoxI"
+  | BoxE (th1, th2, _) -> print_theorems [ th1; th2 ] "BoxE"
+  | DiaI (th1, th2, _) -> print_theorems [ th1; th2 ] "DiaI"
+  | DiaE (th1, th2, _) -> print_theorems [ th1; th2 ] "ImpE"
+  | D (th, _) -> print_theorems [ th ] "RD"
+  | T (th, _) -> print_theorems [ th ] "RT"
+  | B (th1, th2, _) -> print_theorems [ th1; th2 ] "RB"
+  | Four (th1, th2, th3, _) -> print_theorems [ th1; th2; th3 ] "Four"
+  | Five (th1, th2, th3, _) -> print_theorems [ th1; th2; th3 ] "Five"
+  | Two (th1, th2, th3, _) -> print_theorems [ th1; th2; th3 ] "Two");
+  pp_print_cut fmtr ();
+  pp_close_box fmtr ();
   let r, ass, jgmt = destruct_th th in
-  pp_open_hvbox fmtr 0;
+  pp_open_hbox fmtr ();
   pp_print_assumptions fmtr th;
-  pp_print_space fmtr ();
   pp_print_string fmtr "⊢";
   pp_print_space fmtr ();
   pp_print_judgement fmtr ~r jgmt;
@@ -126,29 +156,33 @@ let rec pp_print_theorem fmtr th =
 
 and pp_print_assumptions fmtr th =
   let r, ass, _ = destruct_th th in
-  if ass = [] then pp_print_string fmtr "•" else pp_open_hvbox fmtr 0;
-  List.iter
-    (function
-      | a ->
-          pp_print_judgement fmtr ~r a;
-          pp_print_string fmtr ";";
-          pp_print_space fmtr ())
-    ass;
-  pp_close_box fmtr ()
+  pp_print_string fmtr r;
+  pp_print_string fmtr " :: ";
+  if ass = [] then pp_print_string fmtr "•"
+  else (
+    pp_open_hvbox fmtr 0;
+    List.iter
+      (function
+        | a ->
+            pp_print_judgement fmtr ~r a;
+            pp_print_string fmtr ";";
+            pp_print_space fmtr ())
+      ass;
+    pp_close_box fmtr ())
 
 and pp_print_judgement fmtr ?r = function
   | R (x, y) ->
       let name =
         match r with
         | None -> failwith "relation needed to print judgement"
-        | Some r -> r.name
+        | Some r -> r
       in
 
       pp_print_string fmtr x;
       pp_print_string fmtr name;
       pp_print_string fmtr y
   | J (world, p) ->
-      pp_open_hvbox fmtr 0;
+      pp_open_hbox fmtr ();
       pp_print_string fmtr world;
       pp_print_string fmtr ":";
       pp_print_space fmtr ();
@@ -202,3 +236,4 @@ and pp_print_atom_prop fmtr = function
 
 let print_theorem = pp_print_theorem std_formatter
 let print_judgement = pp_print_judgement std_formatter
+let print_prop = pp_print_imp_prop std_formatter
