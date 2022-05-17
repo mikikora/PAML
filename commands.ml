@@ -8,13 +8,15 @@ type current_proof = P of proof | G of goal
 
 let current_proof : current_proof list ref = ref []
 let current_proof_name : string option ref = ref None
-let judgement_to_prove : Syntax.judgement option ref = ref None
+
+let theorem_to_prove : (string * string * Syntax.judgement) option ref =
+  ref None
+
 let command_history : command list ref = ref []
 let theorem_map : (string, Syntax.theorem) Hashtbl.t = Hashtbl.create 5
 let get_proven_theorems () = Hashtbl.to_seq theorem_map
-
-let get_current_proof_for_backup () =
-  (!current_proof_name, !judgement_to_prove, !command_history)
+let get_current_proof_for_backup () = (!theorem_to_prove, !command_history)
+let add_theorem_from_backup = Hashtbl.add theorem_map
 
 let interpret_command cmd =
   let get_goal () =
@@ -106,9 +108,14 @@ let interpret_statement statement =
         | RelRmProperties (name, properties) ->
             Relation.remove_properties name properties
         | TheoremDecl (name, rel, jgmt) ->
-            judgement_to_prove := Some jgmt;
-            current_proof := [ P (proof (Relation.get_relation rel) [] jgmt) ];
-            current_proof_name := Some name
+            if Relation.relation_exists rel then (
+              theorem_to_prove := Some (name, rel, jgmt);
+              current_proof := [ P (proof rel [] jgmt) ];
+              current_proof_name := Some name)
+            else
+              raise
+                (Error
+                   { v = "Relation " ^ rel ^ " not declared"; l = statement.l })
         | _ ->
             raise
               (Error
@@ -177,7 +184,7 @@ let print_current_state () =
         match Syntax.consequence th with
         | J (_, prop) ->
             open_hbox ();
-            print_string (name ^ " [" ^ (Syntax.relation th).name ^ "] : ");
+            print_string (name ^ " [" ^ Syntax.relation th ^ "] : ");
             Syntax.print_prop prop;
             close_box ();
             print_cut ()

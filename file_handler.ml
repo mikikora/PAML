@@ -3,6 +3,7 @@ open Format
 open Relation
 open Syntax
 open Ast
+open Error
 
 let pp_print_option fmtr a_fun = function
   | None -> pp_print_string fmtr "None"
@@ -92,13 +93,10 @@ let pp_print_command fmtr = function
       pp_print_string fmtr world
   | AssumptionCmd -> pp_print_string fmtr "AssumptionCmd "
 
-let create_backup (backup_command : string Ast.located) =
+let create_backup name =
   let ch_out =
-    try open_out backup_command.v
-    with _ ->
-      raise
-        (Error.Error
-           { v = "Failed to open specified file"; l = backup_command.l })
+    try open_out name
+    with _ -> raise (Error.UnlocatedError "Failed to open specified file")
   in
   let formatter = formatter_of_out_channel ch_out in
   Seq.iter
@@ -117,9 +115,7 @@ let create_backup (backup_command : string Ast.located) =
       pp_print_newline formatter ();
       pp_print_string formatter name;
       pp_print_newline formatter ();
-      pp_print_string formatter (relation th).name;
-      pp_print_newline formatter ();
-      pp_print_theorem formatter th;
+      pp_print_theorem ~backup:true formatter th;
       pp_close_box formatter ();
       pp_print_newline formatter ();
       pp_print_string formatter "}\n")
@@ -127,14 +123,15 @@ let create_backup (backup_command : string Ast.located) =
 
   pp_print_string formatter ";;\n";
 
-  let proof_name, proof_jgmt, proof_command_list =
-    get_current_proof_for_backup ()
-  in
-  (match (proof_name, proof_jgmt) with
-  | Some n, Some jgmt ->
+  let theorem_to_prove, proof_command_list = get_current_proof_for_backup () in
+  (match theorem_to_prove with
+  | Some (n, r, jgmt) ->
       pp_print_string formatter n;
       pp_print_newline formatter ();
-      pp_print_judgement formatter jgmt;
+      pp_print_string formatter r;
+      pp_print_newline formatter ();
+      pp_print_judgement ~backup:true formatter jgmt;
+      pp_print_newline formatter ();
       pp_print_newline formatter ();
       List.iter
         (function
@@ -142,10 +139,45 @@ let create_backup (backup_command : string Ast.located) =
               pp_print_command formatter elem;
               pp_print_newline formatter ())
         proof_command_list
-  | None, None -> ()
-  | _ -> failwith "Absurd");
+  | None -> ());
+  pp_print_string formatter ";;\n";
   pp_print_flush formatter ();
   close_out ch_out
 
-let load_backup name = 0
+let load_backup name =
+  let ch_in =
+    try open_in name with _ -> raise (UnlocatedError "Failed to open file")
+  in
+  let lexbuf = Lexer.create_from_file ch_in name in
+  let () =
+    try
+      let relation_list, theorem_list, theorem_to_prove =
+        Parser.backup Lexer.token lexbuf
+      in
+      List.iter
+        (function rel -> add_new_relation rel.name rel.properties)
+        relation_list;
+      List.iter
+        (function name, th -> add_theorem_from_backup name th)
+        theorem_list;
+      match theorem_to_prove with
+      | None -> ()
+      | Some (name, rel, jgmt, cmd_lst) ->
+          interpret_statement (Lexer.locate (TheoremDecl (name, rel, jgmt)));
+          List.iter
+            (function
+              | cmd -> interpret_statement @@ Lexer.locate (Command cmd))
+            cmd_lst
+    with
+    | Lexer.Eof -> raise (UnlocatedError "Unexpected EOF")
+    | Parser.Error ->
+        let l = Lexer.get_location () in
+        raise (Error { v = "Parse fds error"; l })
+    | Lexer.InvalidToken (ch, msg) ->
+        let l = ch.l in
+        raise (Error { v = msg; l })
+  in
+  Parsing.clear_parser ();
+  close_in ch_in
+
 let create_latex ?name relations theorems = 0

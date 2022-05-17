@@ -20,4 +20,5 @@ val get_relation : string -> relation
 val get_declared_relations : unit -> relation Seq.t
 val make_relation_unmutable : string -> unit
 val has_property : rel_properties -> string -> bool
+val relation_exists : string -> bool
 val pp_print_relation : Format.formatter -> relation -> unit

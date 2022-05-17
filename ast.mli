@@ -32,6 +32,8 @@ type statement_raw =
   | RelProperties of string * rel_properties list
   | RelRmProperties of string * rel_properties list
   | TheoremDecl of string * string * judgement
+  | LoadBackup of string
+  | SaveBackup of string
   | Command of command
 
 and statement = statement_raw located

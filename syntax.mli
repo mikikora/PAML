@@ -42,8 +42,11 @@ val destruct_th : theorem -> theorem_context
 val assumptions_with_world : world -> assumptions -> judgement list
 
 (* printers *)
-val pp_print_theorem : formatter -> theorem -> unit
-val pp_print_judgement : formatter -> ?r:string -> judgement -> unit
+val pp_print_theorem : ?backup:bool -> formatter -> theorem -> unit
+
+val pp_print_judgement :
+  ?backup:bool -> formatter -> ?r:string -> judgement -> unit
+
 val print_theorem : theorem -> unit
 val print_judgement : ?r:string -> judgement -> unit
 val print_prop : prop -> unit

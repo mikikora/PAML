@@ -3,7 +3,7 @@ open Format
 open Relation
 
 type context = (string * judgement) list
-type goal_desc = relation * context * judgement
+type goal_desc = string * context * judgement
 
 type proof =
   | Empty of goal_desc
@@ -78,8 +78,6 @@ let rec goals pf =
   | Node2 (pf1, pf2, _) -> goals pf1 @ goals pf2
   | Node3 (pf1, pf2, pf3, _) -> goals pf1 @ goals pf2 @ goals pf3
 
-(* Exceptions *)
-
 (* Printers *)
 let pp_print_unfocused_proof fmtr pf =
   let ngoals = no_goals pf and goals = goals pf in
@@ -106,7 +104,7 @@ let pp_print_unfocused_proof fmtr pf =
 let pp_print_current_goal fmtr = function
   | pf, path -> (
       match pf with
-      | Empty (rel, ctx, jgmt) ->
+      | Empty (r, ctx, jgmt) ->
           pp_open_vbox fmtr (-100);
           let print_context ctx =
             List.iter
@@ -115,7 +113,7 @@ let pp_print_current_goal fmtr = function
                     pp_print_cut fmtr ();
                     pp_open_hbox fmtr ();
                     pp_print_string fmtr (name ^ ": ");
-                    pp_print_judgement fmtr ~r:rel f;
+                    pp_print_judgement fmtr ~r f;
                     pp_close_box fmtr ())
               ctx
           in
@@ -123,7 +121,7 @@ let pp_print_current_goal fmtr = function
           pp_print_cut fmtr ();
           pp_print_string fmtr (String.make 40 '-');
           pp_print_cut fmtr ();
-          pp_print_judgement fmtr ~r:rel jgmt;
+          pp_print_judgement fmtr ~r jgmt;
           pp_close_box fmtr ()
       | _ ->
           pp_print_string fmtr
