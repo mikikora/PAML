@@ -1,5 +1,4 @@
 open Format
-open Relation
 
 type prop =
   | F
@@ -13,7 +12,7 @@ type prop =
 type world = string
 type judgement = J of world * prop | R of world * world
 type assumptions = judgement list
-type theorem_context = relation * assumptions * judgement
+type theorem_context = string * assumptions * judgement
 
 type theorem =
   | FalseE of theorem * theorem_context
@@ -36,14 +35,18 @@ type theorem =
   | Two of theorem * theorem * theorem * theorem_context
 
 (* supporting functions *)
-val relation : theorem -> relation
+val relation : theorem -> string
 val assumptions : theorem -> assumptions
 val consequence : theorem -> judgement
 val destruct_th : theorem -> theorem_context
 val assumptions_with_world : world -> assumptions -> judgement list
 
 (* printers *)
-val pp_print_theorem : formatter -> theorem -> unit
-val pp_print_judgement : formatter -> ?r:relation -> judgement -> unit
+val pp_print_theorem : ?backup:bool -> formatter -> theorem -> unit
+
+val pp_print_judgement :
+  ?backup:bool -> formatter -> ?r:string -> judgement -> unit
+
 val print_theorem : theorem -> unit
-val print_judgement : ?r:relation -> judgement -> unit
+val print_judgement : ?r:string -> judgement -> unit
+val print_prop : prop -> unit

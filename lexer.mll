@@ -13,9 +13,10 @@
     let lex = Lexing.from_channel stream in
     global_lexbuf := lex; lex
   
-  let create_from_file in_file =
-    let stream = open_in in_file in 
-    create stream
+  let create_from_file in_stream name =
+    let lexbuf = create in_stream in
+    set_filename lexbuf name;
+    lexbuf
 
   let create_from_stdin () =
     create stdin
@@ -81,27 +82,75 @@
         ("contra", CONTRA);
         ("undo", UNDO);
         ("unset", UNSET);
+        ("Assumption", ASSUMPTION);
+        ("Load", LOAD);
+        ("Save", SAVE)
       ]
+
+  let backup_reserved_keywords = [
+    ("FalsE", FALSEE);
+    ("Hyp", HYP);
+    ("ConI", CONI);
+    ("ConE", CONE);
+    ("AltI", ALTI);
+    ("AltE", ALTE);
+    ("ImpI", IMPI);
+    ("ImpE", IMPE);
+    ("BoxI", BOXI);
+    ("BoxE", BOXE);
+    ("DiaI", DIAI);
+    ("DiaE", DIAE);
+    ("RD", RD);
+    ("RT", RT);
+    ("RB", RB);
+    ("Four", FOUR);
+    ("Five", FIVE);
+    ("Two", TWO);
+    ("IntroCmd", INTROCMD);
+    ("ApplyCmd", APPLYCMD);
+    ("ApplyAssmCmd", APPLYASSMCMD);
+    ("SplitCmd", SPLITCMD);
+    ("LeftCmd", LEFTCMD);
+    ("RightCmd", RIGHTCMD);
+    ("SerialCmd", SERIALCMD);
+    ("ReflCmd", REFLCMD);
+    ("SymmCmd", SYMMCMD);
+    ("TransCmd", TRANSCMD);
+    ("EuclCmd", EUCLCMD);
+    ("DirectCmd", DIRECTCMD);
+    ("ProofCmd", PROOFCMD);
+    ("FocusCmd", FOCUSCMD);
+    ("UnfocusCmd", UNFOCUSCMD);
+    ("ContraCmd", CONTRACMD);
+    ("AssumptionCmd", ASSUMPTIONCMD);
+    ("None", NONE);
+    ("Some", SOME);
+  ]
 
   let (symbolTable : (string, Parser.token) Hashtbl.t) = Hashtbl.create 1024
 
   let () =
     List.iter (function (str, t) -> Hashtbl.add symbolTable str t) reserved_keywords
+
+  let () =
+    List.iter (function (str, t) -> Hashtbl.add symbolTable str t) backup_reserved_keywords
     
   let createID str =
-    try 
-      Hashtbl.find symbolTable (String.lowercase_ascii str)
-    with _ ->
-      ID str
+    match (Hashtbl.find_opt symbolTable str,
+           Hashtbl.find_opt symbolTable (String.lowercase_ascii str)) with
+    | Some token, _ 
+    | None, Some token -> token
+    | None, None -> ID str
 }
 
 let identifier = ['_' 'a'-'z' 'A'-'Z']['_' 'A'-'Z' 'a'-'z' '0'-'9' ''']*
 let number = ['0' - '9']+
+let file_name = identifier | identifier '.' identifier
 
 
 rule token = parse
   | ['\n']
-  { token lexbuf}
+  { new_line lexbuf; token lexbuf}
 
   | eof 
   { raise Eof }
@@ -126,9 +175,18 @@ rule token = parse
     createID id
   }
 
+  | '"' (file_name as name) '"'
+  {FILE_NAME name}
+
   | '.' { DOT }
   | ',' {COMMA}
   | ':' {COLON}
+  | ';' {SEMICOLON}
+  | '{' {LBRACE}
+  | '}' {RBRACE}
+  | "|-" {VDASH}
+  | "_|_" {FALSE}
+  | '@' {EMPTY_ASSMP}
 
   | '('
   | '['

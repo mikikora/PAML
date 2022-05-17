@@ -1,3 +1,5 @@
+open Format
+
 type rel_properties =
   | Seriality
   | Reflexivity
@@ -57,4 +59,23 @@ let remove_properties name properties =
     Hashtbl.replace relation_map name new_r
 
 let get_declared_relations () = Hashtbl.to_seq_values relation_map
-let has_property property relation = List.mem property relation.properties
+
+let has_property property relation =
+  List.mem property (get_relation relation).properties
+
+let relation_exists = Hashtbl.mem relation_map
+
+let pp_print_relation fmtr relation =
+  pp_open_vbox fmtr 1;
+  pp_print_string fmtr "{";
+  pp_print_cut fmtr ();
+  pp_print_string fmtr relation.name;
+  List.iter
+    (function
+      | value ->
+          pp_print_cut fmtr ();
+          pp_print_string fmtr (property_to_string value))
+    relation.properties;
+  pp_close_box fmtr ();
+  pp_print_newline fmtr ();
+  pp_print_string fmtr "}"

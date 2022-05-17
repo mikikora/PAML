@@ -1,0 +1,28 @@
+{
+ R
+}
+;;
+{
+fbnei
+ImpI
+ ImpI
+  Hyp
+   R :: x: B; x: C; |- x: C
+  R :: x: C; |- x: B -> C
+ R :: @|- x: C -> B -> C
+}
+{
+fnjsdk
+ImpI
+ ImpI
+  Hyp
+   R :: x: B; x: A; |- x: A
+  R :: x: A; |- x: B -> A
+ R :: @|- x: A -> B -> A
+}
+;;
+fbnei
+R
+x: C -> B -> C
+
+;;

@@ -37,6 +37,53 @@
 %token UNFOCUS
 %token CONTRA
 %token UNDO
+%token ASSUMPTION
+
+%token SEMICOLON
+%token LBRACE
+%token RBRACE
+%token FALSEE
+%token HYP
+%token CONI
+%token CONE
+%token ALTI
+%token ALTE
+%token IMPI
+%token IMPE
+%token BOXI
+%token BOXE
+%token DIAI
+%token DIAE
+%token RD
+%token RT
+%token RB
+%token FOUR
+%token FIVE
+%token TWO
+%token VDASH
+%token INTROCMD
+%token APPLYCMD
+%token APPLYASSMCMD
+%token SPLITCMD
+%token LEFTCMD
+%token RIGHTCMD
+%token SERIALCMD
+%token REFLCMD
+%token SYMMCMD
+%token TRANSCMD
+%token EUCLCMD
+%token DIRECTCMD
+%token PROOFCMD
+%token FOCUSCMD
+%token UNFOCUSCMD
+%token CONTRACMD
+%token ASSUMPTIONCMD
+%token NONE
+%token SOME
+%token EMPTY_ASSMP
+%token LOAD
+%token <string>FILE_NAME
+%token SAVE
 
 %type <Ast.statement>statement
 %type <Syntax.prop>alt_prop
@@ -55,8 +102,24 @@
 %type <string option>option(preceded(COMMA, ID))
 %type <string option>option(preceded(WITH, ID))
 
+%type <Relation.relation list * 
+        (string * Syntax.theorem) list * 
+        (string * string * Syntax.judgement * Ast.command list) option>backup
+%type <Relation.relation list>relation_backup_list
+%type <(string * Syntax.theorem) list>theorem_backup_list
+%type <(string * string * Syntax.judgement * Ast.command list) option>proof_backup
+%type <Ast.command list>proof_commands_backup_list
+%type <Relation.relation>relation_backup
+%type <string * Syntax.theorem>theorem_backup
+%type <Syntax.theorem>theorem
+%type <Syntax.theorem_context>theorem_context
+%type <Ast.command>proof_command_backup
+%type <string option>option_string
+%type <Syntax.judgement list>assumptions
+
 
 %start statement
+%start backup
 
 %%
 
@@ -75,6 +138,10 @@ statement_raw:
     { TheoremDecl (id, rel, jgmt) }
     | THEOREM id=ID WITH rel=ID COMMA prop=imp_prop
     { TheoremDecl (id, rel, J("x", prop)) }
+    | LOAD name=FILE_NAME
+    { LoadBackup name }
+    | SAVE name=FILE_NAME
+    { SaveBackup name }
     | command
     { Command $1 }
 
@@ -111,6 +178,7 @@ command:
     | SPLIT     { SplitCmd }
     | UNFOCUS   { UnfocusCmd }
     | UNDO      { UndoCmd }
+    | ASSUMPTION {AssumptionCmd}
 
     | CONTRA WITH world=ID
     { ContraCmd world }
@@ -138,7 +206,9 @@ command:
     { EuclCmd (name, world1, world2, world3) }
     | DIRECT WITH world1=ID COMMA world2=ID COMMA world3=ID world4=option(preceded(COMMA, ID))
     { DirectCmd (None, None, world1, world2, world3, world4) }
-    | DIRECT WITH world1=ID COMMA world2=ID COMMA world3=ID world4=option(preceded(COMMA, ID)) AS name1=ID COMMA name2=ID
+    | DIRECT 
+      WITH world1=ID COMMA world2=ID COMMA world3=ID world4=option(preceded(COMMA, ID)) 
+      AS name1=ID COMMA name2=ID
     { DirectCmd (Some name1, Some name2, world1, world2, world3, world4) }
 
 judgement:
@@ -171,3 +241,133 @@ atom_prop:
     { $2 }
 
 
+backup:
+    r=relation_backup_list SEMICOLON SEMICOLON 
+    t=theorem_backup_list SEMICOLON SEMICOLON 
+    p=proof_backup SEMICOLON SEMICOLON
+    {r, t, p}
+
+relation_backup_list:
+    //empty
+    { [] }
+    | relation_backup relation_backup_list
+    { $1::$2 }
+
+theorem_backup_list:
+    //empty
+    { [] }
+    | theorem_backup theorem_backup_list
+    { $1::$2 }
+
+proof_backup:
+    //empty
+    { None }
+    | name=ID r=ID jgmt=judgement cmd_lst=proof_commands_backup_list
+    { Some (name, r, jgmt, List.rev cmd_lst) }
+
+proof_commands_backup_list:
+    //empty
+    { [] }
+    | proof_command_backup proof_commands_backup_list
+    { $1::$2 }
+
+
+relation_backup:
+    | LBRACE name=ID properties=property_list RBRACE
+    { {name; properties} }
+
+theorem_backup:
+    | LBRACE name=ID th=theorem RBRACE
+    { (name, th) }
+
+theorem:
+    | FALSEE th=theorem thx=theorem_context
+    { FalseE (th, thx) }
+    | HYP thx=theorem_context
+    { Hyp thx }
+    | CONI th1=theorem th2=theorem thx=theorem_context
+    { ConI (th1, th2, thx)}
+    | CONE th=theorem thx=theorem_context
+    { ConE (th, thx) }
+    | ALTI th=theorem thx=theorem_context
+    { AltI (th, thx) }
+    | ALTE th1=theorem th2=theorem th3=theorem thx=theorem_context
+    { AltE (th1, th2, th3, thx) }
+    | IMPI th=theorem thx=theorem_context
+    { ImpI (th, thx) }
+    | IMPE th1=theorem th2=theorem thx=theorem_context
+    { ImpE (th1, th2, thx)}
+    | BOXI th=theorem thx=theorem_context
+    { BoxI (th, thx) }
+    | BOXE th1=theorem th2=theorem thx=theorem_context
+    { BoxE (th1, th2, thx)}
+    | DIAI th1=theorem th2=theorem thx=theorem_context
+    { DiaI (th1, th2, thx)}
+    | DIAE th1=theorem th2=theorem thx=theorem_context
+    { DiaE (th1, th2, thx)}
+    | RD th=theorem thx=theorem_context
+    { D (th, thx) }
+    | RT th=theorem thx=theorem_context
+    { T (th, thx) }
+    | RB th1=theorem th2=theorem thx=theorem_context
+    { B (th1, th2, thx) }
+    | FOUR th1=theorem th2=theorem th3=theorem thx=theorem_context
+    { Four (th1, th2, th3, thx) }
+    | FIVE th1=theorem th2=theorem th3=theorem thx=theorem_context
+    { Five (th1, th2, th3, thx) }
+    | TWO th1=theorem th2=theorem th3=theorem thx=theorem_context
+    { Two (th1, th2, th3, thx) }
+
+theorem_context:
+    | r=ID COLON COLON ass=assumptions VDASH jgmt=judgement
+    { (r, ass, jgmt) }
+
+assumptions:
+    //empty
+    { [] }
+    | EMPTY_ASSMP
+    { [] }
+    | jgmt=judgement SEMICOLON tl=assumptions
+    {jgmt::tl}
+
+proof_command_backup:
+    | INTROCMD name=option_string COMMA world=option_string
+    { IntroCmd (name, world) }
+    | APPLYCMD name1=option_string COMMA 
+      name2=option_string COMMA 
+      world=option_string COMMA 
+      jgmt=judgement
+    { ApplyCmd (name1, name2, world, jgmt) }
+    | APPLYASSMCMD name=ID
+    { ApplyAssmCmd name }
+    | SPLITCMD { SplitCmd }
+    | LEFTCMD { LeftCmd }
+    | RIGHTCMD {RightCmd}
+    | SERIALCMD name=option_string COMMA world1=option_string COMMA world2=ID
+    { SerialCmd (name, world1, world2) }
+    | REFLCMD name=option_string COMMA world=ID
+    { ReflCmd (name, world) }
+    | SYMMCMD name=option_string COMMA world1=ID COMMA world2=ID
+    { SymmCmd (name, world1, world2) }
+    | TRANSCMD name=option_string COMMA world1=ID COMMA world2=ID COMMA world3=ID
+    { TransCmd (name, world1, world2, world3) }
+    | EUCLCMD name=option_string COMMA world1=ID COMMA world2=ID COMMA world3=ID
+    { EuclCmd (name, world1, world2, world3) }
+    | DIRECTCMD name1=option_string COMMA 
+      name2=option_string COMMA 
+      world1=ID COMMA 
+      world2=ID COMMA 
+      world3=ID COMMA 
+      world4=option_string
+    { DirectCmd (name1, name2, world1, world2, world3, world4) }
+    | PROOFCMD {ProofCmd}
+    | FOCUSCMD n=NUM {FocusCmd n}
+    | UNFOCUSCMD {UnfocusCmd}
+    | CONTRACMD world=ID {ContraCmd world}
+    | ASSUMPTIONCMD {AssumptionCmd}
+
+option_string:
+    | NONE
+    { None }
+    | SOME a=ID
+    { Some a }
