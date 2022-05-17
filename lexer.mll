@@ -84,7 +84,8 @@
         ("unset", UNSET);
         ("Assumption", ASSUMPTION);
         ("Load", LOAD);
-        ("Save", SAVE)
+        ("Save", SAVE);
+        ("Generate", LATEX)
       ]
 
   let backup_reserved_keywords = [

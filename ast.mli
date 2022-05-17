@@ -34,6 +34,7 @@ type statement_raw =
   | TheoremDecl of string * string * judgement
   | LoadBackup of string
   | SaveBackup of string
+  | GenerateLatex of string
   | Command of command
 
 and statement = statement_raw located

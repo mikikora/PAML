@@ -84,6 +84,7 @@
 %token LOAD
 %token <string>FILE_NAME
 %token SAVE
+%token LATEX
 
 %type <Ast.statement>statement
 %type <Syntax.prop>alt_prop
@@ -116,6 +117,7 @@
 %type <Ast.command>proof_command_backup
 %type <string option>option_string
 %type <Syntax.judgement list>assumptions
+%type <Syntax.judgement>extended_judgement
 
 
 %start statement
@@ -142,6 +144,8 @@ statement_raw:
     { LoadBackup name }
     | SAVE name=FILE_NAME
     { SaveBackup name }
+    | LATEX name=FILE_NAME
+    { GenerateLatex name }
     | command
     { Command $1 }
 
@@ -262,7 +266,7 @@ theorem_backup_list:
 proof_backup:
     //empty
     { None }
-    | name=ID r=ID jgmt=judgement cmd_lst=proof_commands_backup_list
+    | name=ID r=ID jgmt=extended_judgement cmd_lst=proof_commands_backup_list
     { Some (name, r, jgmt, List.rev cmd_lst) }
 
 proof_commands_backup_list:
@@ -319,7 +323,7 @@ theorem:
     { Two (th1, th2, th3, thx) }
 
 theorem_context:
-    | r=ID COLON COLON ass=assumptions VDASH jgmt=judgement
+    | r=ID COLON COLON ass=assumptions VDASH jgmt=extended_judgement
     { (r, ass, jgmt) }
 
 assumptions:
@@ -327,7 +331,7 @@ assumptions:
     { [] }
     | EMPTY_ASSMP
     { [] }
-    | jgmt=judgement SEMICOLON tl=assumptions
+    | jgmt=extended_judgement SEMICOLON tl=assumptions
     {jgmt::tl}
 
 proof_command_backup:
@@ -371,3 +375,9 @@ option_string:
     { None }
     | SOME a=ID
     { Some a }
+
+extended_judgement:
+    | world1=ID ID world2=ID
+    { R(world1, world2) }
+    | judgement
+    { $1 }

@@ -34,20 +34,38 @@ let rec read_eval () =
   parser_result
 
 let rec interactive () =
-  let _ = Sys.command "clear" in
-  print_current_state ();
-  print_flush ();
   let statement = read_eval () in
   (match statement.v with
   | LoadBackup n -> (
-      try load_backup n with
+      try
+        load_backup n;
+        let _ = Sys.command "clear" in
+        print_current_state ();
+        print_flush ()
+      with
       | Error err -> report_error err
       | UnlocatedError msg -> report_error { v = msg; l = statement.l })
   | SaveBackup n -> (
-      try create_backup n
+      try
+        create_backup n;
+        let _ = Sys.command "clear" in
+        print_current_state ();
+        print_flush ()
+      with UnlocatedError msg -> report_error { v = msg; l = statement.l })
+  | GenerateLatex n -> (
+      try
+        create_latex n;
+        let _ = Sys.command "clear" in
+        print_current_state ();
+        print_flush ()
       with UnlocatedError msg -> report_error { v = msg; l = statement.l })
   | _ -> (
-      try interpret_statement statement with Error err -> report_error err));
+      try
+        interpret_statement statement;
+        let _ = Sys.command "clear" in
+        print_current_state ();
+        print_flush ()
+      with Error err -> report_error err));
   interactive ()
 
 let main () =

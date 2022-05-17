@@ -113,14 +113,16 @@ let assumptions_with_world world assumptions =
     assumptions
 
 (* printers *)
-let rec pp_print_theorem ?(backup = false) fmtr th =
+type printing_style = LaTeX | Backup | Interactive
+
+let rec pp_print_theorem ?(style = Interactive) fmtr th =
   let print_theorems theorems name =
     pp_print_string fmtr name;
     List.iter
       (function
         | th ->
             pp_print_cut fmtr ();
-            pp_print_theorem ~backup fmtr th)
+            pp_print_theorem ~style fmtr th)
       theorems
   in
   pp_open_vbox fmtr 1;
@@ -147,32 +149,36 @@ let rec pp_print_theorem ?(backup = false) fmtr th =
   pp_close_box fmtr ();
   let r, ass, jgmt = destruct_th th in
   pp_open_hbox fmtr ();
-  pp_print_assumptions ~backup fmtr th;
-  let vdash = if backup then "|-" else "⊢" in
+  pp_print_assumptions ~style fmtr th;
+  let vdash =
+    match style with Interactive -> "⊢" | Backup -> "|-" | LaTeX -> "\\vdash "
+  in
   pp_print_string fmtr vdash;
   pp_print_space fmtr ();
-  pp_print_judgement ~backup fmtr ~r jgmt;
+  pp_print_judgement ~style fmtr ~r jgmt;
   pp_close_box fmtr ()
 
-and pp_print_assumptions ?(backup = false) fmtr th =
+and pp_print_assumptions ?(style = Interactive) fmtr th =
   let r, ass, _ = destruct_th th in
-  if backup then (
+  if style = Backup then (
     pp_print_string fmtr r;
     pp_print_string fmtr " :: ");
-  let bullet = if backup then "@" else "•" in
+  let bullet =
+    match style with Interactive -> "•" | Backup -> "@" | LaTeX -> "\\bullet "
+  in
   if ass = [] then pp_print_string fmtr bullet
   else (
     pp_open_hvbox fmtr 0;
     List.iter
       (function
         | a ->
-            pp_print_judgement ~backup fmtr ~r a;
+            pp_print_judgement ~style fmtr ~r a;
             pp_print_string fmtr ";";
             pp_print_space fmtr ())
       ass;
     pp_close_box fmtr ())
 
-and pp_print_judgement ?(backup = false) fmtr ?r = function
+and pp_print_judgement ?(style = Interactive) fmtr ?r = function
   | R (x, y) ->
       let name =
         match r with
@@ -181,64 +187,96 @@ and pp_print_judgement ?(backup = false) fmtr ?r = function
       in
 
       pp_print_string fmtr x;
+      if style = Backup then pp_print_space fmtr ();
       pp_print_string fmtr name;
+      if style = Backup then pp_print_space fmtr ();
       pp_print_string fmtr y
   | J (world, p) ->
       pp_open_hbox fmtr ();
       pp_print_string fmtr world;
       pp_print_string fmtr ":";
       pp_print_space fmtr ();
-      pp_print_imp_prop ~backup fmtr p;
+      pp_print_imp_prop ~style fmtr p;
       pp_close_box fmtr ()
 
-and pp_print_imp_prop ?(backup = false) fmtr = function
+and pp_print_imp_prop ?(style = Interactive) fmtr = function
   | Imp (p1, p2) ->
-      pp_print_alt_prop ~backup fmtr p1;
+      pp_print_alt_prop ~style fmtr p1;
       pp_print_space fmtr ();
-      let impl = if backup then "->" else "⊃" in
+      let impl =
+        match style with
+        | Interactive -> "⊃"
+        | Backup -> "->"
+        | LaTeX -> "\\supset "
+      in
       pp_print_string fmtr impl;
       pp_print_space fmtr ();
-      pp_print_imp_prop ~backup fmtr p2
-  | _ as p -> pp_print_alt_prop ~backup fmtr p
+      pp_print_imp_prop ~style fmtr p2
+  | _ as p -> pp_print_alt_prop ~style fmtr p
 
-and pp_print_alt_prop ?(backup = false) fmtr = function
+and pp_print_alt_prop ?(style = Interactive) fmtr = function
   | Alt (p1, p2) ->
-      pp_print_con_prop ~backup fmtr p1;
+      pp_print_con_prop ~style fmtr p1;
       pp_print_space fmtr ();
-      let vee = if backup then "\\/" else "∨" in
+      let vee =
+        match style with
+        | Interactive -> "∨"
+        | Backup -> "\\/"
+        | LaTeX -> "\\vee "
+      in
       pp_print_string fmtr vee;
       pp_print_space fmtr ();
-      pp_print_con_prop ~backup fmtr p2
-  | _ as p -> pp_print_con_prop ~backup fmtr p
+      pp_print_con_prop ~style fmtr p2
+  | _ as p -> pp_print_con_prop ~style fmtr p
 
-and pp_print_con_prop ?(backup = false) fmtr = function
+and pp_print_con_prop ?(style = Interactive) fmtr = function
   | Con (p1, p2) ->
-      pp_print_atom_prop ~backup fmtr p1;
+      pp_print_atom_prop ~style fmtr p1;
       pp_print_space fmtr ();
-      let wedge = if backup then "/\\" else "∧" in
+      let wedge =
+        match style with
+        | Interactive -> "∧"
+        | Backup -> "/\\"
+        | LaTeX -> "\\wedge "
+      in
       pp_print_string fmtr wedge;
       pp_print_space fmtr ();
-      pp_print_atom_prop ~backup fmtr p2
-  | _ as p -> pp_print_atom_prop ~backup fmtr p
+      pp_print_atom_prop ~style fmtr p2
+  | _ as p -> pp_print_atom_prop ~style fmtr p
 
-and pp_print_atom_prop ?(backup = false) fmtr = function
+and pp_print_atom_prop ?(style = Interactive) fmtr = function
   | F ->
-      let f = if backup then "_|_" else "⊥" in
+      let f =
+        match style with
+        | Interactive -> "⊥"
+        | Backup -> "_|_"
+        | LaTeX -> "\\bot "
+      in
       pp_print_string fmtr f
   | Var x -> pp_print_string fmtr x
   | Box p ->
-      let box = if backup then "[]" else "◻" in
+      let box =
+        match style with
+        | Interactive -> "◻"
+        | Backup -> "[]"
+        | LaTeX -> "\\Box "
+      in
       pp_print_string fmtr box;
-      pp_print_atom_prop ~backup fmtr p
+      pp_print_atom_prop ~style fmtr p
   | Dia p ->
-      let dia = if backup then "<>" else "◇" in
+      let dia =
+        match style with
+        | Interactive -> "◇"
+        | Backup -> "<>"
+        | LaTeX -> "\\diamond "
+      in
       pp_print_string fmtr dia;
-      pp_print_atom_prop ~backup fmtr p
+      pp_print_atom_prop ~style fmtr p
   | _ as p ->
       pp_open_hvbox fmtr 1;
       pp_print_string fmtr "(";
       pp_print_cut fmtr ();
-      pp_print_imp_prop ~backup fmtr p;
+      pp_print_imp_prop ~style fmtr p;
       pp_print_cut fmtr ();
       pp_print_string fmtr ")";
       pp_close_box fmtr ()

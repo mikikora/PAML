@@ -56,7 +56,8 @@ let interpret_command cmd =
   | AbandonCmd ->
       current_proof := [];
       current_proof_name := None;
-      command_history := []
+      command_history := [];
+      theorem_to_prove := None
   | QedCmd ->
       let cur_th =
         try List.hd !current_proof
@@ -70,7 +71,8 @@ let interpret_command cmd =
       Hashtbl.add theorem_map (Option.get !current_proof_name) complete_theorem;
       current_proof := [];
       current_proof_name := None;
-      command_history := []
+      command_history := [];
+      theorem_to_prove := None
   | ProofCmd -> (
       try
         match List.hd !current_proof with

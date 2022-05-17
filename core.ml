@@ -118,7 +118,7 @@ let boxi world th =
         let new_ass =
           List.filter (function elem -> elem <> R (world, y)) ass
         in
-        BoxI (th, (rel, new_ass, J (world, p)))
+        BoxI (th, (rel, new_ass, J (world, Box p)))
       else failwith "can't use boxi with this assumptions"
   | _ -> failwith " can't use boxi on this judgement"
 

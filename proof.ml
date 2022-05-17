@@ -72,8 +72,7 @@ let _hyp_rel_jgmt (pf, path) : goal =
           (fun acc elem ->
             if acc <> Dummy then acc
             else if snd elem = jgmt then
-              let ass = ctx_to_ass ctx in
-              Proof (Leaf (hyp rel ass (snd elem)), path)
+              Proof (Leaf (hyp rel [ jgmt ] (snd elem)), path)
             else Dummy)
           Dummy ctx
       in
@@ -210,8 +209,7 @@ let _apply_assm name (pf, path) =
   | Empty (rel, ctx, jgmt) ->
       let jgmt_to_apply = List.assoc name ctx in
       let _, new_path = apply jgmt_to_apply (pf, path) in
-      let ass = List.map (function name, value -> value) ctx in
-      (Leaf (hyp rel ass jgmt_to_apply), new_path)
+      (Leaf (hyp rel [ jgmt_to_apply ] jgmt_to_apply), new_path)
   | _ -> raise (UnlocatedError "Not in empty goal")
 
 let apply_assm name goal =
