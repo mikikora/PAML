@@ -98,50 +98,50 @@ let create_backup name =
     try open_out name
     with _ -> raise (Error.UnlocatedError "Failed to open specified file")
   in
-  let formatter = formatter_of_out_channel ch_out in
+  let fmtr = formatter_of_out_channel ch_out in
   Seq.iter
     (function
       | rel ->
-          pp_print_relation formatter rel;
-          pp_print_newline formatter ())
+          pp_print_relation fmtr rel;
+          pp_print_newline fmtr ())
     (get_declared_relations ());
 
-  pp_print_string formatter ";;\n";
+  pp_print_string fmtr ";;\n";
 
   Seq.iter
     (fun (name, th) ->
-      pp_open_vbox formatter 1;
-      pp_print_string formatter "{";
-      pp_print_newline formatter ();
-      pp_print_string formatter name;
-      pp_print_newline formatter ();
-      pp_print_theorem ~backup:true formatter th;
-      pp_close_box formatter ();
-      pp_print_newline formatter ();
-      pp_print_string formatter "}\n")
+      pp_open_vbox fmtr 1;
+      pp_print_string fmtr "{";
+      pp_print_newline fmtr ();
+      pp_print_string fmtr name;
+      pp_print_newline fmtr ();
+      pp_print_theorem ~style:Backup fmtr th;
+      pp_close_box fmtr ();
+      pp_print_newline fmtr ();
+      pp_print_string fmtr "}\n")
     (get_proven_theorems ());
 
-  pp_print_string formatter ";;\n";
+  pp_print_string fmtr ";;\n";
 
   let theorem_to_prove, proof_command_list = get_current_proof_for_backup () in
   (match theorem_to_prove with
   | Some (n, r, jgmt) ->
-      pp_print_string formatter n;
-      pp_print_newline formatter ();
-      pp_print_string formatter r;
-      pp_print_newline formatter ();
-      pp_print_judgement ~backup:true formatter jgmt;
-      pp_print_newline formatter ();
-      pp_print_newline formatter ();
+      pp_print_string fmtr n;
+      pp_print_newline fmtr ();
+      pp_print_string fmtr r;
+      pp_print_newline fmtr ();
+      pp_print_judgement ~style:Backup fmtr jgmt;
+      pp_print_newline fmtr ();
+      pp_print_newline fmtr ();
       List.iter
         (function
           | elem ->
-              pp_print_command formatter elem;
-              pp_print_newline formatter ())
+              pp_print_command fmtr elem;
+              pp_print_newline fmtr ())
         proof_command_list
   | None -> ());
-  pp_print_string formatter ";;\n";
-  pp_print_flush formatter ();
+  pp_print_string fmtr ";;\n";
+  pp_print_flush fmtr ();
   close_out ch_out
 
 let load_backup name =
@@ -180,4 +180,78 @@ let load_backup name =
   Parsing.clear_parser ();
   close_in ch_in
 
-let create_latex ?name relations theorems = 0
+let rec print_tree fmtr th =
+  let print_judgement_with_assumptions jgmt =
+    pp_print_assumptions ~style:LaTeX fmtr th;
+    pp_print_string fmtr " \\vdash ";
+    pp_print_judgement ~style:LaTeX fmtr ~r:(relation th) jgmt;
+    pp_print_string fmtr "$}";
+    pp_print_newline fmtr ()
+  in
+  match th with
+  | Hyp (_, _, jgmt) ->
+      pp_print_string fmtr "\\AxiomC{}\n\\UnaryInfC{$";
+      print_judgement_with_assumptions jgmt
+  | FalseE (th1, (_, _, jgmt))
+  | ConE (th1, (_, _, jgmt))
+  | AltI (th1, (_, _, jgmt))
+  | ImpI (th1, (_, _, jgmt))
+  | BoxI (th1, (_, _, jgmt))
+  | D (th1, (_, _, jgmt))
+  | T (th1, (_, _, jgmt)) ->
+      print_tree fmtr th1;
+      pp_print_string fmtr "\\UnaryInfC{$";
+      print_judgement_with_assumptions jgmt
+  | ConI (th1, th2, (_, _, jgmt))
+  | ImpE (th1, th2, (_, _, jgmt))
+  | BoxE (th1, th2, (_, _, jgmt))
+  | DiaI (th1, th2, (_, _, jgmt))
+  | DiaE (th1, th2, (_, _, jgmt))
+  | B (th1, th2, (_, _, jgmt)) ->
+      print_tree fmtr th1;
+      print_tree fmtr th2;
+      pp_print_string fmtr "\\BinaryInfC{$";
+      print_judgement_with_assumptions jgmt
+  | AltE (th1, th2, th3, (_, _, jgmt))
+  | Four (th1, th2, th3, (_, _, jgmt))
+  | Five (th1, th2, th3, (_, _, jgmt))
+  | Two (th1, th2, th3, (_, _, jgmt)) ->
+      print_tree fmtr th1;
+      print_tree fmtr th2;
+      print_tree fmtr th3;
+      pp_print_string fmtr "\\TrinaryInfC{$";
+      print_judgement_with_assumptions jgmt
+
+let create_latex name =
+  let header =
+    "\n\
+     \\documentclass[a4paper,10pt]{article}\n\n\
+     \\usepackage[hdivide={1.25cm,*,1.25cm},vdivide={2cm,*,1.5cm}]{geometry}\n\
+     \\usepackage{bussproofs}\n\
+     \\usepackage{latexsym}\n\
+     \\begin{document}\n"
+  in
+  let ch_out =
+    try open_out name
+    with _ -> raise (Error.UnlocatedError "Failed to open specified file")
+  in
+  let fmtr = formatter_of_out_channel ch_out in
+  pp_print_string fmtr header;
+  Seq.iter
+    (function
+      | name, theorem ->
+          pp_print_string fmtr ("\\section{" ^ name ^ "}");
+          pp_print_newline fmtr ();
+          let rel = get_relation (relation theorem) in
+          pp_print_string fmtr
+            ("Relation " ^ rel.name ^ " has properties: "
+            ^ List.fold_left
+                (fun acc prop -> property_to_string prop ^ ", " ^ acc)
+                "" rel.properties);
+          pp_print_string fmtr "\\begin{prooftree}";
+          print_tree fmtr theorem;
+          pp_print_string fmtr "\\end{prooftree}")
+    (get_proven_theorems ());
+  pp_print_string fmtr "\\end{document}\n";
+  pp_print_flush fmtr ();
+  close_out ch_out
