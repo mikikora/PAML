@@ -20,5 +20,4 @@ val symmetry : theorem -> theorem -> theorem
 val transitivity : theorem -> theorem -> theorem -> theorem
 val euclideanness : theorem -> theorem -> theorem -> theorem
 val directedness : world -> theorem -> theorem -> theorem -> theorem
-
 val validate_theorem : theorem -> bool

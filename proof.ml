@@ -402,5 +402,4 @@ let chain_tactic tactic1 tactic2 goal =
   let result_pf = apply_second_tactic 0 new_pf in
   (result_pf, new_path)
 
-let try_tactic tactic goal =
-  try tactic goal with _ -> goal
+let try_tactic tactic goal = try tactic goal with _ -> goal

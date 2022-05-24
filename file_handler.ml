@@ -107,8 +107,8 @@ let rec pp_print_command fmtr = function
       pp_print_command fmtr cmd2;
       pp_close_box fmtr ()
   | TryCmd cmd ->
-    pp_print_string fmtr "TryCmd ";
-    pp_print_command fmtr cmd
+      pp_print_string fmtr "TryCmd ";
+      pp_print_command fmtr cmd
 
 let create_backup name =
   let ch_out =
@@ -175,7 +175,11 @@ let load_backup name =
         (function rel -> add_new_relation rel.name rel.properties)
         relation_list;
       List.iter
-        (function name, th -> if Core.validate_theorem th && assumptions th = [] then add_theorem_from_backup name th else raise (UnlocatedError ("Theorem" ^ name ^ " isn't true")))
+        (function
+          | name, th ->
+              if Core.validate_theorem th && assumptions th = [] then
+                add_theorem_from_backup name th
+              else raise (UnlocatedError ("Theorem" ^ name ^ " isn't true")))
         theorem_list;
       match theorem_to_prove with
       | None -> ()
@@ -207,27 +211,39 @@ let rec print_tree fmtr th =
   in
   match th with
   | Assumption (rule, (_, _, jgmt)) ->
-    pp_print_string fmtr ("\\AxiomC{}\n\\RightLabel{\\scriptsize$" ^ (theorem_rule_to_string ~style:LaTeX rule) ^ "$}\n");
-    pp_print_string fmtr "\\UnaryInfC{$";
-    print_judgement_with_assumptions jgmt
+      pp_print_string fmtr
+        ("\\AxiomC{}\n\\RightLabel{\\scriptsize$"
+        ^ theorem_rule_to_string ~style:LaTeX rule
+        ^ "$}\n");
+      pp_print_string fmtr "\\UnaryInfC{$";
+      print_judgement_with_assumptions jgmt
   | Single (rule, th1, (_, _, jgmt)) ->
-    print_tree fmtr th1;
-    pp_print_string fmtr ("\\RightLabel{\\scriptsize$" ^ (theorem_rule_to_string ~style:LaTeX rule) ^ "$}\n");
-    pp_print_string fmtr "\\UnaryInfC{$";
-    print_judgement_with_assumptions jgmt
+      print_tree fmtr th1;
+      pp_print_string fmtr
+        ("\\RightLabel{\\scriptsize$"
+        ^ theorem_rule_to_string ~style:LaTeX rule
+        ^ "$}\n");
+      pp_print_string fmtr "\\UnaryInfC{$";
+      print_judgement_with_assumptions jgmt
   | Double (rule, th1, th2, (_, _, jgmt)) ->
-    print_tree fmtr th1;
-    print_tree fmtr th2;
-    pp_print_string fmtr ("\\RightLabel{\\scriptsize$" ^ (theorem_rule_to_string ~style:LaTeX rule) ^ "$}\n");
-    pp_print_string fmtr "\\BinaryInfC{$";
-    print_judgement_with_assumptions jgmt
+      print_tree fmtr th1;
+      print_tree fmtr th2;
+      pp_print_string fmtr
+        ("\\RightLabel{\\scriptsize$"
+        ^ theorem_rule_to_string ~style:LaTeX rule
+        ^ "$}\n");
+      pp_print_string fmtr "\\BinaryInfC{$";
+      print_judgement_with_assumptions jgmt
   | Triple (rule, th1, th2, th3, (_, _, jgmt)) ->
-    print_tree fmtr th1;
-    print_tree fmtr th2;
-    print_tree fmtr th3;
-    pp_print_string fmtr ("\\RightLabel{\\scriptsize$" ^ (theorem_rule_to_string ~style:LaTeX rule) ^ "$}\n");
-    pp_print_string fmtr "\\TrinaryInfC{$";
-    print_judgement_with_assumptions jgmt
+      print_tree fmtr th1;
+      print_tree fmtr th2;
+      print_tree fmtr th3;
+      pp_print_string fmtr
+        ("\\RightLabel{\\scriptsize$"
+        ^ theorem_rule_to_string ~style:LaTeX rule
+        ^ "$}\n");
+      pp_print_string fmtr "\\TrinaryInfC{$";
+      print_judgement_with_assumptions jgmt
 
 let create_latex name =
   let header =

@@ -14,34 +14,34 @@ type judgement = J of world * prop | R of world * world
 type assumptions = judgement list
 type theorem_context = Relation.relation_name * assumptions * judgement
 
-type theorem_rule = 
-  | FalseE 
-  | Hyp 
-  | ConI 
+type theorem_rule =
+  | FalseE
+  | Hyp
+  | ConI
   | ConE1
   | ConE2
   | AltI1
-  | AltI2 
-  | AltE 
-  | ImpI 
-  | ImpE 
-  | BoxI 
-  | BoxE 
-  | DiaI 
+  | AltI2
+  | AltE
+  | ImpI
+  | ImpE
+  | BoxI
+  | BoxE
+  | DiaI
   | DiaE of world
   | D of world * world
   | T of world
-  | B 
-  | Four 
-  | Five 
+  | B
+  | Four
+  | Five
   | Two of world
   | Weak
 
 type theorem =
-| Assumption of theorem_rule * theorem_context
-| Single of theorem_rule * theorem * theorem_context
-| Double of theorem_rule * theorem * theorem * theorem_context
-| Triple of theorem_rule * theorem * theorem * theorem * theorem_context
+  | Assumption of theorem_rule * theorem_context
+  | Single of theorem_rule * theorem * theorem_context
+  | Double of theorem_rule * theorem * theorem * theorem_context
+  | Triple of theorem_rule * theorem * theorem * theorem * theorem_context
 
 (* supporting functions *)
 val relation : theorem -> string

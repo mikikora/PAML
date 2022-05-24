@@ -15,26 +15,26 @@ type judgement = J of world * prop | R of world * world
 type assumptions = judgement list
 type theorem_context = relation_name * assumptions * judgement
 
-type theorem_rule = 
-  | FalseE 
-  | Hyp 
-  | ConI 
+type theorem_rule =
+  | FalseE
+  | Hyp
+  | ConI
   | ConE1
   | ConE2
   | AltI1
-  | AltI2 
-  | AltE 
-  | ImpI 
-  | ImpE 
-  | BoxI 
-  | BoxE 
-  | DiaI 
+  | AltI2
+  | AltE
+  | ImpI
+  | ImpE
+  | BoxI
+  | BoxE
+  | DiaI
   | DiaE of world
   | D of world * world
   | T of world
-  | B 
-  | Four 
-  | Five 
+  | B
+  | Four
+  | Five
   | Two of world
   | Weak
 
@@ -49,7 +49,7 @@ let relation = function
   | Assumption (_, (r, _, _))
   | Single (_, _, (r, _, _))
   | Double (_, _, _, (r, _, _))
-  | Triple (_, _, _, _, (r, _, _)) -> 
+  | Triple (_, _, _, _, (r, _, _)) ->
       r
 
 let assumptions = function
@@ -70,7 +70,8 @@ let theorem_rule = function
   | Assumption (rule, _)
   | Single (rule, _, _)
   | Double (rule, _, _, _)
-  | Triple (rule, _, _, _, _) -> rule
+  | Triple (rule, _, _, _, _) ->
+      rule
 
 let destruct_th th = (relation th, assumptions th, consequence th)
 
@@ -87,7 +88,7 @@ let assumptions_with_world world assumptions =
 (* printers *)
 type printing_style = LaTeX | Backup | Interactive
 
-let theorem_rule_to_string ?(style=Backup) = function
+let theorem_rule_to_string ?(style = Backup) = function
   | FalseE -> if style = LaTeX then "(\\bot E)" else "FalseE"
   | Hyp -> if style = LaTeX then "(Hyp)" else "Hyp"
   | ConI -> if style = LaTeX then "(\\wedge I)" else "ConI"
@@ -110,7 +111,6 @@ let theorem_rule_to_string ?(style=Backup) = function
   | Two x -> if style = LaTeX then "(R_2)" else "Two " ^ x
   | Weak -> if style = LaTeX then "(W)" else "Weak"
 
-
 let rec pp_print_theorem ?(style = Interactive) fmtr th =
   let print_theorems name rule theorems =
     pp_print_string fmtr name;
@@ -126,10 +126,10 @@ let rec pp_print_theorem ?(style = Interactive) fmtr th =
   pp_open_vbox fmtr 1;
   (match th with
   | Assumption (rule, _) -> print_theorems "Assumption " rule []
-  | Single (rule, th1, _) -> print_theorems "Single " rule [th1]
-  | Double (rule, th1, th2, _) -> print_theorems "Double " rule [th1; th2]
-  | Triple (rule, th1, th2, th3, _) -> print_theorems "Triple " rule [th1; th2; th3]
-  );
+  | Single (rule, th1, _) -> print_theorems "Single " rule [ th1 ]
+  | Double (rule, th1, th2, _) -> print_theorems "Double " rule [ th1; th2 ]
+  | Triple (rule, th1, th2, th3, _) ->
+      print_theorems "Triple " rule [ th1; th2; th3 ]);
   pp_print_cut fmtr ();
   pp_close_box fmtr ();
   let r, ass, jgmt = destruct_th th in

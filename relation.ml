@@ -17,7 +17,6 @@ let property_to_string = function
   | Directedness -> "Directedness"
 
 type relation_name = string
-
 type relation = { name : relation_name; properties : rel_property list }
 
 exception Error of relation_name * string

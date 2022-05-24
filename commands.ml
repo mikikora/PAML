@@ -92,11 +92,10 @@ let interpret_command cmd =
   | UndoCmd -> (
       try current_proof := List.tl !current_proof with Failure _ -> ())
   | ApplyAssmCmd _ | AssumptionCmd | ChainCmd _ ->
-    let res = unfocus @@ (cmd_to_proof_function cmd) (get_goal ()) in
-    if no_goals res = 1 then
-      current_proof := G (focus 1 res) :: !current_proof
-    else
-      current_proof := P res :: !current_proof
+      let res = unfocus @@ (cmd_to_proof_function cmd) (get_goal ()) in
+      if no_goals res = 1 then
+        current_proof := G (focus 1 res) :: !current_proof
+      else current_proof := P res :: !current_proof
   | _ ->
       current_proof :=
         G ((cmd_to_proof_function cmd) (get_goal ())) :: !current_proof
