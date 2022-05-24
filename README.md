@@ -12,13 +12,13 @@ To compile simply run `make`. To run program run generated `modal_prover`. To ma
 Programm has two modes: declaring and proving. Each command must end with dot to be executed.
 ### Declaring mode
 Immidiatly after starting programm user will be in declaring mode. In this mode user can type one of the following commends:
-* `Relation` *name* *list of properties* -- to declare new relation (separete properties with comma)
-* *Relation name* *list of properties* -- to add properties of existsing relation
-* *Relation name* `unset` *list of properties* -- to remove properties of existsing relation
-* `Save` *path to file* -- to save progress (can be used in proving mode)
-* `Load` *path to file* -- to restore save from given file
-* `Generate` *path to file* -- to generate LaTeX file with proved theorems
-* `Theorem` *name* `with` *relation name*, *judgement to prove* -- start proving given judgement. After this command program enters proving mode.
+* `Relation` *name* *list_of_properties* -- to declare new relation (separete properties with comma)
+* *Relation_name* *list_of_properties* -- to add properties of existsing relation
+* *Relation_name* `unset` *list_of_properties* -- to remove properties of existsing relation
+* `Save` *path_to_file* -- to save progress (can be used in proving mode)
+* `Load` *path_to_file* -- to restore save from given file
+* `Generate` *path_to_file* -- to generate LaTeX file with proved theorems
+* `Theorem` *name* `with` *relation_name*, *judgement to prove* -- start proving given judgement. After this command program enters proving mode.
 
 Note that if there is any theorem proven with a relation this relation properties can no longer be changed.
 
@@ -28,7 +28,7 @@ In this mode program can be in focused or unfocused mode. In unfocused mode user
 In focused mode user can see all assumptions in local context and judgement to prove. Command avaible in this mode:
 * `unfocus` -- to enter unfocus mode
 * `Apply` -- to apply (use elimination rule) given judgement, one of the assumptions (by name) or already proved theorem in global context (also by name). To give world name add `with` *world* (seperate world with comma). To name any newly generated assumption use `as` *name*
-* `Intro` *optional name* -- to intro (use introduction rule). To give world name add `with` *world*.
+* `Intro` *optional_name* -- to intro (use introduction rule). To give world name add `with` *world*.
 * *property* `with` *worlds* to use rule associated with relation property. World should be seperated with comma. To give name to new assumption use `as` *name*. 
 * `undo` -- to undo last command.
 
@@ -43,7 +43,7 @@ Syntax of judgements is similar to that of Coq. Avaible logical operators:
 * "\/" -- alternative
 * "[]" -- box
 * "<>" -- diamond
-* "F" or "_|_" -- bottom
+* "F" or "\_|\_" -- bottom
 
 Full judgement example: "x : [](A -> B) -> ([]A -> []B)".
 
