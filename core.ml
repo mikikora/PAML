@@ -7,13 +7,17 @@ let rec remove_duplicates lst =
       hd :: (List.filter (function el -> el <> hd) @@ remove_duplicates tl)
 
 let hyp rel ass jgmt =
-  if List.mem jgmt ass then Hyp (rel, ass, jgmt)
+  if List.mem jgmt ass then Assumption (Hyp, (rel, ass, jgmt))
   else failwith "no assumption matches goal"
+
+let weakening th jgmt_to_add =
+  let rel, ass, jgmt = destruct_th th in
+  Single (Weak, th, (rel, remove_duplicates @@ jgmt_to_add :: ass, jgmt))
 
 let falsee new_jgmt th =
   let rel, ass, jgmt = destruct_th th in
   match (jgmt, new_jgmt) with
-  | J (_, F), J (_, _) -> FalseE (th, (rel, ass, new_jgmt))
+  | J (_, F), J (_, _) -> Single (FalseE, th, (rel, ass, new_jgmt))
   | J (_, _), _ -> failwith "False is not in the judgement"
   | _, _ -> failwith "Can't use it on relation judgement"
 
@@ -25,8 +29,8 @@ let coni th1 th2 =
     match (jgmt1, jgmt2) with
     | J (x, p1), J (y, p2) ->
         if x = y then
-          ConI
-            ( th1,
+          Double (ConI,
+             th1,
               th2,
               (rel1, remove_duplicates @@ ass1 @ ass2, J (x, Con (p1, p2))) )
         else failwith "worlds don't match"
@@ -35,25 +39,25 @@ let coni th1 th2 =
 let cone1 th =
   let rel, ass, jgmt = destruct_th th in
   match jgmt with
-  | J (x, Con (a, b)) -> ConE (th, (rel, ass, J (x, a)))
+  | J (x, Con (a, b)) -> Single (ConE1, th, (rel, ass, J (x, a)))
   | _ -> failwith "can't use cone on this judgement"
 
 let cone2 th =
   let rel, ass, jgmt = destruct_th th in
   match jgmt with
-  | J (x, Con (a, b)) -> ConE (th, (rel, ass, J (x, b)))
+  | J (x, Con (a, b)) -> Single (ConE2, th, (rel, ass, J (x, b)))
   | _ -> failwith "can't use cone on this judgement"
 
 let alti1 prop th =
   let rel, ass, jgmt = destruct_th th in
   match jgmt with
-  | J (x, p) -> AltI (th, (rel, ass, J (x, Alt (p, prop))))
+  | J (x, p) -> Single (AltI1, th, (rel, ass, J (x, Alt (p, prop))))
   | _ -> failwith "can't use alti on this judgement"
 
 let alti2 prop th =
   let rel, ass, jgmt = destruct_th th in
   match jgmt with
-  | J (x, p) -> AltI (th, (rel, ass, J (x, Alt (prop, p))))
+  | J (x, p) -> Single (AltI2, th, (rel, ass, J (x, Alt (prop, p))))
   | _ -> failwith "can't use alti on this judgement"
 
 let alte th1 th2 th3 =
@@ -75,7 +79,7 @@ let alte th1 th2 th3 =
               (function v -> v <> J (x, p1) && v <> J (x, p2))
               (ass2 @ ass3)
           in
-          AltE (th1, th2, th3, (rel1, remove_duplicates @@ ass1 @ ass, jgmt2))
+          Triple (AltE, th1, th2, th3, (rel1, remove_duplicates @@ ass1 @ ass, jgmt2))
         else failwith "can't use alte with this assumptions"
     | _ -> failwith "can't use alte on this judgement"
 
@@ -89,8 +93,8 @@ let impi left_jgmt th =
   match jgmt with
   | J (x, p) ->
       if List.mem left_jgmt ass && x = y then
-        ImpI
-          ( th,
+        Single (ImpI,
+           th,
             ( rel,
               List.filter (function v -> v <> left_jgmt) ass,
               J (x, Imp (prop, p)) ) )
@@ -105,7 +109,7 @@ let impe th1 th2 =
     match (jgmt1, jgmt2) with
     | J (x, Imp (p1, p2)), J (y, p3) ->
         if x = y && p1 = p3 then
-          ImpE (th1, th2, (rel1, remove_duplicates @@ ass1 @ ass2, J (x, p2)))
+          Double (ImpE, th1, th2, (rel1, remove_duplicates @@ ass1 @ ass2, J (x, p2)))
         else failwith "can't use impe with this judgement"
     | _ -> failwith "can't use impe on this judgement"
 
@@ -118,7 +122,7 @@ let boxi world th =
         let new_ass =
           List.filter (function elem -> elem <> R (world, y)) ass
         in
-        BoxI (th, (rel, new_ass, J (world, Box p)))
+        Single (BoxI, th, (rel, new_ass, J (world, Box p)))
       else failwith "can't use boxi with this assumptions"
   | _ -> failwith " can't use boxi on this judgement"
 
@@ -130,7 +134,7 @@ let boxe world th1 th2 =
     match (jgmt1, jgmt2) with
     | J (x, Box p), R (y, world) ->
         if x = y then
-          BoxE (th1, th2, (rel1, remove_duplicates @@ ass1 @ ass2, J (world, p)))
+          Double (BoxE, th1, th2, (rel1, remove_duplicates @@ ass1 @ ass2, J (world, p)))
         else failwith "worlds don't match"
     | _ -> failwith "can't use boxe here"
 
@@ -142,8 +146,8 @@ let diai world th1 th2 =
     match (jgmt1, jgmt2) with
     | J (y, p), R (world, z) ->
         if y = z then
-          DiaI
-            ( th1,
+          Double (DiaI,
+             th1,
               th2,
               (rel1, remove_duplicates @@ ass1 @ ass2, J (world, Dia p)) )
         else failwith "worlds don't match"
@@ -165,7 +169,7 @@ let diae y th1 th2 =
           let ass2 =
             List.filter (function v -> v <> R (x, y) && v <> J (y, a)) ass2
           in
-          DiaE (th1, th2, (rel1, remove_duplicates @@ ass1 @ ass2, J (z, b)))
+          Double ((DiaE y), th1, th2, (rel1, remove_duplicates @@ ass1 @ ass2, J (z, b)))
         else failwith "can't use diae with this assumptions"
     | _ -> failwith "can't use diae here"
 
@@ -179,7 +183,7 @@ let seriality x y th =
           failwith "can't use seriality with this assumptions"
         else
           let new_ass = List.filter (function v -> v <> R (x, y)) ass in
-          D (th, (rel, new_ass, jgmt))
+          Single ((D (x, y)), th, (rel, new_ass, jgmt))
     | _ -> failwith "can't use seriality here"
   else failwith "seriality can only be used with seriable relation"
 
@@ -190,7 +194,7 @@ let reflexivity x th =
     | J (y, prop) ->
         if List.mem (R (x, x)) (assumptions_with_world x ass) then
           let new_ass = List.filter (function v -> v <> R (x, x)) ass in
-          T (th, (rel, new_ass, jgmt))
+          Single ((T x), th, (rel, new_ass, jgmt))
         else
           failwith
             "There is no reflexive assumption with this world in the scope"
@@ -206,7 +210,7 @@ let symmetry th1 th2 =
         if List.mem (R (y, x)) ass2 then
           let new_ass2 = List.filter (function v -> v <> R (y, x)) ass2 in
           let new_ass = remove_duplicates @@ ass1 @ new_ass2 in
-          B (th1, th2, (rel1, new_ass, jgmt2))
+          Double (B, th1, th2, (rel1, new_ass, jgmt2))
         else
           failwith
             "There is no symmetry assumption with this worlds in the scope"
@@ -229,7 +233,7 @@ let transitivity th1 th2 th3 =
         if y1 = y2 && List.mem (R (x, z)) ass3 then
           let new_ass3 = List.filter (function v -> v <> R (x, z)) ass3 in
           let new_ass = remove_duplicates @@ ass1 @ ass2 @ new_ass3 in
-          Four (th1, th2, th3, (rel1, new_ass, jgmt3))
+          Triple (Four, th1, th2, th3, (rel1, new_ass, jgmt3))
         else failwith "Premises can't build this rule"
     | _, _ -> failwith "can't use transitivity here"
   else
@@ -250,7 +254,7 @@ let euclideanness th1 th2 th3 =
         if x1 = x2 && List.mem (R (y, z)) ass3 then
           let new_ass3 = List.filter (function v -> v <> R (y, z)) ass3 in
           let new_ass = remove_duplicates @@ ass1 @ ass2 @ new_ass3 in
-          Five (th1, th2, th3, (rel1, new_ass, jgmt3))
+          Triple (Five, th1, th2, th3, (rel1, new_ass, jgmt3))
         else failwith "Premises can't build this rule"
     | _, _ -> failwith "can't use euclideanness here"
   else
@@ -279,10 +283,57 @@ let directedness w th1 th2 th3 =
             List.filter (function v -> v <> R (y, w) && v <> R (z, w)) ass3
           in
           let new_ass = remove_duplicates @@ ass1 @ ass2 @ new_ass3 in
-          Two (th1, th2, th3, (rel1, new_ass, jgmt3))
+          Triple ((Two w), th1, th2, th3, (rel1, new_ass, jgmt3))
         else failwith "Premises can't build this rule"
     | _, _, _ -> failwith "can't use directedness here"
   else
     failwith
       "Can't build theorem with different relations or with non directed \
        relation"
+
+
+(* Check if given theorem is valid *)
+let rec validate_theorem th = 
+  let absurd_theorem = Assumption (Hyp, ("", [], J("", F))) in
+  let calculated_theorem = 
+  (match th with
+  | Assumption (rule, (rel, ass, jgmt)) ->
+    hyp rel ass jgmt
+  | Single (rule, th1, (_, _, jgmt)) -> 
+    if validate_theorem th1 then
+    (
+    match rule with
+    | Weak -> absurd_theorem
+    | FalseE -> falsee jgmt th1
+    | ConE1  -> cone1 th1
+    | ConE2 -> cone2 th1
+    | AltI1 -> (match jgmt with | J(_, Alt(_, prop)) -> alti1 prop th1 | _ -> absurd_theorem)
+    | AltI2 -> (match jgmt with | J(_, Alt(prop, _)) -> alti1 prop th1 | _ -> absurd_theorem)
+    | ImpI -> (match jgmt with | J (x, Imp(prop, _)) -> impi (J(x, prop)) th1 | _ -> absurd_theorem)
+    | BoxI -> (match jgmt with | J (x, _) -> boxi x th1 | _ -> absurd_theorem)
+    | D (x, y) -> seriality x y th1
+    | T x -> reflexivity x th1
+    | _ -> absurd_theorem
+  ) else absurd_theorem
+  | Double (rule, th1, th2, (_, _, jgmt)) -> 
+    if validate_theorem th1 && validate_theorem th2 then
+    (
+    match rule with
+    | ConI -> coni th1 th2
+    | ImpE -> impe th1 th2
+    | BoxE -> (match jgmt with | J(x, _) -> boxe x th1 th2 | _ -> absurd_theorem)
+    | DiaI -> (match jgmt with | J(x, _) -> diai x th1 th2 | _ -> absurd_theorem)
+    | DiaE x -> diae x th1 th2
+    | B -> symmetry th1 th2
+    | _ -> absurd_theorem
+  ) else absurd_theorem
+  | Triple (rule, th1, th2, th3, (_, _, jgmt)) -> if validate_theorem th1 && validate_theorem th2 && validate_theorem th3 then (
+    match rule with
+    | AltE -> alte th1 th2 th3
+    | Four -> transitivity th1 th2 th3
+    | Five -> euclideanness th1 th2 th3
+    | Two x -> directedness x th1 th2 th3
+    | _ -> absurd_theorem
+  ) else absurd_theorem
+  ) in
+  calculated_theorem <> absurd_theorem && th = calculated_theorem

@@ -24,35 +24,31 @@ let interpret_command cmd =
     | G gl -> gl
     | _ -> raise (UnlocatedError "Not focused")
   in
+  let rec cmd_to_proof_function : command -> goal -> goal = function
+    | IntroCmd (name, world) -> intro ~name ~world
+    | ApplyCmd (name1, name2, world, jgmt) -> apply ~name1 ~name2 ~world jgmt
+    | ApplyAssmCmd (name1, name2, world, name) ->
+        apply_assm ~name1 ~name2 ~world name
+    | SplitCmd -> split
+    | LeftCmd -> left
+    | RightCmd -> right
+    | ContraCmd w -> contra w
+    | ReflCmd (name, world) -> refl ~name world
+    | SymmCmd (name, world1, world2) -> symm ~name world1 world2
+    | TransCmd (name, world1, world2, world3) ->
+        trans ~name world1 world2 world3
+    | EuclCmd (name, world1, world2, world3) -> eucl ~name world1 world2 world3
+    | DirectCmd (name1, name2, world1, world2, world3, world) ->
+        direct ~name1 ~name2 world1 world2 world3 ~world
+    | AssumptionCmd -> assumption
+    | ChainCmd (cmd1, cmd2) ->
+        let translate_cmd1 = cmd_to_proof_function cmd1
+        and translate_cmd2 = cmd_to_proof_function cmd2 in
+        chain_tactic translate_cmd1 translate_cmd2
+    | TryCmd cmd -> try_tactic @@ cmd_to_proof_function cmd
+    | _ -> raise (UnlocatedError "This is not a tactic")
+  in
   match cmd with
-  | IntroCmd (name, world) ->
-      current_proof := G (intro ~name ~world (get_goal ())) :: !current_proof
-  | ApplyCmd (name1, name2, world, jgmt) ->
-      current_proof :=
-        G (apply ~name1 ~name2 ~world jgmt (get_goal ())) :: !current_proof
-  | ApplyAssmCmd name ->
-      current_proof := P (apply_assm name (get_goal ())) :: !current_proof
-  | SplitCmd -> current_proof := G (split (get_goal ())) :: !current_proof
-  | LeftCmd -> current_proof := G (left (get_goal ())) :: !current_proof
-  | RightCmd -> current_proof := G (right (get_goal ())) :: !current_proof
-  | ContraCmd w -> current_proof := G (contra w (get_goal ())) :: !current_proof
-  | SerialCmd (name, world, x) ->
-      current_proof := G (serial ~name ~world x (get_goal ())) :: !current_proof
-  | ReflCmd (name, world) ->
-      current_proof := G (refl ~name world (get_goal ())) :: !current_proof
-  | SymmCmd (name, world1, world2) ->
-      current_proof :=
-        G (symm ~name world1 world2 (get_goal ())) :: !current_proof
-  | TransCmd (name, world1, world2, world3) ->
-      current_proof :=
-        G (trans ~name world1 world2 world3 (get_goal ())) :: !current_proof
-  | EuclCmd (name, world1, world2, world3) ->
-      current_proof :=
-        G (eucl ~name world1 world2 world3 (get_goal ())) :: !current_proof
-  | DirectCmd (name1, name2, world1, world2, world3, world) ->
-      current_proof :=
-        G (direct ~name1 ~name2 world1 world2 world3 ~world (get_goal ()))
-        :: !current_proof
   | AbandonCmd ->
       current_proof := [];
       current_proof_name := None;
@@ -95,8 +91,15 @@ let interpret_command cmd =
       with Failure _ -> raise (UnlocatedError "Nothing to unfocus from"))
   | UndoCmd -> (
       try current_proof := List.tl !current_proof with Failure _ -> ())
-  | AssumptionCmd ->
-      current_proof := P (assumption (get_goal ())) :: !current_proof
+  | ApplyAssmCmd _ | AssumptionCmd | ChainCmd _ ->
+    let res = unfocus @@ (cmd_to_proof_function cmd) (get_goal ()) in
+    if no_goals res = 1 then
+      current_proof := G (focus 1 res) :: !current_proof
+    else
+      current_proof := P res :: !current_proof
+  | _ ->
+      current_proof :=
+        G ((cmd_to_proof_function cmd) (get_goal ())) :: !current_proof
 
 let interpret_statement statement =
   match !current_proof with
@@ -169,7 +172,7 @@ let print_current_state () =
         if relation.properties = [] then () else print_string " : ";
         open_hbox ();
         List.iter
-          (fun (property : Relation.rel_properties) ->
+          (fun (property : Relation.rel_property) ->
             print_string @@ Relation.property_to_string property;
             print_string ",";
             print_space ())

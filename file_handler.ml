@@ -11,7 +11,7 @@ let pp_print_option fmtr a_fun = function
       pp_print_string fmtr "Some ";
       a_fun fmtr a
 
-let pp_print_command fmtr = function
+let rec pp_print_command fmtr = function
   | UndoCmd | AbandonCmd | QedCmd -> ()
   | IntroCmd (name, world) ->
       pp_print_string fmtr "IntroCmd ";
@@ -27,8 +27,14 @@ let pp_print_command fmtr = function
       pp_print_option fmtr pp_print_string world;
       pp_print_string fmtr ", ";
       pp_print_judgement fmtr jgmt
-  | ApplyAssmCmd name ->
+  | ApplyAssmCmd (name1, name2, world, name) ->
       pp_print_string fmtr "ApplyAssmCmd ";
+      pp_print_option fmtr pp_print_string name1;
+      pp_print_string fmtr ", ";
+      pp_print_option fmtr pp_print_string name2;
+      pp_print_string fmtr ", ";
+      pp_print_option fmtr pp_print_string world;
+      pp_print_string fmtr ", ";
       pp_print_string fmtr name
   | SplitCmd -> pp_print_string fmtr "SplitCmd "
   | LeftCmd -> pp_print_string fmtr "LeftCmd "
@@ -92,6 +98,17 @@ let pp_print_command fmtr = function
       pp_print_string fmtr "ContraCmd ";
       pp_print_string fmtr world
   | AssumptionCmd -> pp_print_string fmtr "AssumptionCmd "
+  | ChainCmd (cmd1, cmd2) ->
+      pp_print_string fmtr "ChainCmd ";
+      pp_open_vbox fmtr 1;
+      pp_print_newline fmtr ();
+      pp_print_command fmtr cmd1;
+      pp_print_newline fmtr ();
+      pp_print_command fmtr cmd2;
+      pp_close_box fmtr ()
+  | TryCmd cmd ->
+    pp_print_string fmtr "TryCmd ";
+    pp_print_command fmtr cmd
 
 let create_backup name =
   let ch_out =
@@ -158,7 +175,7 @@ let load_backup name =
         (function rel -> add_new_relation rel.name rel.properties)
         relation_list;
       List.iter
-        (function name, th -> add_theorem_from_backup name th)
+        (function name, th -> if Core.validate_theorem th && assumptions th = [] then add_theorem_from_backup name th else raise (UnlocatedError ("Theorem" ^ name ^ " isn't true")))
         theorem_list;
       match theorem_to_prove with
       | None -> ()
@@ -189,38 +206,28 @@ let rec print_tree fmtr th =
     pp_print_newline fmtr ()
   in
   match th with
-  | Hyp (_, _, jgmt) ->
-      pp_print_string fmtr "\\AxiomC{}\n\\UnaryInfC{$";
-      print_judgement_with_assumptions jgmt
-  | FalseE (th1, (_, _, jgmt))
-  | ConE (th1, (_, _, jgmt))
-  | AltI (th1, (_, _, jgmt))
-  | ImpI (th1, (_, _, jgmt))
-  | BoxI (th1, (_, _, jgmt))
-  | D (th1, (_, _, jgmt))
-  | T (th1, (_, _, jgmt)) ->
-      print_tree fmtr th1;
-      pp_print_string fmtr "\\UnaryInfC{$";
-      print_judgement_with_assumptions jgmt
-  | ConI (th1, th2, (_, _, jgmt))
-  | ImpE (th1, th2, (_, _, jgmt))
-  | BoxE (th1, th2, (_, _, jgmt))
-  | DiaI (th1, th2, (_, _, jgmt))
-  | DiaE (th1, th2, (_, _, jgmt))
-  | B (th1, th2, (_, _, jgmt)) ->
-      print_tree fmtr th1;
-      print_tree fmtr th2;
-      pp_print_string fmtr "\\BinaryInfC{$";
-      print_judgement_with_assumptions jgmt
-  | AltE (th1, th2, th3, (_, _, jgmt))
-  | Four (th1, th2, th3, (_, _, jgmt))
-  | Five (th1, th2, th3, (_, _, jgmt))
-  | Two (th1, th2, th3, (_, _, jgmt)) ->
-      print_tree fmtr th1;
-      print_tree fmtr th2;
-      print_tree fmtr th3;
-      pp_print_string fmtr "\\TrinaryInfC{$";
-      print_judgement_with_assumptions jgmt
+  | Assumption (rule, (_, _, jgmt)) ->
+    pp_print_string fmtr ("\\AxiomC{}\n\\RightLabel{\\scriptsize$" ^ (theorem_rule_to_string ~style:LaTeX rule) ^ "$}\n");
+    pp_print_string fmtr "\\UnaryInfC{$";
+    print_judgement_with_assumptions jgmt
+  | Single (rule, th1, (_, _, jgmt)) ->
+    print_tree fmtr th1;
+    pp_print_string fmtr ("\\RightLabel{\\scriptsize$" ^ (theorem_rule_to_string ~style:LaTeX rule) ^ "$}\n");
+    pp_print_string fmtr "\\UnaryInfC{$";
+    print_judgement_with_assumptions jgmt
+  | Double (rule, th1, th2, (_, _, jgmt)) ->
+    print_tree fmtr th1;
+    print_tree fmtr th2;
+    pp_print_string fmtr ("\\RightLabel{\\scriptsize$" ^ (theorem_rule_to_string ~style:LaTeX rule) ^ "$}\n");
+    pp_print_string fmtr "\\BinaryInfC{$";
+    print_judgement_with_assumptions jgmt
+  | Triple (rule, th1, th2, th3, (_, _, jgmt)) ->
+    print_tree fmtr th1;
+    print_tree fmtr th2;
+    print_tree fmtr th3;
+    pp_print_string fmtr ("\\RightLabel{\\scriptsize$" ^ (theorem_rule_to_string ~style:LaTeX rule) ^ "$}\n");
+    pp_print_string fmtr "\\TrinaryInfC{$";
+    print_judgement_with_assumptions jgmt
 
 let create_latex name =
   let header =
@@ -252,6 +259,6 @@ let create_latex name =
           print_tree fmtr theorem;
           pp_print_string fmtr "\\end{prooftree}")
     (get_proven_theorems ());
-  pp_print_string fmtr "\\end{document}\n";
+  pp_print_string fmtr "\n\\end{document}\n";
   pp_print_flush fmtr ();
   close_out ch_out

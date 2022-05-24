@@ -7,7 +7,7 @@ type 'a located = { v : 'a; l : location }
 type command =
   | IntroCmd of string option * world option
   | ApplyCmd of string option * string option * world option * judgement
-  | ApplyAssmCmd of string
+  | ApplyAssmCmd of string option * string option * world option * string
   | SplitCmd
   | LeftCmd
   | RightCmd
@@ -26,11 +26,13 @@ type command =
   | ContraCmd of world
   | UndoCmd
   | AssumptionCmd
+  | ChainCmd of command * command
+  | TryCmd of command
 
 type statement_raw =
-  | RelDecl of string * rel_properties list
-  | RelProperties of string * rel_properties list
-  | RelRmProperties of string * rel_properties list
+  | RelDecl of string * rel_property list
+  | RelProperties of string * rel_property list
+  | RelRmProperties of string * rel_property list
   | TheoremDecl of string * string * judgement
   | LoadBackup of string
   | SaveBackup of string

@@ -56,6 +56,7 @@ let rec interactive () =
       try
         create_latex n;
         let _ = Sys.command "clear" in
+        print_string "Generated\n";
         print_current_state ();
         print_flush ()
       with UnlocatedError msg -> report_error { v = msg; l = statement.l })

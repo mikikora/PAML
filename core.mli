@@ -1,7 +1,6 @@
 open Syntax
-open Relation
 
-val hyp : string -> assumptions -> judgement -> theorem
+val hyp : Relation.relation_name -> assumptions -> judgement -> theorem
 val coni : theorem -> theorem -> theorem
 val cone1 : theorem -> theorem
 val cone2 : theorem -> theorem
@@ -21,3 +20,5 @@ val symmetry : theorem -> theorem -> theorem
 val transitivity : theorem -> theorem -> theorem -> theorem
 val euclideanness : theorem -> theorem -> theorem -> theorem
 val directedness : world -> theorem -> theorem -> theorem -> theorem
+
+val validate_theorem : theorem -> bool

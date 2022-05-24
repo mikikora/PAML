@@ -5,8 +5,6 @@ open Relation
 
 val qed : proof -> theorem
 val proof : string -> context -> judgement -> proof
-
-(* val goal_desc : goal -> goal_desc *)
 val unfocus : goal -> proof
 val focus : int -> proof -> goal
 
@@ -21,7 +19,14 @@ val apply :
   goal ->
   goal
 
-val apply_assm : string -> goal -> proof
+val apply_assm :
+  ?name1:string option ->
+  ?name2:string option ->
+  ?world:world option ->
+  string ->
+  goal ->
+  goal
+
 val split : goal -> goal
 val left : goal -> goal
 val right : goal -> goal
@@ -42,4 +47,6 @@ val direct :
   goal ->
   goal
 
-val assumption : goal -> proof
+val assumption : goal -> goal
+val chain_tactic : (goal -> goal) -> (goal -> goal) -> goal -> goal
+val try_tactic : (goal -> goal) -> goal -> goal

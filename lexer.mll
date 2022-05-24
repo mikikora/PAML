@@ -82,31 +82,39 @@
         ("contra", CONTRA);
         ("undo", UNDO);
         ("unset", UNSET);
-        ("Assumption", ASSUMPTION);
+        ("Assumption", ASS);
         ("Load", LOAD);
         ("Save", SAVE);
-        ("Generate", LATEX)
+        ("Generate", LATEX);
+        ("try", TRY)
       ]
 
   let backup_reserved_keywords = [
-    ("FalsE", FALSEE);
-    ("Hyp", HYP);
-    ("ConI", CONI);
-    ("ConE", CONE);
-    ("AltI", ALTI);
-    ("AltE", ALTE);
-    ("ImpI", IMPI);
-    ("ImpE", IMPE);
-    ("BoxI", BOXI);
-    ("BoxE", BOXE);
-    ("DiaI", DIAI);
+    ("Assumption", ASSUMPTION);
+    ("Single", SINGLE);
+    ("Double", DOUBLE);
+    ("Triple", TRIPLE);
+    ("FalsE", RULE FalseE);
+    ("Hyp", RULE Hyp);
+    ("ConI", RULE ConI);
+    ("ConE1", RULE ConE1);
+    ("ConE2", RULE ConE2);
+    ("AltI1", RULE AltI1);
+    ("AltI2", RULE AltI2);
+    ("AltE", RULE AltE);
+    ("ImpI", RULE ImpI);
+    ("ImpE", RULE ImpE);
+    ("BoxI", RULE BoxI);
+    ("BoxE", RULE BoxE);
+    ("DiaI", RULE DiaI);
     ("DiaE", DIAE);
     ("RD", RD);
     ("RT", RT);
-    ("RB", RB);
-    ("Four", FOUR);
-    ("Five", FIVE);
+    ("RB", RULE B);
+    ("Four", RULE Four);
+    ("Five", RULE Five);
     ("Two", TWO);
+    ("Weak", RULE Weak);
     ("IntroCmd", INTROCMD);
     ("ApplyCmd", APPLYCMD);
     ("ApplyAssmCmd", APPLYASSMCMD);
@@ -124,6 +132,8 @@
     ("UnfocusCmd", UNFOCUSCMD);
     ("ContraCmd", CONTRACMD);
     ("AssumptionCmd", ASSUMPTIONCMD);
+    ("ChainCmd", CHAINCMD);
+    ("TryCmd", TRYCMD);
     ("None", NONE);
     ("Some", SOME);
   ]

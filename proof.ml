@@ -7,19 +7,24 @@ open Error
 (* Functions for creating and navigating proof *)
 let proof rel ctx jgmt = Empty (rel, ctx, jgmt)
 
+let _get_father = function
+  | pf, path -> (
+      match path with
+      | Root -> (pf, Root)
+      | Left (father, right, f) -> (Node2 (pf, right, f), father)
+      | Right (father, left, f) -> (Node2 (left, pf, f), father)
+      | Mid (father, f) -> (Node1 (pf, f), father)
+      | Left3 (father, mid, right, f) -> (Node3 (pf, mid, right, f), father)
+      | Mid3 (father, left, right, f) -> (Node3 (left, pf, right, f), father)
+      | Right3 (father, left, mid, f) -> (Node3 (left, mid, pf, f), father))
+
 let rec unfocus = function
   | pf, path -> (
       match path with
       | Root -> pf
-      | Left (father, right, f) -> unfocus (Node2 (pf, right, f), father)
-      | Right (father, left, f) -> unfocus (Node2 (left, pf, f), father)
-      | Mid (father, f) -> unfocus (Node1 (pf, f), father)
-      | Left3 (father, mid, right, f) ->
-          unfocus (Node3 (pf, mid, right, f), father)
-      | Mid3 (father, left, right, f) ->
-          unfocus (Node3 (left, pf, right, f), father)
-      | Right3 (father, left, mid, f) ->
-          unfocus (Node3 (left, mid, pf, f), father))
+      | _ ->
+          let pf = unfocus (_get_father (pf, path)) in
+          pf)
 
 let focus n pf =
   let rec build_goal acc path = function
@@ -72,7 +77,7 @@ let _hyp_rel_jgmt (pf, path) : goal =
           (fun acc elem ->
             if acc <> Dummy then acc
             else if snd elem = jgmt then
-              Proof (Leaf (hyp rel [ jgmt ] (snd elem)), path)
+              Proof (Leaf (hyp rel (ctx_to_ass ctx) (snd elem)), path)
             else Dummy)
           Dummy ctx
       in
@@ -204,17 +209,13 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
 
 (* hyp *)
 
-let _apply_assm name (pf, path) =
+let apply_assm ?(name1 = None) ?(name2 = None) ?(world = None) name (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) ->
       let jgmt_to_apply = List.assoc name ctx in
-      let _, new_path = apply jgmt_to_apply (pf, path) in
-      (Leaf (hyp rel [ jgmt_to_apply ] jgmt_to_apply), new_path)
+      let _, new_path = apply ~name1 ~name2 ~world jgmt_to_apply (pf, path) in
+      (Leaf (hyp rel (ctx_to_ass ctx) jgmt_to_apply), new_path)
   | _ -> raise (UnlocatedError "Not in empty goal")
-
-let apply_assm name goal =
-  let res = _apply_assm name goal in
-  unfocus res
 
 (* False  *)
 let contra world (pf, path) =
@@ -369,14 +370,19 @@ let direct ?(name1 = None) ?(name2 = None) x y z ?(world = None) (pf, path) =
 
 (* Automatic tactics *)
 
-let _assumption (pf, path) =
+let assumption (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) -> (
       let res =
         List.fold_left
           (fun acc elem ->
             if acc <> Dummy then acc
-            else try Proof (_apply_assm (fst elem) (pf, path)) with _ -> Dummy)
+            else
+              try
+                let applied = apply_assm (fst elem) (pf, path) in
+                if no_goals (fst @@ _get_father applied) = 0 then Proof applied
+                else Dummy
+              with _ -> Dummy)
           Dummy ctx
       in
       match res with
@@ -384,4 +390,17 @@ let _assumption (pf, path) =
       | Proof p -> p)
   | _ -> raise (UnlocatedError "Not in empty goal")
 
-let assumption goal = unfocus (_assumption goal)
+let chain_tactic tactic1 tactic2 goal =
+  let rec apply_second_tactic acc pf =
+    if no_goals pf < acc + 1 then pf
+    else
+      let new_pf, path = _get_father @@ tactic2 (focus (acc + 1) pf) in
+      let new_goals = no_goals new_pf in
+      apply_second_tactic (acc + new_goals) (unfocus (new_pf, path))
+  in
+  let new_pf, new_path = _get_father @@ tactic1 goal in
+  let result_pf = apply_second_tactic 0 new_pf in
+  (result_pf, new_path)
+
+let try_tactic tactic goal =
+  try tactic goal with _ -> goal

@@ -47,4 +47,7 @@ clean:
 nuke: clean
 	rm -f $(target)
 
-install: nuke all clean
+install: nuke all 
+
+run: all
+	rlwrap ./$(target)

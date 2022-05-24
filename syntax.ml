@@ -13,92 +13,64 @@ type prop =
 type world = string
 type judgement = J of world * prop | R of world * world
 type assumptions = judgement list
-type theorem_context = string * assumptions * judgement
+type theorem_context = relation_name * assumptions * judgement
+
+type theorem_rule = 
+  | FalseE 
+  | Hyp 
+  | ConI 
+  | ConE1
+  | ConE2
+  | AltI1
+  | AltI2 
+  | AltE 
+  | ImpI 
+  | ImpE 
+  | BoxI 
+  | BoxE 
+  | DiaI 
+  | DiaE of world
+  | D of world * world
+  | T of world
+  | B 
+  | Four 
+  | Five 
+  | Two of world
+  | Weak
 
 type theorem =
-  | FalseE of theorem * theorem_context
-  | Hyp of theorem_context
-  | ConI of theorem * theorem * theorem_context
-  | ConE of theorem * theorem_context
-  | AltI of theorem * theorem_context
-  | AltE of theorem * theorem * theorem * theorem_context
-  | ImpI of theorem * theorem_context
-  | ImpE of theorem * theorem * theorem_context
-  | BoxI of theorem * theorem_context
-  | BoxE of theorem * theorem * theorem_context
-  | DiaI of theorem * theorem * theorem_context
-  | DiaE of theorem * theorem * theorem_context
-  | D of theorem * theorem_context
-  | T of theorem * theorem_context
-  | B of theorem * theorem * theorem_context
-  | Four of theorem * theorem * theorem * theorem_context
-  | Five of theorem * theorem * theorem * theorem_context
-  | Two of theorem * theorem * theorem * theorem_context
+  | Assumption of theorem_rule * theorem_context
+  | Single of theorem_rule * theorem * theorem_context
+  | Double of theorem_rule * theorem * theorem * theorem_context
+  | Triple of theorem_rule * theorem * theorem * theorem * theorem_context
 
 (* supporting functions *)
-
 let relation = function
-  | FalseE (_, (r, _, _))
-  | Hyp (r, _, _)
-  | ConI (_, _, (r, _, _))
-  | ConE (_, (r, _, _))
-  | AltI (_, (r, _, _))
-  | AltE (_, _, _, (r, _, _))
-  | ImpI (_, (r, _, _))
-  | ImpE (_, _, (r, _, _))
-  | BoxI (_, (r, _, _))
-  | BoxE (_, _, (r, _, _))
-  | DiaI (_, _, (r, _, _))
-  | DiaE (_, _, (r, _, _))
-  | D (_, (r, _, _))
-  | T (_, (r, _, _))
-  | B (_, _, (r, _, _))
-  | Four (_, _, _, (r, _, _))
-  | Five (_, _, _, (r, _, _))
-  | Two (_, _, _, (r, _, _)) ->
+  | Assumption (_, (r, _, _))
+  | Single (_, _, (r, _, _))
+  | Double (_, _, _, (r, _, _))
+  | Triple (_, _, _, _, (r, _, _)) -> 
       r
 
 let assumptions = function
-  | FalseE (_, (_, l, _))
-  | Hyp (_, l, _)
-  | ConI (_, _, (_, l, _))
-  | ConE (_, (_, l, _))
-  | AltI (_, (_, l, _))
-  | AltE (_, _, _, (_, l, _))
-  | ImpI (_, (_, l, _))
-  | ImpE (_, _, (_, l, _))
-  | BoxI (_, (_, l, _))
-  | BoxE (_, _, (_, l, _))
-  | DiaI (_, _, (_, l, _))
-  | DiaE (_, _, (_, l, _))
-  | D (_, (_, l, _))
-  | T (_, (_, l, _))
-  | B (_, _, (_, l, _))
-  | Four (_, _, _, (_, l, _))
-  | Five (_, _, _, (_, l, _))
-  | Two (_, _, _, (_, l, _)) ->
+  | Assumption (_, (_, l, _))
+  | Single (_, _, (_, l, _))
+  | Double (_, _, _, (_, l, _))
+  | Triple (_, _, _, _, (_, l, _)) ->
       l
 
 let consequence = function
-  | FalseE (_, (_, _, x))
-  | Hyp (_, _, x)
-  | ConI (_, _, (_, _, x))
-  | ConE (_, (_, _, x))
-  | AltI (_, (_, _, x))
-  | AltE (_, _, _, (_, _, x))
-  | ImpI (_, (_, _, x))
-  | ImpE (_, _, (_, _, x))
-  | BoxI (_, (_, _, x))
-  | BoxE (_, _, (_, _, x))
-  | DiaI (_, _, (_, _, x))
-  | DiaE (_, _, (_, _, x))
-  | D (_, (_, _, x))
-  | T (_, (_, _, x))
-  | B (_, _, (_, _, x))
-  | Four (_, _, _, (_, _, x))
-  | Five (_, _, _, (_, _, x))
-  | Two (_, _, _, (_, _, x)) ->
+  | Assumption (_, (_, _, x))
+  | Single (_, _, (_, _, x))
+  | Double (_, _, _, (_, _, x))
+  | Triple (_, _, _, _, (_, _, x)) ->
       x
+
+let theorem_rule = function
+  | Assumption (rule, _)
+  | Single (rule, _, _)
+  | Double (rule, _, _, _)
+  | Triple (rule, _, _, _, _) -> rule
 
 let destruct_th th = (relation th, assumptions th, consequence th)
 
@@ -115,9 +87,35 @@ let assumptions_with_world world assumptions =
 (* printers *)
 type printing_style = LaTeX | Backup | Interactive
 
+let theorem_rule_to_string ?(style=Backup) = function
+  | FalseE -> if style = LaTeX then "(\\bot E)" else "FalseE"
+  | Hyp -> if style = LaTeX then "(Hyp)" else "Hyp"
+  | ConI -> if style = LaTeX then "(\\wedge I)" else "ConI"
+  | ConE1 -> if style = LaTeX then "(\\wedge E1)" else "ConE1"
+  | ConE2 -> if style = LaTeX then "(\\wedge E2)" else "ConE2"
+  | AltI1 -> if style = LaTeX then "(\\vee I1)" else "AltI1"
+  | AltI2 -> if style = LaTeX then "(\\vee I2)" else "AltI2"
+  | AltE -> if style = LaTeX then "(\\vee E)" else "AltE"
+  | ImpI -> if style = LaTeX then "(\\supset I)" else "ImpI"
+  | ImpE -> if style = LaTeX then "(\\supset E)" else "ImpE"
+  | BoxI -> if style = LaTeX then "(\\Box I)" else "BoxI"
+  | BoxE -> if style = LaTeX then "(\\Box E)" else "BoxE"
+  | DiaI -> if style = LaTeX then "(\\diamond I)" else "DiaI"
+  | DiaE x -> if style = LaTeX then "(\\diamond E)" else "DiaE " ^ x
+  | D (x, y) -> if style = LaTeX then "(R_D)" else "RD " ^ x ^ " " ^ y
+  | T x -> if style = LaTeX then "(R_T)" else "RT " ^ x
+  | B -> if style = LaTeX then "(R_B)" else "RB"
+  | Four -> if style = LaTeX then "(R_4)" else "Four"
+  | Five -> if style = LaTeX then "(R_5)" else "Five"
+  | Two x -> if style = LaTeX then "(R_2)" else "Two " ^ x
+  | Weak -> if style = LaTeX then "(W)" else "Weak"
+
+
 let rec pp_print_theorem ?(style = Interactive) fmtr th =
-  let print_theorems theorems name =
+  let print_theorems name rule theorems =
     pp_print_string fmtr name;
+    pp_print_cut fmtr ();
+    pp_print_string fmtr (theorem_rule_to_string ~style rule);
     List.iter
       (function
         | th ->
@@ -127,24 +125,11 @@ let rec pp_print_theorem ?(style = Interactive) fmtr th =
   in
   pp_open_vbox fmtr 1;
   (match th with
-  | FalseE (th, _) -> print_theorems [ th ] "FalseE"
-  | Hyp _ -> print_theorems [] "Hyp"
-  | ConI (th1, th2, _) -> print_theorems [ th1; th2 ] "ConI"
-  | ConE (th, _) -> print_theorems [ th ] "ConE"
-  | AltI (th, _) -> print_theorems [ th ] "AltI"
-  | AltE (th1, th2, th3, _) -> print_theorems [ th1; th2; th3 ] "AltE"
-  | ImpI (th, _) -> print_theorems [ th ] "ImpI"
-  | ImpE (th1, th2, _) -> print_theorems [ th1; th2 ] "ImpE"
-  | BoxI (th, _) -> print_theorems [ th ] "BoxI"
-  | BoxE (th1, th2, _) -> print_theorems [ th1; th2 ] "BoxE"
-  | DiaI (th1, th2, _) -> print_theorems [ th1; th2 ] "DiaI"
-  | DiaE (th1, th2, _) -> print_theorems [ th1; th2 ] "ImpE"
-  | D (th, _) -> print_theorems [ th ] "RD"
-  | T (th, _) -> print_theorems [ th ] "RT"
-  | B (th1, th2, _) -> print_theorems [ th1; th2 ] "RB"
-  | Four (th1, th2, th3, _) -> print_theorems [ th1; th2; th3 ] "Four"
-  | Five (th1, th2, th3, _) -> print_theorems [ th1; th2; th3 ] "Five"
-  | Two (th1, th2, th3, _) -> print_theorems [ th1; th2; th3 ] "Two");
+  | Assumption (rule, _) -> print_theorems "Assumption " rule []
+  | Single (rule, th1, _) -> print_theorems "Single " rule [th1]
+  | Double (rule, th1, th2, _) -> print_theorems "Double " rule [th1; th2]
+  | Triple (rule, th1, th2, th3, _) -> print_theorems "Triple " rule [th1; th2; th3]
+  );
   pp_print_cut fmtr ();
   pp_close_box fmtr ();
   let r, ass, jgmt = destruct_th th in
@@ -164,7 +149,7 @@ and pp_print_assumptions ?(style = Interactive) fmtr th =
     pp_print_string fmtr r;
     pp_print_string fmtr " :: ");
   let bullet =
-    match style with Interactive -> "•" | Backup -> "@" | LaTeX -> "\\bullet "
+    match style with Interactive -> "•" | Backup -> "@" | LaTeX -> " "
   in
   if ass = [] then pp_print_string fmtr bullet
   else (

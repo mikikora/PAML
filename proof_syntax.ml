@@ -3,7 +3,7 @@ open Format
 open Relation
 
 type context = (string * judgement) list
-type goal_desc = string * context * judgement
+type goal_desc = relation_name * context * judgement
 
 type proof =
   | Empty of goal_desc

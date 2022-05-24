@@ -1,6 +1,6 @@
 open Format
 
-type rel_properties =
+type rel_property =
   | Seriality
   | Reflexivity
   | Symmetry
@@ -16,9 +16,11 @@ let property_to_string = function
   | Euclideanness -> "Euclideanness"
   | Directedness -> "Directedness"
 
-type relation = { name : string; properties : rel_properties list }
+type relation_name = string
 
-exception Error of string * string
+type relation = { name : relation_name; properties : rel_property list }
+
+exception Error of relation_name * string
 exception RelationDoesNotExist of string
 
 let relation_map : (string, relation) Hashtbl.t = Hashtbl.create 5

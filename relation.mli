@@ -1,4 +1,4 @@
-type rel_properties =
+type rel_property =
   | Seriality
   | Reflexivity
   | Symmetry
@@ -6,19 +6,20 @@ type rel_properties =
   | Euclideanness
   | Directedness
 
-val property_to_string : rel_properties -> string
+val property_to_string : rel_property -> string
 
-type relation = { name : string; properties : rel_properties list }
+type relation_name = string
+type relation = { name : relation_name; properties : rel_property list }
 
-exception Error of string * string
+exception Error of relation_name * string
 exception RelationDoesNotExist of string
 
-val add_new_relation : string -> rel_properties list -> unit
-val add_properties : string -> rel_properties list -> unit
-val remove_properties : string -> rel_properties list -> unit
-val get_relation : string -> relation
+val add_new_relation : relation_name -> rel_property list -> unit
+val add_properties : relation_name -> rel_property list -> unit
+val remove_properties : relation_name -> rel_property list -> unit
+val get_relation : relation_name -> relation
 val get_declared_relations : unit -> relation Seq.t
-val make_relation_unmutable : string -> unit
-val has_property : rel_properties -> string -> bool
-val relation_exists : string -> bool
+val make_relation_unmutable : relation_name -> unit
+val has_property : rel_property -> relation_name -> bool
+val relation_exists : relation_name -> bool
 val pp_print_relation : Format.formatter -> relation -> unit

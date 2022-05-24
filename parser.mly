@@ -37,28 +37,20 @@
 %token UNFOCUS
 %token CONTRA
 %token UNDO
-%token ASSUMPTION
+%token ASS
+%token TRY
 
 %token SEMICOLON
 %token LBRACE
 %token RBRACE
-%token FALSEE
-%token HYP
-%token CONI
-%token CONE
-%token ALTI
-%token ALTE
-%token IMPI
-%token IMPE
-%token BOXI
-%token BOXE
-%token DIAI
+%token ASSUMPTION
+%token SINGLE
+%token DOUBLE
+%token TRIPLE
+%token <Syntax.theorem_rule>RULE
 %token DIAE
 %token RD
 %token RT
-%token RB
-%token FOUR
-%token FIVE
 %token TWO
 %token VDASH
 %token INTROCMD
@@ -78,6 +70,8 @@
 %token UNFOCUSCMD
 %token CONTRACMD
 %token ASSUMPTIONCMD
+%token CHAINCMD
+%token TRYCMD
 %token NONE
 %token SOME
 %token EMPTY_ASSMP
@@ -95,9 +89,9 @@
 %type <Syntax.judgement>judgement
 %type <string option>option(ID)
 %type <Ast.statement_raw>statement_raw
-%type <Relation.rel_properties list>property_list
-%type <Relation.rel_properties list>not_empty_property_list
-%type <Relation.rel_properties>relation_property
+%type <Relation.rel_property list>property_list
+%type <Relation.rel_property list>not_empty_property_list
+%type <Relation.rel_property>relation_property
 %type <unit option>option(COMMA)
 %type <string option>option(preceded(AS, ID))
 %type <string option>option(preceded(COMMA, ID))
@@ -118,7 +112,10 @@
 %type <string option>option_string
 %type <Syntax.judgement list>assumptions
 %type <Syntax.judgement>extended_judgement
+%type <Syntax.theorem_rule>rule
 
+%left SEMICOLON
+%right TRY
 
 %start statement
 %start backup
@@ -182,7 +179,7 @@ command:
     | SPLIT     { SplitCmd }
     | UNFOCUS   { UnfocusCmd }
     | UNDO      { UndoCmd }
-    | ASSUMPTION {AssumptionCmd}
+    | ASS {AssumptionCmd}
 
     | CONTRA WITH world=ID
     { ContraCmd world }
@@ -190,8 +187,10 @@ command:
     { FocusCmd n }
     | FOCUS
     { FocusCmd 1 }
-    | APPLY asm=ID
-    { ApplyAssmCmd asm }
+    | APPLY asm=ID world=option(preceded(WITH, ID))
+    { ApplyAssmCmd (None, None, world, asm) }
+    | APPLY asm=ID world=option(preceded(WITH, ID)) AS name1=ID COMMA name2=ID
+    { ApplyAssmCmd (Some name1, Some name2, world, asm) }
     | INTRO name=option(ID) world=option(preceded(WITH, ID))
     { IntroCmd (name, world) }
     | APPLY jgmt=judgement world=option(preceded(WITH, ID))
@@ -214,6 +213,11 @@ command:
       WITH world1=ID COMMA world2=ID COMMA world3=ID world4=option(preceded(COMMA, ID)) 
       AS name1=ID COMMA name2=ID
     { DirectCmd (Some name1, Some name2, world1, world2, world3, world4) }
+
+    | cmd1=command SEMICOLON cmd2=command
+    { ChainCmd (cmd1, cmd2) }
+    | TRY cmd=command
+    { TryCmd cmd }
 
 judgement:
     | world=ID COLON prop=imp_prop
@@ -285,42 +289,21 @@ theorem_backup:
     { (name, th) }
 
 theorem:
-    | FALSEE th=theorem thx=theorem_context
-    { FalseE (th, thx) }
-    | HYP thx=theorem_context
-    { Hyp thx }
-    | CONI th1=theorem th2=theorem thx=theorem_context
-    { ConI (th1, th2, thx)}
-    | CONE th=theorem thx=theorem_context
-    { ConE (th, thx) }
-    | ALTI th=theorem thx=theorem_context
-    { AltI (th, thx) }
-    | ALTE th1=theorem th2=theorem th3=theorem thx=theorem_context
-    { AltE (th1, th2, th3, thx) }
-    | IMPI th=theorem thx=theorem_context
-    { ImpI (th, thx) }
-    | IMPE th1=theorem th2=theorem thx=theorem_context
-    { ImpE (th1, th2, thx)}
-    | BOXI th=theorem thx=theorem_context
-    { BoxI (th, thx) }
-    | BOXE th1=theorem th2=theorem thx=theorem_context
-    { BoxE (th1, th2, thx)}
-    | DIAI th1=theorem th2=theorem thx=theorem_context
-    { DiaI (th1, th2, thx)}
-    | DIAE th1=theorem th2=theorem thx=theorem_context
-    { DiaE (th1, th2, thx)}
-    | RD th=theorem thx=theorem_context
-    { D (th, thx) }
-    | RT th=theorem thx=theorem_context
-    { T (th, thx) }
-    | RB th1=theorem th2=theorem thx=theorem_context
-    { B (th1, th2, thx) }
-    | FOUR th1=theorem th2=theorem th3=theorem thx=theorem_context
-    { Four (th1, th2, th3, thx) }
-    | FIVE th1=theorem th2=theorem th3=theorem thx=theorem_context
-    { Five (th1, th2, th3, thx) }
-    | TWO th1=theorem th2=theorem th3=theorem thx=theorem_context
-    { Two (th1, th2, th3, thx) }
+    | ASSUMPTION rule=rule thx=theorem_context
+    { Assumption (rule, thx) }
+    | SINGLE rule=rule th1=theorem thx=theorem_context
+    { Single (rule, th1, thx) }
+    | DOUBLE rule=rule th1=theorem th2=theorem thx=theorem_context
+    { Double (rule, th1, th2, thx) }
+    | TRIPLE rule=rule th1=theorem th2=theorem th3=theorem thx=theorem_context
+    { Triple (rule, th1, th2, th3, thx) }
+
+rule:
+    | RULE {$1}
+    | DIAE x=ID {DiaE x}
+    | RD x=ID y=ID {D (x, y)}
+    | RT x=ID {T x}
+    | TWO x=ID {Two x}
 
 theorem_context:
     | r=ID COLON COLON ass=assumptions VDASH jgmt=extended_judgement
@@ -342,8 +325,11 @@ proof_command_backup:
       world=option_string COMMA 
       jgmt=judgement
     { ApplyCmd (name1, name2, world, jgmt) }
-    | APPLYASSMCMD name=ID
-    { ApplyAssmCmd name }
+    | APPLYASSMCMD name1=option_string COMMA 
+      name2=option_string COMMA 
+      world=option_string COMMA 
+      name=ID
+    { ApplyAssmCmd (name1, name2, world, name) }
     | SPLITCMD { SplitCmd }
     | LEFTCMD { LeftCmd }
     | RIGHTCMD {RightCmd}
@@ -369,6 +355,10 @@ proof_command_backup:
     | UNFOCUSCMD {UnfocusCmd}
     | CONTRACMD world=ID {ContraCmd world}
     | ASSUMPTIONCMD {AssumptionCmd}
+    | CHAINCMD cmd1=proof_command_backup cmd2=proof_command_backup
+    { ChainCmd (cmd1, cmd2) }
+    | TRYCMD cmd=proof_command_backup
+    { TryCmd cmd }
 
 option_string:
     | NONE
