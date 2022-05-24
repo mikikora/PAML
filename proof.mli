@@ -27,6 +27,14 @@ val apply_assm :
   goal ->
   goal
 
+val apply_th : 
+  ?name1:string option ->
+  ?name2:string option ->
+  ?world:world option ->
+  theorem ->
+  goal ->
+  goal
+
 val split : goal -> goal
 val left : goal -> goal
 val right : goal -> goal

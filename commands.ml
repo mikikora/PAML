@@ -27,8 +27,12 @@ let interpret_command cmd =
   let rec cmd_to_proof_function : command -> goal -> goal = function
     | IntroCmd (name, world) -> intro ~name ~world
     | ApplyCmd (name1, name2, world, jgmt) -> apply ~name1 ~name2 ~world jgmt
-    | ApplyAssmCmd (name1, name2, world, name) ->
-        apply_assm ~name1 ~name2 ~world name
+    | ApplyAssmCmd (name1, name2, world, name) -> (
+        fun goal ->
+          try apply_assm ~name1 ~name2 ~world name goal
+          with Not_found -> (
+            try apply_th ~name1 ~name2 ~world (Hashtbl.find theorem_map name) goal
+            with Not_found -> raise (UnlocatedError (name ^ " not found")) ))
     | SplitCmd -> split
     | LeftCmd -> left
     | RightCmd -> right

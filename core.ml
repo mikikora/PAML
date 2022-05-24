@@ -10,7 +10,7 @@ let hyp rel ass jgmt =
   if List.mem jgmt ass then Assumption (Hyp, (rel, ass, jgmt))
   else failwith "no assumption matches goal"
 
-let weakening th jgmt_to_add =
+let weakening jgmt_to_add th =
   let rel, ass, jgmt = destruct_th th in
   Single (Weak, th, (rel, remove_duplicates @@ (jgmt_to_add :: ass), jgmt))
 
@@ -70,19 +70,14 @@ let alte th1 th2 th3 =
   else
     match jgmt1 with
     | J (x, Alt (p1, p2)) ->
-        if
-          List.mem (J (x, p1)) ass2
-          && List.mem (J (x, p2)) ass3
-          && jgmt2 = jgmt3
-        then
-          let ass =
-            List.filter
-              (function v -> v <> J (x, p1) && v <> J (x, p2))
-              (ass2 @ ass3)
-          in
-          Triple
-            (AltE, th1, th2, th3, (rel1, remove_duplicates @@ ass1 @ ass, jgmt2))
-        else failwith "can't use alte with this assumptions"
+      if jgmt1 <> jgmt2 then failwith "Judgements in theorem 2 and 3 must be the same"
+      else
+      let new_th2 = if List.mem (J(x, p1)) ass2 then th2
+      else weakening (J(x, p1)) th2 in
+      let new_th3 = if List.mem (J(x, p2)) ass3 then th3
+      else weakening (J(x, p2)) th3 in
+      let ass = List.filter (function v -> v <> J (x, p1) && v <> J (x, p2)) ((assumptions new_th2) @ (assumptions new_th3)) in
+      Triple (AltE, th1, new_th2, new_th3, (rel1, remove_duplicates @@ ass1 @ ass, jgmt2))
     | _ -> failwith "can't use alte on this judgement"
 
 let impi left_jgmt th =
@@ -94,14 +89,14 @@ let impi left_jgmt th =
   let rel, ass, jgmt = destruct_th th in
   match jgmt with
   | J (x, p) ->
-      if List.mem left_jgmt ass && x = y then
-        Single
-          ( ImpI,
-            th,
-            ( rel,
-              List.filter (function v -> v <> left_jgmt) ass,
-              J (x, Imp (prop, p)) ) )
-      else failwith "can't use impi with this proposition"
+    let new_th = if List.mem left_jgmt ass then th else weakening left_jgmt th in
+    if x = y then
+      Single (ImpI,
+      new_th,
+          ( rel,
+            List.filter (function v -> v <> left_jgmt) (assumptions new_th),
+            J (x, Imp (prop, p)) ) )
+    else failwith "can't use impi with different worlds in judgements"
   | _ -> failwith "can't use impi on this judgement"
 
 let impe th1 th2 =
@@ -121,12 +116,14 @@ let boxi world th =
   let rel, ass, jgmt = destruct_th th in
   match jgmt with
   | J (y, p) ->
-      let matching_assumptions = assumptions_with_world y ass in
+    let new_th = if List.mem (R(world,y)) ass then th else weakening (R(world,y)) th in
+    let new_ass = assumptions new_th in 
+      let matching_assumptions = assumptions_with_world y new_ass in
       if matching_assumptions = [ R (world, y) ] then
-        let new_ass =
-          List.filter (function elem -> elem <> R (world, y)) ass
+        let result_ass =
+          List.filter (function elem -> elem <> R (world, y)) new_ass
         in
-        Single (BoxI, th, (rel, new_ass, J (world, Box p)))
+        Single (BoxI, new_th, (rel, result_ass, J (world, Box p)))
       else failwith "can't use boxi with this assumptions"
   | _ -> failwith " can't use boxi on this judgement"
 
@@ -169,20 +166,21 @@ let diae y th1 th2 =
   else
     match (jgmt1, jgmt2) with
     | J (x, Dia a), J (z, b) ->
-        let matching_assumptions = assumptions_with_world y ass2 in
+      let new_th2 = if List.mem (J(y, a)) ass2 then th2 else weakening (J(y, a)) th2 in
+      let new_th2 = if List.mem (R(x, y)) ass2 then new_th2 else weakening (R(x, y)) th2 in
+      let new_ass2 = assumptions new_th2 in
+        let matching_assumptions = assumptions_with_world y new_ass2 in
         if
           List.length matching_assumptions = 2
-          && List.mem (R (x, y)) matching_assumptions
-          && List.mem (J (y, a)) matching_assumptions
         then
-          let ass2 =
-            List.filter (function v -> v <> R (x, y) && v <> J (y, a)) ass2
+          let new_ass2 =
+            List.filter (function v -> v <> R (x, y) && v <> J (y, a)) new_ass2
           in
           Double
             ( DiaE y,
               th1,
-              th2,
-              (rel1, remove_duplicates @@ ass1 @ ass2, J (z, b)) )
+              new_th2,
+              (rel1, remove_duplicates @@ ass1 @ new_ass2, J (z, b)) )
         else failwith "can't use diae with this assumptions"
     | _ -> failwith "can't use diae here"
 
@@ -191,12 +189,13 @@ let seriality x y th =
   if Relation.has_property Relation.Seriality rel then
     match jgmt with
     | J (z, prop) ->
+      let new_th = if List.mem (R(x,y)) ass then th else weakening (R(x,y)) th in
         let matching_assumptions = assumptions_with_world y ass in
         if y = x || y = z || matching_assumptions <> [ R (x, y) ] then
           failwith "can't use seriality with this assumptions"
         else
-          let new_ass = List.filter (function v -> v <> R (x, y)) ass in
-          Single (D (x, y), th, (rel, new_ass, jgmt))
+          let new_ass = List.filter (function v -> v <> R (x, y)) (assumptions new_th) in
+          Single (D (x, y), new_th, (rel, new_ass, jgmt))
     | _ -> failwith "can't use seriality here"
   else failwith "seriality can only be used with seriable relation"
 
@@ -205,9 +204,11 @@ let reflexivity x th =
   if Relation.has_property Relation.Reflexivity rel then
     match jgmt with
     | J (y, prop) ->
-        if List.mem (R (x, x)) (assumptions_with_world x ass) then
-          let new_ass = List.filter (function v -> v <> R (x, x)) ass in
-          Single (T x, th, (rel, new_ass, jgmt))
+      let new_th = if List.mem (R (x, x)) ass then th else weakening (R (x, x)) th in
+      let new_ass = assumptions new_th in
+        if List.mem (R (x, x)) (assumptions_with_world x new_ass) then
+          let new_ass = List.filter (function v -> v <> R (x, x)) new_ass in
+          Single (T x, new_th, (rel, new_ass, jgmt))
         else
           failwith
             "There is no reflexive assumption with this world in the scope"
@@ -220,10 +221,12 @@ let symmetry th1 th2 =
   if rel1 = rel2 && Relation.has_property Relation.Symmetry rel1 then
     match jgmt1 with
     | R (x, y) ->
+      let new_th2 = if List.mem (R (y, x)) ass2 then th2 else weakening (R (y, x)) th2 in
+      let ass2 = assumptions new_th2 in
         if List.mem (R (y, x)) ass2 then
           let new_ass2 = List.filter (function v -> v <> R (y, x)) ass2 in
           let new_ass = remove_duplicates @@ ass1 @ new_ass2 in
-          Double (B, th1, th2, (rel1, new_ass, jgmt2))
+          Double (B, th1, new_th2, (rel1, new_ass, jgmt2))
         else
           failwith
             "There is no symmetry assumption with this worlds in the scope"
@@ -243,10 +246,12 @@ let transitivity th1 th2 th3 =
   then
     match (jgmt1, jgmt2) with
     | R (x, y1), R (y2, z) ->
+      let new_th3 = if List.mem (R (x, z)) ass3 then th3 else weakening (R (x, z)) th3 in
+      let ass3 = assumptions new_th3 in
         if y1 = y2 && List.mem (R (x, z)) ass3 then
           let new_ass3 = List.filter (function v -> v <> R (x, z)) ass3 in
           let new_ass = remove_duplicates @@ ass1 @ ass2 @ new_ass3 in
-          Triple (Four, th1, th2, th3, (rel1, new_ass, jgmt3))
+          Triple (Four, th1, th2, new_th3, (rel1, new_ass, jgmt3))
         else failwith "Premises can't build this rule"
     | _, _ -> failwith "can't use transitivity here"
   else
@@ -264,10 +269,12 @@ let euclideanness th1 th2 th3 =
   then
     match (jgmt1, jgmt2) with
     | R (x1, y), R (x2, z) ->
+      let new_th3 = if List.mem (R (y, z)) ass3 then th3 else weakening (R (y, z)) th3 in
+      let ass3 = assumptions new_th3 in
         if x1 = x2 && List.mem (R (y, z)) ass3 then
           let new_ass3 = List.filter (function v -> v <> R (y, z)) ass3 in
           let new_ass = remove_duplicates @@ ass1 @ ass2 @ new_ass3 in
-          Triple (Five, th1, th2, th3, (rel1, new_ass, jgmt3))
+          Triple (Five, th1, th2, new_th3, (rel1, new_ass, jgmt3))
         else failwith "Premises can't build this rule"
     | _, _ -> failwith "can't use euclideanness here"
   else
@@ -285,18 +292,19 @@ let directedness w th1 th2 th3 =
   then
     match (jgmt1, jgmt2, jgmt3) with
     | R (x1, y), R (x2, z), J (v, _) ->
+      let new_th3 = if List.mem (R (y, w)) ass3 then th3 else weakening (R (y, w)) th3 in
+      let new_th3 = if List.mem (R (z, w)) ass3 then new_th3 else weakening (R (z, w)) new_th3 in
+      let ass3 = assumptions new_th3 in
         let matching_assumptions = assumptions_with_world w ass3 in
         if
           x1 = x2 && w <> x1 && w <> y && w <> z && w <> v
           && List.length matching_assumptions = 2
-          && List.mem (R (y, w)) matching_assumptions
-          && List.mem (R (z, w)) matching_assumptions
         then
           let new_ass3 =
             List.filter (function v -> v <> R (y, w) && v <> R (z, w)) ass3
           in
           let new_ass = remove_duplicates @@ ass1 @ ass2 @ new_ass3 in
-          Triple (Two w, th1, th2, th3, (rel1, new_ass, jgmt3))
+          Triple (Two w, th1, th2, new_th3, (rel1, new_ass, jgmt3))
         else failwith "Premises can't build this rule"
     | _, _, _ -> failwith "can't use directedness here"
   else
@@ -310,10 +318,14 @@ let rec validate_theorem th =
   let calculated_theorem =
     match th with
     | Assumption (rule, (rel, ass, jgmt)) -> hyp rel ass jgmt
-    | Single (rule, th1, (_, _, jgmt)) ->
+    | Single (rule, th1, (_, ass, jgmt)) ->
         if validate_theorem th1 then
           match rule with
-          | Weak -> absurd_theorem
+          | Weak -> 
+            let prev_ass = assumptions th1 in
+            if List.filter (fun elem -> not @@ List.mem elem ass) prev_ass = []
+              && List.length (List.filter (fun elem -> not @@ List.mem elem prev_ass) ass) = 1
+            then th else absurd_theorem
           | FalseE -> falsee jgmt th1
           | ConE1 -> cone1 th1
           | ConE2 -> cone2 th1
