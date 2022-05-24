@@ -29,12 +29,12 @@ type theorem_rule =
   | BoxE
   | DiaI
   | DiaE of world
-  | D of world * world
-  | T of world
-  | B
-  | Four
-  | Five
-  | Two of world
+  | D of world * world (* Seriality *)
+  | T of world (* Reflexivity *)
+  | B (* Symmetry *)
+  | Four (* Transitivity *)
+  | Five (* Euclideaness *)
+  | Two of world (* Directedness *)
   | Weak
 
 type theorem =

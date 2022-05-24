@@ -92,7 +92,7 @@ let intro ?(name = None) ?(world = None) = function
       match pf with
       | Empty (rel, ctx, jgmt) -> (
           match jgmt with
-          | J (x, Imp (p1, p2)) ->
+          | J (x, Imp (p1, p2)) -> (* Implication *)
               let new_ctx =
                 (match name with
                 | Some name -> add_to_ctx ~name
@@ -101,7 +101,7 @@ let intro ?(name = None) ?(world = None) = function
                   (J (x, p1))
               in
               (Empty (rel, new_ctx, J (x, p2)), Mid (path, impi (J (x, p1))))
-          | J (x, Box p) ->
+          | J (x, Box p) -> (* Box *)
               let w =
                 match world with
                 | None -> create_fresh_world_name ctx
@@ -118,7 +118,7 @@ let intro ?(name = None) ?(world = None) = function
                     (R (x, w))
                 in
                 (Empty (rel, new_ctx, J (w, p)), Mid (path, boxi x))
-          | J (x, Dia p) -> (
+          | J (x, Dia p) -> ( (* Diamond *)
               match world with
               | None -> raise (UnlocatedError "You must specify world")
               | Some w ->
@@ -136,17 +136,17 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
       if f = jgmt then (pf, path) (* To prove p with p we must prove p *)
       else
         match (jgmt, f) with
-        | J (y, prop), J (x, Imp (l, r)) ->
+        | J (y, prop), J (x, Imp (l, r)) -> (* Implication *)
             if x = y then
               if r = prop then
                 ( Empty (rel, ctx, f),
                   Left (path, Empty (rel, ctx, J (x, l)), impe) )
               else
-                let pf_father, path_father = apply (J (x, r)) (pf, path) in
+                let pf_father, path_father = apply ~name1 ~name2 ~world (J (x, r)) (pf, path) in
                 ( Empty (rel, ctx, f),
                   Left (path_father, Empty (rel, ctx, J (x, r)), impe) )
             else raise (UnlocatedError "This judgment describes other world")
-        | J (y, prop), J (x, Con (p1, p2)) ->
+        | J (y, prop), J (x, Con (p1, p2)) -> (* Conjuction *)
             if x = y then
               if prop = p1 then (Empty (rel, ctx, f), Mid (path, cone1))
               else if prop = p2 then (Empty (rel, ctx, f), Mid (path, cone2))
@@ -156,7 +156,7 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
             else
               raise
                 (UnlocatedError "Can't apply conjunction from different world")
-        | _, J (x, Alt (p1, p2)) ->
+        | _, J (x, Alt (p1, p2)) -> (* Alternative *)
             let new_ctx1, new_ctx2 =
               match (name1, name2) with
               | Some n1, Some n2 ->
@@ -175,12 +175,12 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
                   Empty (rel, new_ctx1, jgmt),
                   Empty (rel, new_ctx2, jgmt),
                   alte ) )
-        | J (y, p), J (x, Box bp) ->
+        | J (y, p), J (x, Box bp) -> (* Box *)
             if bp = p then
               let left, _ = _hyp_rel_jgmt (Empty (rel, ctx, R (x, y)), path) in
               (Empty (rel, ctx, f), Left (path, left, boxe x))
             else raise (UnlocatedError "Prop doesn't match")
-        | J (z, b), J (x, Dia a) ->
+        | J (z, b), J (x, Dia a) -> (* Diamond *)
             let w =
               match world with
               | None -> create_fresh_world_name ctx
@@ -208,13 +208,21 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
   | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* hyp *)
-
 let apply_assm ?(name1 = None) ?(name2 = None) ?(world = None) name (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) ->
       let jgmt_to_apply = List.assoc name ctx in
       let _, new_path = apply ~name1 ~name2 ~world jgmt_to_apply (pf, path) in
       (Leaf (hyp rel (ctx_to_ass ctx) jgmt_to_apply), new_path)
+  | _ -> raise (UnlocatedError "Not in empty goal")
+
+(* Apply already proven theorem *)
+let apply_th ?(name1=None) ?(name2=None) ?(world=None) th = function (pf, path) ->
+  match pf with
+  | Empty (rel, ctx, jgmt) ->
+    let jgmt_to_apply = consequence th in
+    let _, new_path = apply ~name1 ~name2 ~world jgmt_to_apply (pf, path) in
+    (Leaf th, new_path)
   | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* False  *)
