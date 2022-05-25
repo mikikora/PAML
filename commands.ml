@@ -37,6 +37,7 @@ let interpret_command cmd =
     | LeftCmd -> left
     | RightCmd -> right
     | ContraCmd w -> contra w
+    | SerialCmd (name, world, world1) -> serial ~name ~world world1
     | ReflCmd (name, world) -> refl ~name world
     | SymmCmd (name, world1, world2) -> symm ~name world1 world2
     | TransCmd (name, world1, world2, world3) ->
