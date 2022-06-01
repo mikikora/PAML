@@ -70,14 +70,26 @@ let alte th1 th2 th3 =
   else
     match jgmt1 with
     | J (x, Alt (p1, p2)) ->
-      if jgmt1 <> jgmt2 then failwith "Judgements in theorem 2 and 3 must be the same"
-      else
-      let new_th2 = if List.mem (J(x, p1)) ass2 then th2
-      else weakening (J(x, p1)) th2 in
-      let new_th3 = if List.mem (J(x, p2)) ass3 then th3
-      else weakening (J(x, p2)) th3 in
-      let ass = List.filter (function v -> v <> J (x, p1) && v <> J (x, p2)) ((assumptions new_th2) @ (assumptions new_th3)) in
-      Triple (AltE, th1, new_th2, new_th3, (rel1, remove_duplicates @@ ass1 @ ass, jgmt2))
+        if jgmt1 <> jgmt2 then
+          failwith "Judgements in theorem 2 and 3 must be the same"
+        else
+          let new_th2 =
+            if List.mem (J (x, p1)) ass2 then th2 else weakening (J (x, p1)) th2
+          in
+          let new_th3 =
+            if List.mem (J (x, p2)) ass3 then th3 else weakening (J (x, p2)) th3
+          in
+          let ass =
+            List.filter
+              (function v -> v <> J (x, p1) && v <> J (x, p2))
+              (assumptions new_th2 @ assumptions new_th3)
+          in
+          Triple
+            ( AltE,
+              th1,
+              new_th2,
+              new_th3,
+              (rel1, remove_duplicates @@ ass1 @ ass, jgmt2) )
     | _ -> failwith "can't use alte on this judgement"
 
 let impi left_jgmt th =
@@ -89,14 +101,17 @@ let impi left_jgmt th =
   let rel, ass, jgmt = destruct_th th in
   match jgmt with
   | J (x, p) ->
-    let new_th = if List.mem left_jgmt ass then th else weakening left_jgmt th in
-    if x = y then
-      Single (ImpI,
-      new_th,
-          ( rel,
-            List.filter (function v -> v <> left_jgmt) (assumptions new_th),
-            J (x, Imp (prop, p)) ) )
-    else failwith "can't use impi with different worlds in judgements"
+      let new_th =
+        if List.mem left_jgmt ass then th else weakening left_jgmt th
+      in
+      if x = y then
+        Single
+          ( ImpI,
+            new_th,
+            ( rel,
+              List.filter (function v -> v <> left_jgmt) (assumptions new_th),
+              J (x, Imp (prop, p)) ) )
+      else failwith "can't use impi with different worlds in judgements"
   | _ -> failwith "can't use impi on this judgement"
 
 let impe th1 th2 =
@@ -116,8 +131,10 @@ let boxi world th =
   let rel, ass, jgmt = destruct_th th in
   match jgmt with
   | J (y, p) ->
-    let new_th = if List.mem (R(world,y)) ass then th else weakening (R(world,y)) th in
-    let new_ass = assumptions new_th in 
+      let new_th =
+        if List.mem (R (world, y)) ass then th else weakening (R (world, y)) th
+      in
+      let new_ass = assumptions new_th in
       let matching_assumptions = assumptions_with_world y new_ass in
       if matching_assumptions = [ R (world, y) ] then
         let result_ass =
@@ -166,15 +183,19 @@ let diae y th1 th2 =
   else
     match (jgmt1, jgmt2) with
     | J (x, Dia a), J (z, b) ->
-      let new_th2 = if List.mem (J(y, a)) ass2 then th2 else weakening (J(y, a)) th2 in
-      let new_th2 = if List.mem (R(x, y)) ass2 then new_th2 else weakening (R(x, y)) th2 in
-      let new_ass2 = assumptions new_th2 in
+        let new_th2 =
+          if List.mem (J (y, a)) ass2 then th2 else weakening (J (y, a)) th2
+        in
+        let new_th2 =
+          if List.mem (R (x, y)) ass2 then new_th2 else weakening (R (x, y)) th2
+        in
+        let new_ass2 = assumptions new_th2 in
         let matching_assumptions = assumptions_with_world y new_ass2 in
-        if
-          List.length matching_assumptions = 2
-        then
+        if List.length matching_assumptions = 2 then
           let new_ass2 =
-            List.filter (function v -> v <> R (x, y) && v <> J (y, a)) new_ass2
+            List.filter
+              (function v -> v <> R (x, y) && v <> J (y, a))
+              new_ass2
           in
           Double
             ( DiaE y,
@@ -189,12 +210,16 @@ let seriality x y th =
   if Relation.has_property Relation.Seriality rel then
     match jgmt with
     | J (z, prop) ->
-      let new_th = if List.mem (R(x,y)) ass then th else weakening (R(x,y)) th in
+        let new_th =
+          if List.mem (R (x, y)) ass then th else weakening (R (x, y)) th
+        in
         let matching_assumptions = assumptions_with_world y ass in
         if y = x || y = z || matching_assumptions <> [ R (x, y) ] then
           failwith "can't use seriality with this assumptions"
         else
-          let new_ass = List.filter (function v -> v <> R (x, y)) (assumptions new_th) in
+          let new_ass =
+            List.filter (function v -> v <> R (x, y)) (assumptions new_th)
+          in
           Single (D (x, y), new_th, (rel, new_ass, jgmt))
     | _ -> failwith "can't use seriality here"
   else failwith "seriality can only be used with seriable relation"
@@ -204,8 +229,10 @@ let reflexivity x th =
   if Relation.has_property Relation.Reflexivity rel then
     match jgmt with
     | J (y, prop) ->
-      let new_th = if List.mem (R (x, x)) ass then th else weakening (R (x, x)) th in
-      let new_ass = assumptions new_th in
+        let new_th =
+          if List.mem (R (x, x)) ass then th else weakening (R (x, x)) th
+        in
+        let new_ass = assumptions new_th in
         if List.mem (R (x, x)) (assumptions_with_world x new_ass) then
           let new_ass = List.filter (function v -> v <> R (x, x)) new_ass in
           Single (T x, new_th, (rel, new_ass, jgmt))
@@ -221,8 +248,10 @@ let symmetry th1 th2 =
   if rel1 = rel2 && Relation.has_property Relation.Symmetry rel1 then
     match jgmt1 with
     | R (x, y) ->
-      let new_th2 = if List.mem (R (y, x)) ass2 then th2 else weakening (R (y, x)) th2 in
-      let ass2 = assumptions new_th2 in
+        let new_th2 =
+          if List.mem (R (y, x)) ass2 then th2 else weakening (R (y, x)) th2
+        in
+        let ass2 = assumptions new_th2 in
         if List.mem (R (y, x)) ass2 then
           let new_ass2 = List.filter (function v -> v <> R (y, x)) ass2 in
           let new_ass = remove_duplicates @@ ass1 @ new_ass2 in
@@ -246,8 +275,10 @@ let transitivity th1 th2 th3 =
   then
     match (jgmt1, jgmt2) with
     | R (x, y1), R (y2, z) ->
-      let new_th3 = if List.mem (R (x, z)) ass3 then th3 else weakening (R (x, z)) th3 in
-      let ass3 = assumptions new_th3 in
+        let new_th3 =
+          if List.mem (R (x, z)) ass3 then th3 else weakening (R (x, z)) th3
+        in
+        let ass3 = assumptions new_th3 in
         if y1 = y2 && List.mem (R (x, z)) ass3 then
           let new_ass3 = List.filter (function v -> v <> R (x, z)) ass3 in
           let new_ass = remove_duplicates @@ ass1 @ ass2 @ new_ass3 in
@@ -269,8 +300,10 @@ let euclideanness th1 th2 th3 =
   then
     match (jgmt1, jgmt2) with
     | R (x1, y), R (x2, z) ->
-      let new_th3 = if List.mem (R (y, z)) ass3 then th3 else weakening (R (y, z)) th3 in
-      let ass3 = assumptions new_th3 in
+        let new_th3 =
+          if List.mem (R (y, z)) ass3 then th3 else weakening (R (y, z)) th3
+        in
+        let ass3 = assumptions new_th3 in
         if x1 = x2 && List.mem (R (y, z)) ass3 then
           let new_ass3 = List.filter (function v -> v <> R (y, z)) ass3 in
           let new_ass = remove_duplicates @@ ass1 @ ass2 @ new_ass3 in
@@ -292,9 +325,14 @@ let directedness w th1 th2 th3 =
   then
     match (jgmt1, jgmt2, jgmt3) with
     | R (x1, y), R (x2, z), J (v, _) ->
-      let new_th3 = if List.mem (R (y, w)) ass3 then th3 else weakening (R (y, w)) th3 in
-      let new_th3 = if List.mem (R (z, w)) ass3 then new_th3 else weakening (R (z, w)) new_th3 in
-      let ass3 = assumptions new_th3 in
+        let new_th3 =
+          if List.mem (R (y, w)) ass3 then th3 else weakening (R (y, w)) th3
+        in
+        let new_th3 =
+          if List.mem (R (z, w)) ass3 then new_th3
+          else weakening (R (z, w)) new_th3
+        in
+        let ass3 = assumptions new_th3 in
         let matching_assumptions = assumptions_with_world w ass3 in
         if
           x1 = x2 && w <> x1 && w <> y && w <> z && w <> v
@@ -321,11 +359,17 @@ let rec validate_theorem th =
     | Single (rule, th1, (_, ass, jgmt)) ->
         if validate_theorem th1 then
           match rule with
-          | Weak -> 
-            let prev_ass = assumptions th1 in
-            if List.filter (fun elem -> not @@ List.mem elem ass) prev_ass = []
-              && List.length (List.filter (fun elem -> not @@ List.mem elem prev_ass) ass) = 1
-            then th else absurd_theorem
+          | Weak ->
+              let prev_ass = assumptions th1 in
+              if
+                List.filter (fun elem -> not @@ List.mem elem ass) prev_ass = []
+                && List.length
+                     (List.filter
+                        (fun elem -> not @@ List.mem elem prev_ass)
+                        ass)
+                   = 1
+              then th
+              else absurd_theorem
           | FalseE -> falsee jgmt th1
           | ConE1 -> cone1 th1
           | ConE2 -> cone2 th1

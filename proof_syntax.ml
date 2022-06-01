@@ -27,6 +27,19 @@ type path =
 
 type goal = proof * path
 
+(* compering paths *)
+let rec are_paths_equal path1 path2 =
+  match path1, path2 with
+  | Root, Root -> true
+  | Left(father1, _, _), Left(father2, _, _)
+  | Right(father1, _, _), Right(father2, _, _)
+  | Mid(father1, _), Mid (father2, _)
+  | Left3(father1, _, _, _), Left3(father2, _, _, _)
+  | Mid3(father1, _, _, _), Mid3(father2, _, _, _)
+  | Right3(father1, _, _, _), Right3(father2, _, _, _) ->
+    are_paths_equal father1 father2
+  | _ -> false
+
 (* For modal rules function world_in_context will be helpful *)
 let world_in_context world ctx =
   List.exists

@@ -39,6 +39,8 @@
 %token UNDO
 %token ASS
 %token TRY
+%token EXIT
+%token MODEL
 
 %token SEMICOLON
 %token LBRACE
@@ -123,7 +125,7 @@
 %%
 
 statement:
-    statement_raw DOT 
+    | statement_raw DOT 
     { locate $1 }
 
 statement_raw:
@@ -133,9 +135,9 @@ statement_raw:
     { RelProperties ($1, $2) }
     | ID UNSET not_empty_property_list
     { RelRmProperties ($1, $3) }
-    | THEOREM id=ID WITH rel=ID COMMA jgmt=judgement
+    | THEOREM id=ID rel=option(preceded(WITH, ID)) COMMA jgmt=judgement
     { TheoremDecl (id, rel, jgmt) }
-    | THEOREM id=ID WITH rel=ID COMMA prop=imp_prop
+    | THEOREM id=ID rel=option(preceded(WITH, ID)) COMMA prop=imp_prop
     { TheoremDecl (id, rel, J("x", prop)) }
     | LOAD name=FILE_NAME
     { LoadBackup name }
@@ -143,6 +145,21 @@ statement_raw:
     { SaveBackup name }
     | LATEX name=FILE_NAME
     { GenerateLatex name }
+    | EXIT { raise Lexer.Eof }
+    | MODEL system=ID rel_name=option(preceded(WITH, ID))
+    { 
+        let sys = (match system with
+          | "K" -> K
+          | "T" -> T
+          | "B" -> B
+          | "S4" -> S4
+          | "S5" -> S5
+          | _ -> (* message ignored*)
+            raise (Error.UnlocatedError "Not a proper system name") 
+        ) in
+        EnterModel (rel_name, sys) }
+    | EXIT MODEL
+    { ExitModel }
     | command
     { Command $1 }
 

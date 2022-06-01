@@ -4,10 +4,14 @@ open Format
 open Proof_syntax
 open Error
 
+let print_hints : bool ref = ref false
+
 type current_proof = P of proof | G of goal
 
 let current_proof : current_proof list ref = ref []
 let current_proof_name : string option ref = ref None
+let current_system : Relation.system option ref = ref None
+let last_declared_relation : Relation.relation_name option ref = ref None
 
 let theorem_to_prove : (string * string * Syntax.judgement) option ref =
   ref None
@@ -31,8 +35,9 @@ let interpret_command cmd =
         fun goal ->
           try apply_assm ~name1 ~name2 ~world name goal
           with Not_found -> (
-            try apply_th ~name1 ~name2 ~world (Hashtbl.find theorem_map name) goal
-            with Not_found -> raise (UnlocatedError (name ^ " not found")) ))
+            try
+              apply_th ~name1 ~name2 ~world (Hashtbl.find theorem_map name) goal
+            with Not_found -> raise (UnlocatedError (name ^ " not found"))))
     | SplitCmd -> split
     | LeftCmd -> left
     | RightCmd -> right
@@ -70,6 +75,7 @@ let interpret_command cmd =
         | G _ -> raise (UnlocatedError "Proof is not complete")
       in
       Hashtbl.add theorem_map (Option.get !current_proof_name) complete_theorem;
+      Relation.make_relation_unmutable (Syntax.relation complete_theorem);
       current_proof := [];
       current_proof_name := None;
       command_history := [];
@@ -111,20 +117,41 @@ let interpret_statement statement =
       try
         match statement.v with
         | RelDecl (name, properties) ->
-            Relation.add_new_relation name properties
+            Relation.add_new_relation name properties;
+            last_declared_relation := Some name
         | RelProperties (name, properties) ->
             Relation.add_properties name properties
         | RelRmProperties (name, properties) ->
             Relation.remove_properties name properties
-        | TheoremDecl (name, rel, jgmt) ->
-            if Relation.relation_exists rel then (
-              theorem_to_prove := Some (name, rel, jgmt);
-              current_proof := [ P (proof rel [] jgmt) ];
-              current_proof_name := Some name)
-            else
-              raise
-                (Error
-                   { v = "Relation " ^ rel ^ " not declared"; l = statement.l })
+        | TheoremDecl (name, rel_opt, jgmt) ->
+            let rel_name =
+              match rel_opt with
+              | None -> (
+                  match !last_declared_relation with
+                  | None ->
+                      raise
+                        (Error { v="No relation declared"; l=statement.l})
+                  | Some rel -> rel)
+              | Some rel ->
+                  if Relation.relation_exists rel then rel
+                  else
+                    raise
+                      (Error
+                         {
+                           v = "Relation " ^ rel ^ " not declared";
+                           l = statement.l;
+                         })
+            in
+            theorem_to_prove := Some (name, rel_name, jgmt);
+            current_proof := [ P (proof rel_name [] jgmt) ];
+            current_proof_name := Some name
+        | EnterModel (rel_opt, sys) -> 
+          last_declared_relation := Some (Relation.create_relation_for_system rel_opt sys);
+          current_system := Some sys
+        | ExitModel -> (
+            match !current_system with
+            | None -> raise (Error { v = "No model to exit"; l = statement.l })
+            | Some _ -> current_system := None)
         | _ ->
             raise
               (Error
@@ -158,6 +185,10 @@ let print_current_state () =
     print_string ">";
     print_flush ()
   in
+  (match !current_system with
+  | None -> ()
+  | Some sys -> 
+    print_endline ("Active model: " ^ (Relation.system_to_string sys) ^ "\n"));
   try
     match List.hd !current_proof with
     | P pf ->

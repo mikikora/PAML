@@ -184,7 +184,7 @@ let load_backup name =
       match theorem_to_prove with
       | None -> ()
       | Some (name, rel, jgmt, cmd_lst) ->
-          interpret_statement (Lexer.locate (TheoremDecl (name, rel, jgmt)));
+          interpret_statement (Lexer.locate (TheoremDecl (name, Some rel, jgmt)));
           List.iter
             (function
               | cmd -> interpret_statement @@ Lexer.locate (Command cmd))

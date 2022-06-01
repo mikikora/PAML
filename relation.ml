@@ -16,6 +16,26 @@ let property_to_string = function
   | Euclideanness -> "Euclideanness"
   | Directedness -> "Directedness"
 
+type system = K | D | T | B | S4 | S5
+
+let system_to_string = function
+  | K -> "K"
+  | D -> "D"
+  | T -> "T"
+  | B -> "B"
+  | S4 -> "S4"
+  | S5 -> "S5"
+
+let system_to_properties =
+  [
+    (K, []);
+    (D, [ Seriality ]);
+    (T, [ Transitivity ]);
+    (B, [ Transitivity; Symmetry ]);
+    (S4, [ Reflexivity; Transitivity ]);
+    (S5, [ Reflexivity; Euclideanness ]);
+  ]
+
 type relation_name = string
 type relation = { name : relation_name; properties : rel_property list }
 
@@ -27,7 +47,9 @@ let used_relations : string list ref = ref []
 
 let make_relation_unmutable name =
   if Hashtbl.mem relation_map name then
-    used_relations := name :: !used_relations
+    if List.mem name !used_relations then
+      used_relations := name :: !used_relations
+    else ()
   else raise (RelationDoesNotExist name)
 
 let is_relation_unmutable name = List.mem name !used_relations
@@ -37,6 +59,19 @@ let add_new_relation name properties =
   match Hashtbl.find_opt relation_map name with
   | Some r -> raise (Error (r.name, "Relation already exists"))
   | None -> Hashtbl.add relation_map name (create_relation name properties)
+
+let create_relation_name () =
+  let rec generate_name acc =
+    let name = "R" ^ String.make acc '\'' in
+    if Hashtbl.mem relation_map name then generate_name (acc + 1) else name
+  in
+  generate_name 0
+
+let create_relation_for_system name sys =
+  let name = match name with Some n -> n | None -> create_relation_name () in
+  let properties = List.assoc sys system_to_properties in
+  add_new_relation name properties;
+  name
 
 let get_relation = Hashtbl.find relation_map
 
