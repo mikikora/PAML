@@ -33,10 +33,12 @@ type statement_raw =
   | RelDecl of string * rel_property list
   | RelProperties of string * rel_property list
   | RelRmProperties of string * rel_property list
-  | TheoremDecl of string * string * judgement
+  | TheoremDecl of string * relation_name option * judgement
   | LoadBackup of string
   | SaveBackup of string
   | GenerateLatex of string
+  | EnterModel of relation_name option * system
+  | ExitModel
   | Command of command
 
 and statement = statement_raw located

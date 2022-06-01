@@ -86,7 +86,9 @@
         ("Load", LOAD);
         ("Save", SAVE);
         ("Generate", LATEX);
-        ("try", TRY)
+        ("try", TRY);
+        ("exit", EXIT);
+        ("model", MODEL)
       ]
 
   let backup_reserved_keywords = [

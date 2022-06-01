@@ -74,7 +74,7 @@ let _hyp_rel_jgmt (pf, path) : goal =
           (fun acc elem ->
             if acc <> Dummy then acc
             else if snd elem = jgmt then
-              Proof (Leaf (hyp rel [jgmt] (snd elem)), path)
+              Proof (Leaf (hyp rel [ jgmt ] (snd elem)), path)
             else Dummy)
           Dummy ctx
       in
@@ -143,11 +143,11 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
                 ( Empty (rel, ctx, f),
                   Left (path, Empty (rel, ctx, J (x, l)), impe) )
               else
-                let pf_father, path_father =
+                let _, path_father =
                   apply ~name1 ~name2 ~world (J (x, r)) (pf, path)
                 in
                 ( Empty (rel, ctx, f),
-                  Left (path_father, Empty (rel, ctx, J (x, r)), impe) )
+                  Left (path_father, Empty (rel, ctx, J (x, l)), impe) )
             else raise (UnlocatedError "This judgment describes other world")
         | J (y, prop), J (x, Con (p1, p2)) ->
             (* Conjuction *)
@@ -220,7 +220,7 @@ let apply_assm ?(name1 = None) ?(name2 = None) ?(world = None) name (pf, path) =
   | Empty (rel, ctx, jgmt) ->
       let jgmt_to_apply = List.assoc name ctx in
       let _, new_path = apply ~name1 ~name2 ~world jgmt_to_apply (pf, path) in
-      (Leaf (hyp rel [jgmt_to_apply] jgmt_to_apply), new_path)
+      (Leaf (hyp rel [ jgmt_to_apply ] jgmt_to_apply), new_path)
   | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* Apply already proven theorem *)
@@ -408,7 +408,7 @@ let assumption (pf, path) =
       | Proof p -> p)
   | _ -> raise (UnlocatedError "Not in empty goal")
 
-let chain_tactic tactic1 tactic2 goal =
+let chain_tactic tactic1 tactic2 (pf, path) =
   let rec apply_second_tactic acc pf =
     if no_goals pf < acc + 1 then pf
     else
@@ -416,7 +416,14 @@ let chain_tactic tactic1 tactic2 goal =
       let new_goals = no_goals new_pf in
       apply_second_tactic (acc + new_goals) (unfocus (new_pf, path))
   in
-  let new_pf, new_path = _get_father @@ tactic1 goal in
+  let rec unfocus_to_starting_point (res_pf, res_path) =
+    if are_paths_equal res_path path then (res_pf, res_path)
+    else
+      match path with
+      | Root -> failwith "No common father"
+      | _ -> unfocus_to_starting_point @@ _get_father (res_pf, res_path)
+  in
+  let new_pf, new_path = unfocus_to_starting_point @@ tactic1 (pf, path) in
   let result_pf = apply_second_tactic 0 new_pf in
   (result_pf, new_path)
 

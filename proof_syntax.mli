@@ -27,6 +27,7 @@ type path =
 
 type goal = proof * path
 
+val are_paths_equal : path -> path -> bool
 val world_in_context : world -> context -> bool
 val add_to_ctx : ?name:string -> context -> judgement -> context
 val no_goals : proof -> int
