@@ -39,6 +39,7 @@ type statement_raw =
   | GenerateLatex of string
   | EnterModel of relation_name option * system
   | ExitModel
+  | ToggleHints of bool
   | Command of command
 
 and statement = statement_raw located

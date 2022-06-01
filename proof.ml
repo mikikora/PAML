@@ -84,7 +84,7 @@ let _hyp_rel_jgmt (pf, path) : goal =
   | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* box, diamond and implication introduction *)
-let intro ?(name = None) ?(world = None) = function
+let intro name world = function
   | pf, path -> (
       match pf with
       | Empty (rel, ctx, jgmt) -> (
@@ -130,7 +130,7 @@ let intro ?(name = None) ?(world = None) = function
       | _ -> raise (UnlocatedError "Not in empty goal"))
 
 (* implication, conjunction and box elimination *)
-let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
+let rec apply name1 name2 world f (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) -> (
       if f = jgmt then (pf, path) (* To prove p with p we must prove p *)
@@ -144,7 +144,7 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
                   Left (path, Empty (rel, ctx, J (x, l)), impe) )
               else
                 let _, path_father =
-                  apply ~name1 ~name2 ~world (J (x, r)) (pf, path)
+                  apply name1 name2 world (J (x, r)) (pf, path)
                 in
                 ( Empty (rel, ctx, f),
                   Left (path_father, Empty (rel, ctx, J (x, l)), impe) )
@@ -215,24 +215,27 @@ let rec apply ?(name1 = None) ?(name2 = None) ?(world = None) f (pf, path) =
   | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* hyp *)
-let apply_assm ?(name1 = None) ?(name2 = None) ?(world = None) name (pf, path) =
+let apply_assm name1 name2 world name (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) ->
       let jgmt_to_apply = List.assoc name ctx in
-      let _, new_path = apply ~name1 ~name2 ~world jgmt_to_apply (pf, path) in
+      let _, new_path = apply name1 name2 world jgmt_to_apply (pf, path) in
       (Leaf (hyp rel [ jgmt_to_apply ] jgmt_to_apply), new_path)
   | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* Apply already proven theorem *)
-let apply_th ?(name1 = None) ?(name2 = None) ?(world = None) th = function
+let apply_th name1 name2 world th = function
   | pf, path -> (
       match pf with
       | Empty (rel, ctx, jgmt) ->
-          let jgmt_to_apply = consequence th in
-          let _, new_path =
-            apply ~name1 ~name2 ~world jgmt_to_apply (pf, path)
-          in
-          (Leaf th, new_path)
+          if relation th <> rel then
+            raise (UnlocatedError "Theorems use different relations")
+          else
+            let jgmt_to_apply = consequence th in
+            let _, new_path =
+              apply name1 name2 world jgmt_to_apply (pf, path)
+            in
+            (Leaf th, new_path)
       | _ -> raise (UnlocatedError "Not in empty goal"))
 
 (* False  *)
@@ -270,7 +273,7 @@ let right (pf, path) =
   | _ -> raise (UnlocatedError "Not in empty goal")
 
 (* rules for relation properties *)
-let serial ?(name = None) ?(world = None) x (pf, path) =
+let serial name world x (pf, path) =
   match pf with
   | Empty (rel, ctx, J (z, prop)) ->
       if has_property Seriality rel then
@@ -290,7 +293,7 @@ let serial ?(name = None) ?(world = None) x (pf, path) =
       else raise (UnlocatedError "Relation has no seriality property")
   | _ -> raise (UnlocatedError "Not in empty goal")
 
-let refl ?(name = None) world (pf, path) =
+let refl name world (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) ->
       if has_property Reflexivity rel then
@@ -304,7 +307,7 @@ let refl ?(name = None) world (pf, path) =
       else raise (UnlocatedError "Relation has no reflexivity property")
   | _ -> raise (UnlocatedError "Not in empty goal")
 
-let symm ?(name = None) world1 world2 (pf, path) =
+let symm name world1 world2 (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) ->
       if has_property Symmetry rel then
@@ -321,7 +324,7 @@ let symm ?(name = None) world1 world2 (pf, path) =
       else raise (UnlocatedError "Relation has no symmetry property")
   | _ -> raise (UnlocatedError "Not in empty goal")
 
-let trans ?(name = None) world1 world2 world3 (pf, path) =
+let trans name world1 world2 world3 (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) ->
       if has_property Transitivity rel then
@@ -339,7 +342,7 @@ let trans ?(name = None) world1 world2 world3 (pf, path) =
       else raise (UnlocatedError "Relation has no transitivity property")
   | _ -> raise (UnlocatedError "Not in empty goal")
 
-let eucl ?(name = None) world1 world2 world3 (pf, path) =
+let eucl name world1 world2 world3 (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) ->
       if has_property Euclideanness rel then
@@ -357,7 +360,7 @@ let eucl ?(name = None) world1 world2 world3 (pf, path) =
       else raise (UnlocatedError "Relation has no euclideanness property")
   | _ -> raise (UnlocatedError "Not in empty goal")
 
-let direct ?(name1 = None) ?(name2 = None) x y z ?(world = None) (pf, path) =
+let direct name1 name2 x y z world (pf, path) =
   match pf with
   | Empty (rel, ctx, (J (v, prop) as jgmt)) ->
       if has_property Directedness rel then
@@ -397,7 +400,7 @@ let assumption (pf, path) =
             if acc <> Dummy then acc
             else
               try
-                let applied = apply_assm (fst elem) (pf, path) in
+                let applied = apply_assm None None None (fst elem) (pf, path) in
                 if no_goals (fst @@ _get_father applied) = 0 then Proof applied
                 else Dummy
               with _ -> Dummy)

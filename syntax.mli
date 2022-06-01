@@ -44,7 +44,7 @@ type theorem =
   | Triple of theorem_rule * theorem * theorem * theorem * theorem_context
 
 (* supporting functions *)
-val relation : theorem -> string
+val relation : theorem -> Relation.relation_name
 val assumptions : theorem -> assumptions
 val consequence : theorem -> judgement
 val destruct_th : theorem -> theorem_context

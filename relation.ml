@@ -43,7 +43,7 @@ exception Error of relation_name * string
 exception RelationDoesNotExist of string
 
 let relation_map : (string, relation) Hashtbl.t = Hashtbl.create 5
-let used_relations : string list ref = ref []
+let used_relations : relation_name list ref = ref []
 
 let make_relation_unmutable name =
   if Hashtbl.mem relation_map name then
