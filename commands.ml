@@ -4,8 +4,6 @@ open Format
 open Proof_syntax
 open Error
 
-let print_hints : bool ref = ref false
-
 type current_proof = P of proof | G of goal
 
 let current_proof : current_proof list ref = ref []
@@ -29,27 +27,25 @@ let interpret_command cmd =
     | _ -> raise (UnlocatedError "Not focused")
   in
   let rec cmd_to_proof_function : command -> goal -> goal = function
-    | IntroCmd (name, world) -> intro ~name ~world
-    | ApplyCmd (name1, name2, world, jgmt) -> apply ~name1 ~name2 ~world jgmt
+    | IntroCmd (name, world) -> intro name world
+    | ApplyCmd (name1, name2, world, jgmt) -> apply name1 name2 world jgmt
     | ApplyAssmCmd (name1, name2, world, name) -> (
         fun goal ->
-          try apply_assm ~name1 ~name2 ~world name goal
+          try apply_assm name1 name2 world name goal
           with Not_found -> (
-            try
-              apply_th ~name1 ~name2 ~world (Hashtbl.find theorem_map name) goal
+            try apply_th name1 name2 world (Hashtbl.find theorem_map name) goal
             with Not_found -> raise (UnlocatedError (name ^ " not found"))))
     | SplitCmd -> split
     | LeftCmd -> left
     | RightCmd -> right
     | ContraCmd w -> contra w
-    | SerialCmd (name, world, world1) -> serial ~name ~world world1
-    | ReflCmd (name, world) -> refl ~name world
-    | SymmCmd (name, world1, world2) -> symm ~name world1 world2
-    | TransCmd (name, world1, world2, world3) ->
-        trans ~name world1 world2 world3
-    | EuclCmd (name, world1, world2, world3) -> eucl ~name world1 world2 world3
+    | SerialCmd (name, world, world1) -> serial name world world1
+    | ReflCmd (name, world) -> refl name world
+    | SymmCmd (name, world1, world2) -> symm name world1 world2
+    | TransCmd (name, world1, world2, world3) -> trans name world1 world2 world3
+    | EuclCmd (name, world1, world2, world3) -> eucl name world1 world2 world3
     | DirectCmd (name1, name2, world1, world2, world3, world) ->
-        direct ~name1 ~name2 world1 world2 world3 ~world
+        direct name1 name2 world1 world2 world3 world
     | AssumptionCmd -> assumption
     | ChainCmd (cmd1, cmd2) ->
         let translate_cmd1 = cmd_to_proof_function cmd1
@@ -178,7 +174,7 @@ let interpret_statement statement =
       | _ ->
           raise (Error { v = "Can't use that in open proof"; l = statement.l }))
 
-let print_current_state () =
+let print_current_state print_hints =
   let print_command_prompt () =
     print_newline ();
     print_string (String.make 40 '=');
@@ -197,6 +193,17 @@ let print_current_state () =
         print_command_prompt ()
     | G gl ->
         print_current_goal gl;
+        if print_hints then (
+          print_newline ();
+          print_string (String.make 40 '=');
+          print_newline ();
+          let goal_desc =
+            match gl with
+            | Empty goal_desc, _ -> goal_desc
+            | _ -> failwith "Not in empty goal"
+          in
+          print_endline "Hints:\n";
+          print_string (Hint.get_hint_string goal_desc));
         print_command_prompt ()
   with Failure _ ->
     open_vbox 0;

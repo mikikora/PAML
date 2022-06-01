@@ -5,7 +5,7 @@ open Commands
 open Error
 open File_handler
 
-exception ParseError of location
+let print_hints : bool ref = ref false
 
 let rec read_eval () =
   let lexbuf = Lexer.create_from_stdin () in
@@ -40,7 +40,8 @@ let rec interactive () =
       try
         load_backup n;
         let _ = Sys.command "clear" in
-        print_current_state ();
+        print_string "Loaded successfully";
+        print_current_state !print_hints;
         print_flush ()
       with
       | Error err -> report_error err
@@ -49,7 +50,8 @@ let rec interactive () =
       try
         create_backup n;
         let _ = Sys.command "clear" in
-        print_current_state ();
+        print_string "Saved";
+        print_current_state !print_hints;
         print_flush ()
       with UnlocatedError msg -> report_error { v = msg; l = statement.l })
   | GenerateLatex n -> (
@@ -58,21 +60,32 @@ let rec interactive () =
         let _ = Sys.command "clear" in
         print_string "Generated";
         print_newline ();
-        print_current_state ();
+        print_current_state !print_hints;
         print_flush ()
       with UnlocatedError msg -> report_error { v = msg; l = statement.l })
+  | ToggleHints b ->
+      print_hints := b;
+      let _ = Sys.command "clear" in
+      print_string "Done";
+      print_newline ();
+      print_current_state !print_hints;
+      print_flush ()
   | _ -> (
       try
         interpret_statement statement;
         let _ = Sys.command "clear" in
-        print_current_state ();
+        print_current_state !print_hints;
         print_flush ()
       with Error err -> report_error err));
   interactive ()
 
 let main () =
   let _ = Sys.command "clear" in
-  print_current_state ();
+  print_string
+    "Welcome to interactive prover for modal logics\n\
+     To turn on hints use \"Hints on\"\n\
+     To enter specific modal model type \"Model name_of_model\"\n\n";
+  print_current_state !print_hints;
   interactive ()
 
 let () = main ()

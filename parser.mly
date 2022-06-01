@@ -41,6 +41,8 @@
 %token TRY
 %token EXIT
 %token MODEL
+%token HINT
+%token <bool>ONOFF
 
 %token SEMICOLON
 %token LBRACE
@@ -160,6 +162,8 @@ statement_raw:
         EnterModel (rel_name, sys) }
     | EXIT MODEL
     { ExitModel }
+    | HINT b=ONOFF
+    { ToggleHints b }
     | command
     { Command $1 }
 
