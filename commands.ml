@@ -130,7 +130,7 @@ let interpret_statement statement =
                   match !last_declared_relation with
                   | None ->
                       raise
-                        (Error { v="No relation declared"; l=statement.l})
+                        (Error { v = "No relation declared"; l = statement.l })
                   | Some rel -> rel)
               | Some rel ->
                   if Relation.relation_exists rel then rel
@@ -145,9 +145,10 @@ let interpret_statement statement =
             theorem_to_prove := Some (name, rel_name, jgmt);
             current_proof := [ P (proof rel_name [] jgmt) ];
             current_proof_name := Some name
-        | EnterModel (rel_opt, sys) -> 
-          last_declared_relation := Some (Relation.create_relation_for_system rel_opt sys);
-          current_system := Some sys
+        | EnterModel (rel_opt, sys) ->
+            last_declared_relation :=
+              Some (Relation.create_relation_for_system rel_opt sys);
+            current_system := Some sys
         | ExitModel -> (
             match !current_system with
             | None -> raise (Error { v = "No model to exit"; l = statement.l })
@@ -187,8 +188,8 @@ let print_current_state () =
   in
   (match !current_system with
   | None -> ()
-  | Some sys -> 
-    print_endline ("Active model: " ^ (Relation.system_to_string sys) ^ "\n"));
+  | Some sys ->
+      print_endline ("Active model: " ^ Relation.system_to_string sys ^ "\n"));
   try
     match List.hd !current_proof with
     | P pf ->

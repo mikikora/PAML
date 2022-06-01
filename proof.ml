@@ -416,11 +416,12 @@ let chain_tactic tactic1 tactic2 (pf, path) =
       let new_goals = no_goals new_pf in
       apply_second_tactic (acc + new_goals) (unfocus (new_pf, path))
   in
-  let rec unfocus_to_starting_point (res_pf, res_path) = 
-    if are_paths_equal res_path path then (res_pf, res_path) else
-    match path with
-    | Root -> failwith "No common father"
-    | _ -> unfocus_to_starting_point @@ _get_father (res_pf, res_path)
+  let rec unfocus_to_starting_point (res_pf, res_path) =
+    if are_paths_equal res_path path then (res_pf, res_path)
+    else
+      match path with
+      | Root -> failwith "No common father"
+      | _ -> unfocus_to_starting_point @@ _get_father (res_pf, res_path)
   in
   let new_pf, new_path = unfocus_to_starting_point @@ tactic1 (pf, path) in
   let result_pf = apply_second_tactic 0 new_pf in

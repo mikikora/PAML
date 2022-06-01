@@ -15,8 +15,7 @@ let rec read_eval () =
         let () = create_backup "backup.bck" in
         let () = print_endline "End" in
         exit 0
-    | Error.UnlocatedError _ 
-    | Parser.Error ->
+    | Error.UnlocatedError _ | Parser.Error ->
         let loc = Lexer.get_location () in
         Printf.fprintf stderr "%s:%d:%d: Parse error" loc.loc_file loc.loc_line
           loc.loc_char;
