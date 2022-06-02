@@ -39,6 +39,7 @@
 %token UNDO
 %token ASS
 %token TRY
+%token AUTO
 %token EXIT
 %token MODEL
 %token HINT
@@ -239,6 +240,10 @@ command:
     { ChainCmd (cmd1, cmd2) }
     | TRY cmd=command
     { TryCmd cmd }
+    | AUTO n=NUM
+    { AutoCmd n }
+    | AUTO
+    { AutoCmd 5 }
 
 judgement:
     | world=ID COLON prop=imp_prop

@@ -20,39 +20,39 @@ let get_proven_theorems () = Hashtbl.to_seq theorem_map
 let get_current_proof_for_backup () = (!theorem_to_prove, !command_history)
 let add_theorem_from_backup = Hashtbl.add theorem_map
 
+let rec cmd_to_proof_function : command -> goal -> goal = function
+  | IntroCmd (name, world) -> intro name world
+  | ApplyCmd (name1, name2, world, jgmt) -> apply name1 name2 world jgmt
+  | ApplyAssmCmd (name1, name2, world, name) -> (
+      fun goal ->
+        try apply_assm name1 name2 world name goal
+        with Not_found -> (
+          try apply_th name1 name2 world (Hashtbl.find theorem_map name) goal
+          with Not_found -> raise (UnlocatedError (name ^ " not found"))))
+  | SplitCmd -> split
+  | LeftCmd -> left
+  | RightCmd -> right
+  | ContraCmd w -> contra w
+  | SerialCmd (name, world, world1) -> serial name world world1
+  | ReflCmd (name, world) -> refl name world
+  | SymmCmd (name, world1, world2) -> symm name world1 world2
+  | TransCmd (name, world1, world2, world3) -> trans name world1 world2 world3
+  | EuclCmd (name, world1, world2, world3) -> eucl name world1 world2 world3
+  | DirectCmd (name1, name2, world1, world2, world3, world) ->
+      direct name1 name2 world1 world2 world3 world
+  | AssumptionCmd -> assumption
+  | ChainCmd (cmd1, cmd2) ->
+      let translate_cmd1 = cmd_to_proof_function cmd1
+      and translate_cmd2 = cmd_to_proof_function cmd2 in
+      chain_tactic translate_cmd1 translate_cmd2
+  | TryCmd cmd -> try_tactic @@ cmd_to_proof_function cmd
+  | _ -> raise (UnlocatedError "This is not a tactic")
+
 let interpret_command cmd =
   let get_goal () =
     match List.hd !current_proof with
     | G gl -> gl
     | _ -> raise (UnlocatedError "Not focused")
-  in
-  let rec cmd_to_proof_function : command -> goal -> goal = function
-    | IntroCmd (name, world) -> intro name world
-    | ApplyCmd (name1, name2, world, jgmt) -> apply name1 name2 world jgmt
-    | ApplyAssmCmd (name1, name2, world, name) -> (
-        fun goal ->
-          try apply_assm name1 name2 world name goal
-          with Not_found -> (
-            try apply_th name1 name2 world (Hashtbl.find theorem_map name) goal
-            with Not_found -> raise (UnlocatedError (name ^ " not found"))))
-    | SplitCmd -> split
-    | LeftCmd -> left
-    | RightCmd -> right
-    | ContraCmd w -> contra w
-    | SerialCmd (name, world, world1) -> serial name world world1
-    | ReflCmd (name, world) -> refl name world
-    | SymmCmd (name, world1, world2) -> symm name world1 world2
-    | TransCmd (name, world1, world2, world3) -> trans name world1 world2 world3
-    | EuclCmd (name, world1, world2, world3) -> eucl name world1 world2 world3
-    | DirectCmd (name1, name2, world1, world2, world3, world) ->
-        direct name1 name2 world1 world2 world3 world
-    | AssumptionCmd -> assumption
-    | ChainCmd (cmd1, cmd2) ->
-        let translate_cmd1 = cmd_to_proof_function cmd1
-        and translate_cmd2 = cmd_to_proof_function cmd2 in
-        chain_tactic translate_cmd1 translate_cmd2
-    | TryCmd cmd -> try_tactic @@ cmd_to_proof_function cmd
-    | _ -> raise (UnlocatedError "This is not a tactic")
   in
   match cmd with
   | AbandonCmd ->
@@ -98,6 +98,14 @@ let interpret_command cmd =
       with Failure _ -> raise (UnlocatedError "Nothing to unfocus from"))
   | UndoCmd -> (
       try current_proof := List.tl !current_proof with Failure _ -> ())
+  | AutoCmd n ->
+      let new_pf, new_path = Auto.auto cmd_to_proof_function n (get_goal ()) in
+      if no_goals new_pf = 0 then
+        let res = unfocus (new_pf, new_path) in
+        if no_goals res = 1 then
+          current_proof := G (focus 1 res) :: !current_proof
+        else current_proof := P res :: !current_proof
+      else ()
   | ApplyAssmCmd _ | AssumptionCmd | ChainCmd _ ->
       let res = unfocus @@ (cmd_to_proof_function cmd) (get_goal ()) in
       if no_goals res = 1 then

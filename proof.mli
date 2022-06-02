@@ -3,6 +3,7 @@ open Core
 open Proof_syntax
 open Relation
 
+val get_father : goal -> goal
 val qed : proof -> theorem
 val proof : string -> context -> judgement -> proof
 val unfocus : goal -> proof

@@ -87,6 +87,7 @@
         ("Save", SAVE);
         ("Generate", LATEX);
         ("try", TRY);
+        ("auto", AUTO);
         ("exit", EXIT);
         ("model", MODEL);
         ("hints", HINT);

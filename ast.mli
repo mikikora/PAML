@@ -28,6 +28,7 @@ type command =
   | AssumptionCmd
   | ChainCmd of command * command
   | TryCmd of command
+  | AutoCmd of int
 
 type statement_raw =
   | RelDecl of string * rel_property list
