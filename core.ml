@@ -70,7 +70,7 @@ let alte th1 th2 th3 =
   else
     match jgmt1 with
     | J (x, Alt (p1, p2)) ->
-        if jgmt1 <> jgmt2 then
+        if jgmt2 <> jgmt3 then
           failwith "Judgements in theorem 2 and 3 must be the same"
         else
           let new_th2 =
@@ -183,11 +183,13 @@ let diae y th1 th2 =
   else
     match (jgmt1, jgmt2) with
     | J (x, Dia a), J (z, b) ->
+      if y = x || y = z then failwith "world must be fresh"
+      else
         let new_th2 =
           if List.mem (J (y, a)) ass2 then th2 else weakening (J (y, a)) th2
         in
         let new_th2 =
-          if List.mem (R (x, y)) ass2 then new_th2 else weakening (R (x, y)) th2
+          if List.mem (R (x, y)) ass2 then new_th2 else weakening (R (x, y)) new_th2
         in
         let new_ass2 = assumptions new_th2 in
         let matching_assumptions = assumptions_with_world y new_ass2 in

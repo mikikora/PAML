@@ -7,7 +7,7 @@ open Error
 (* Functions for creating and navigating proof *)
 let proof rel ctx jgmt = Empty (rel, ctx, jgmt)
 
-let _get_father = function
+let get_father = function
   | pf, path -> (
       match path with
       | Root -> (pf, Root)
@@ -23,7 +23,7 @@ let rec unfocus = function
       match path with
       | Root -> pf
       | _ ->
-          let pf = unfocus (_get_father (pf, path)) in
+          let pf = unfocus (get_father (pf, path)) in
           pf)
 
 let focus n pf =
@@ -401,7 +401,7 @@ let assumption (pf, path) =
             else
               try
                 let applied = apply_assm None None None (fst elem) (pf, path) in
-                if no_goals (fst @@ _get_father applied) = 0 then Proof applied
+                if no_goals (fst @@ get_father applied) = 0 then Proof applied
                 else Dummy
               with _ -> Dummy)
           Dummy ctx
@@ -415,16 +415,16 @@ let chain_tactic tactic1 tactic2 (pf, path) =
   let rec apply_second_tactic acc pf =
     if no_goals pf < acc + 1 then pf
     else
-      let new_pf, path = _get_father @@ tactic2 (focus (acc + 1) pf) in
+      let new_pf, path = get_father @@ tactic2 (focus (acc + 1) pf) in
       let new_goals = no_goals new_pf in
       apply_second_tactic (acc + new_goals) (unfocus (new_pf, path))
   in
   let rec unfocus_to_starting_point (res_pf, res_path) =
     if are_paths_equal res_path path then (res_pf, res_path)
     else
-      match path with
+      match res_path with
       | Root -> failwith "No common father"
-      | _ -> unfocus_to_starting_point @@ _get_father (res_pf, res_path)
+      | _ -> unfocus_to_starting_point @@ get_father (res_pf, res_path)
   in
   let new_pf, new_path = unfocus_to_starting_point @@ tactic1 (pf, path) in
   let result_pf = apply_second_tactic 0 new_pf in

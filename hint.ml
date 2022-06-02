@@ -178,7 +178,7 @@ let hint_to_string = function
   | IntroCmd (_, None) -> "intro"
   | IntroCmd (_, Some w) -> "intro with " ^ w
   | ContraCmd w -> "contra with " ^ w
-  | ApplyAssmCmd (_, _, Some w, name) -> "apply " ^ w ^ " with " ^ w
+  | ApplyAssmCmd (_, _, Some w, name) -> "apply " ^ name ^ " with " ^ w
   | ApplyAssmCmd (_, _, None, name) -> "apply " ^ name
   | ReflCmd (_, world) -> "refl with " ^ world
   | SymmCmd (_, x, y) -> "symm with " ^ x ^ ", " ^ y
