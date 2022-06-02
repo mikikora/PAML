@@ -17,12 +17,9 @@ let auto cmd_to_proof_function depth (pf, path) =
     in
     let rec use_auto_on_all_subgoals new_pf =
       let no_goals_start = no_goals new_pf in
-      let new_pf =
-        unfocus @@ auto_tactic (depth - 1) (focus 1 new_pf)
-      in
+      let new_pf = unfocus @@ auto_tactic (depth - 1) (focus 1 new_pf) in
       if no_goals new_pf = no_goals_start - 1 then
-        if no_goals new_pf = 0 then new_pf
-        else use_auto_on_all_subgoals new_pf
+        if no_goals new_pf = 0 then new_pf else use_auto_on_all_subgoals new_pf
       else raise CouldNotProove
     in
     if depth = 0 then (pf, path)

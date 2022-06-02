@@ -183,28 +183,29 @@ let diae y th1 th2 =
   else
     match (jgmt1, jgmt2) with
     | J (x, Dia a), J (z, b) ->
-      if y = x || y = z then failwith "world must be fresh"
-      else
-        let new_th2 =
-          if List.mem (J (y, a)) ass2 then th2 else weakening (J (y, a)) th2
-        in
-        let new_th2 =
-          if List.mem (R (x, y)) ass2 then new_th2 else weakening (R (x, y)) new_th2
-        in
-        let new_ass2 = assumptions new_th2 in
-        let matching_assumptions = assumptions_with_world y new_ass2 in
-        if List.length matching_assumptions = 2 then
-          let new_ass2 =
-            List.filter
-              (function v -> v <> R (x, y) && v <> J (y, a))
-              new_ass2
+        if y = x || y = z then failwith "world must be fresh"
+        else
+          let new_th2 =
+            if List.mem (J (y, a)) ass2 then th2 else weakening (J (y, a)) th2
           in
-          Double
-            ( DiaE y,
-              th1,
-              new_th2,
-              (rel1, remove_duplicates @@ ass1 @ new_ass2, J (z, b)) )
-        else failwith "can't use diae with this assumptions"
+          let new_th2 =
+            if List.mem (R (x, y)) ass2 then new_th2
+            else weakening (R (x, y)) new_th2
+          in
+          let new_ass2 = assumptions new_th2 in
+          let matching_assumptions = assumptions_with_world y new_ass2 in
+          if List.length matching_assumptions = 2 then
+            let new_ass2 =
+              List.filter
+                (function v -> v <> R (x, y) && v <> J (y, a))
+                new_ass2
+            in
+            Double
+              ( DiaE y,
+                th1,
+                new_th2,
+                (rel1, remove_duplicates @@ ass1 @ new_ass2, J (z, b)) )
+          else failwith "can't use diae with this assumptions"
     | _ -> failwith "can't use diae here"
 
 let seriality x y th =
