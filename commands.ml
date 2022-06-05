@@ -15,10 +15,10 @@ let theorem_to_prove : (string * string * Syntax.judgement) option ref =
   ref None
 
 let command_history : command list ref = ref []
-let theorem_map : (string, Syntax.theorem) Hashtbl.t = Hashtbl.create 5
-let get_proven_theorems () = Hashtbl.to_seq theorem_map
+let theorem_map : (string * Syntax.theorem) list ref = ref []
+let get_proven_theorems () = List.rev !theorem_map
 let get_current_proof_for_backup () = (!theorem_to_prove, !command_history)
-let add_theorem_from_backup = Hashtbl.add theorem_map
+let add_theorem_from_backup name theorem = theorem_map := (name, theorem) :: !theorem_map
 
 let rec cmd_to_proof_function : command -> goal -> goal = function
   | IntroCmd (name, world) -> intro name world
@@ -27,7 +27,7 @@ let rec cmd_to_proof_function : command -> goal -> goal = function
       fun goal ->
         try apply_assm name1 name2 world name goal
         with Not_found -> (
-          try apply_th name1 name2 world (Hashtbl.find theorem_map name) [] goal
+          try apply_th name1 name2 world (List.assoc name !theorem_map) [] goal
           with Not_found -> raise (UnlocatedError (name ^ " not found"))))
   | SplitCmd -> split
   | LeftCmd -> left
@@ -71,7 +71,7 @@ let interpret_command cmd =
         | P pf -> qed pf
         | G _ -> raise (UnlocatedError "Proof is not complete")
       in
-      Hashtbl.add theorem_map (Option.get !current_proof_name) complete_theorem;
+      theorem_map := ((Option.get !current_proof_name), complete_theorem) :: !theorem_map;
       Relation.make_relation_unmutable (Syntax.relation complete_theorem);
       current_proof := [];
       current_proof_name := None;
@@ -219,8 +219,8 @@ let print_outside_proof_mode () =
   print_newline ();
   print_string "Complited theorems:";
   print_newline ();
-  Hashtbl.iter
-    (fun name th ->
+  List.iter
+    (function name, th ->
       match Syntax.consequence th with
       | J (_, prop) ->
           open_hbox ();
@@ -229,7 +229,7 @@ let print_outside_proof_mode () =
           close_box ();
           print_newline ()
       | _ -> failwith "Absurd")
-    theorem_map;
+    !theorem_map;
   close_box ()
 
 let print_current_state print_hints =

@@ -148,7 +148,7 @@ let create_backup name =
 
   pp_print_string fmtr ";;\n";
 
-  Seq.iter
+  List.iter
     (fun (name, th) ->
       pp_open_vbox fmtr 1;
       pp_print_string fmtr "{";
@@ -284,7 +284,7 @@ let create_latex name =
   in
   let fmtr = formatter_of_out_channel ch_out in
   pp_print_string fmtr header;
-  Seq.iter
+  List.iter
     (function
       | name, theorem ->
           pp_print_string fmtr ("\\section{" ^ name ^ "}");
