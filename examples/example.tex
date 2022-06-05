@@ -1,0 +1,361 @@
+
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[hdivide={1.25cm,*,1.25cm},vdivide={2cm,*,1.5cm},landscape]{geometry}
+\usepackage{bussproofs}
+\usepackage{latexsym}
+\begin{document}
+\section{axiom5}
+Relation R has properties: \begin{prooftree}\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$
+x: \diamond A \supset  \Box B;
+ \vdash x: \diamond A \supset  \Box B$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$y: A;  \vdash y: A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xRy;  \vdash xRy$}
+\RightLabel{\scriptsize$(\diamond I)$}
+\BinaryInfC{$y: A; xRy;  \vdash 
+x: \diamond A$}
+\RightLabel{\scriptsize$(\supset E)$}
+\BinaryInfC{$x: \diamond A \supset  \Box B;
+                                                   y: A;
+                                                   xRy;
+                                                    \vdash x: \Box B$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xRy;  \vdash xRy$}
+\RightLabel{\scriptsize$(\Box E)$}
+\BinaryInfC{$x: \diamond A \supset  \Box B;
+                                                y: A;
+                                                xRy;
+                                                 \vdash y: B$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$x: \diamond A \supset  \Box B;
+                                                  xRy;
+                                                   \vdash y: A \supset  B$}
+\RightLabel{\scriptsize$(\Box I)$}
+\UnaryInfC{$x: \diamond A \supset  \Box B;  \vdash 
+x: \Box (A \supset  B)$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$  \vdash x: (
+                                                               \diamond A
+                                                               \supset 
+                                                               \Box B
+                                                               ) \supset  \Box (
+                                                                    A
+                                                                    \supset 
+                                                                    B
+                                                                    )$}
+\end{prooftree}\section{axiom11}
+Relation R2 has properties: Directedness, \begin{prooftree}\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$
+x: \diamond \Box A;
+ \vdash x: \diamond \Box A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xR2y;  \vdash xR2y$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xR2z;  \vdash xR2z$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$z: \Box A;  \vdash 
+z: \Box A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$zR2w;  \vdash zR2w$}
+\RightLabel{\scriptsize$(\Box E)$}
+\BinaryInfC{$z: \Box A; zR2w;  \vdash 
+w: A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$yR2w;  \vdash yR2w$}
+\RightLabel{\scriptsize$(\diamond I)$}
+\BinaryInfC{$z: \Box A; zR2w; yR2w;  \vdash 
+y: \diamond A$}
+\RightLabel{\scriptsize$(R_2)$}
+\TrinaryInfC{$xR2y; xR2z; z: \Box A;  \vdash 
+y: \diamond A$}
+\RightLabel{\scriptsize$(\diamond E)$}
+\BinaryInfC{$x: \diamond \Box A; xR2y;  \vdash 
+y: \diamond A$}
+\RightLabel{\scriptsize$(\Box I)$}
+\UnaryInfC{$x: \diamond \Box A;  \vdash 
+x: \Box \diamond A$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$  \vdash x: \diamond \Box A \supset  \Box \diamond A$}
+\end{prooftree}\section{axiom4}
+Relation R has properties: \begin{prooftree}\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$
+x: \diamond (A \vee  B);
+ \vdash x: \diamond (A \vee  B)$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$y: A \vee  B;  \vdash 
+y: A \vee  B$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$y: A;  \vdash y: A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xRy;  \vdash xRy$}
+\RightLabel{\scriptsize$(\diamond I)$}
+\BinaryInfC{$y: A; xRy;  \vdash 
+x: \diamond A$}
+\RightLabel{\scriptsize$(\vee I1)$}
+\UnaryInfC{$y: A; xRy;  \vdash x: \diamond A \vee  \diamond B$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$y: B;  \vdash y: B$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xRy;  \vdash xRy$}
+\RightLabel{\scriptsize$(\diamond I)$}
+\BinaryInfC{$y: B; xRy;  \vdash 
+x: \diamond B$}
+\RightLabel{\scriptsize$(\vee I2)$}
+\UnaryInfC{$y: B; xRy;  \vdash x: \diamond A \vee  \diamond B$}
+\RightLabel{\scriptsize$(\vee E)$}
+\TrinaryInfC{$y: A \vee  B; xRy;  \vdash 
+x: \diamond A \vee  \diamond B$}
+\RightLabel{\scriptsize$(\diamond E)$}
+\BinaryInfC{$x: \diamond (A \vee  B);  \vdash 
+x: \diamond A \vee  \diamond B$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$  \vdash x: \diamond (
+                                                                    A
+                                                                    \vee 
+                                                                    B
+                                                                    ) \supset  \diamond A \vee  \diamond B$}
+\end{prooftree}\section{axiom2}
+Relation R has properties: \begin{prooftree}\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$
+x: \diamond A;
+ \vdash x: \diamond A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$x: \Box (A \supset  B);  \vdash 
+x: \Box (A \supset  B)$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xRy;  \vdash xRy$}
+\RightLabel{\scriptsize$(\Box E)$}
+\BinaryInfC{$x: \Box (A \supset  B); xRy;  \vdash 
+y: A \supset  B$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$y: A;  \vdash y: A$}
+\RightLabel{\scriptsize$(\supset E)$}
+\BinaryInfC{$x: \Box (A \supset  B);
+                                                   xRy;
+                                                   y: A;
+                                                    \vdash y: B$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xRy;  \vdash xRy$}
+\RightLabel{\scriptsize$(\diamond I)$}
+\BinaryInfC{$x: \Box (A \supset  B);
+                                                    xRy;
+                                                    y: A;
+                                                     \vdash x: \diamond B$}
+\RightLabel{\scriptsize$(\diamond E)$}
+\BinaryInfC{$x: \diamond A;
+                                                    x: \Box (A \supset  B);
+                                                     \vdash x: \diamond B$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$x: \Box (A \supset  B);  \vdash 
+x: \diamond A \supset  \diamond B$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$  \vdash x: \Box (
+                                                                    A
+                                                                    \supset 
+                                                                    B
+                                                                    ) \supset  \diamond A \supset  \diamond B$}
+\end{prooftree}\section{axiom10}
+Relation R5 has properties: Euclideanness, \begin{prooftree}\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$
+x: \diamond A;
+ \vdash x: \diamond A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xR5y;  \vdash xR5y$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xR5z;  \vdash xR5z$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$z: A;  \vdash z: A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$yR5z;  \vdash yR5z$}
+\RightLabel{\scriptsize$(\diamond I)$}
+\BinaryInfC{$z: A; yR5z;  \vdash 
+y: \diamond A$}
+\RightLabel{\scriptsize$(R_5)$}
+\TrinaryInfC{$xR5y; xR5z; z: A;  \vdash 
+y: \diamond A$}
+\RightLabel{\scriptsize$(\diamond E)$}
+\BinaryInfC{$x: \diamond A; xR5y;  \vdash 
+y: \diamond A$}
+\RightLabel{\scriptsize$(\Box I)$}
+\UnaryInfC{$x: \diamond A;  \vdash 
+x: \Box \diamond A$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$  \vdash x: \diamond A \supset  \Box \diamond A$}
+\end{prooftree}\section{axiom1}
+Relation R has properties: \begin{prooftree}\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$
+x: \Box (A \supset  B);
+ \vdash x: \Box (A \supset  B)$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xRy;  \vdash xRy$}
+\RightLabel{\scriptsize$(\Box E)$}
+\BinaryInfC{$x: \Box (A \supset  B); xRy;  \vdash 
+y: A \supset  B$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$x: \Box A;  \vdash 
+x: \Box A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xRy;  \vdash xRy$}
+\RightLabel{\scriptsize$(\Box E)$}
+\BinaryInfC{$x: \Box A; xRy;  \vdash 
+y: A$}
+\RightLabel{\scriptsize$(\supset E)$}
+\BinaryInfC{$x: \Box (A \supset  B);
+                                                   xRy;
+                                                   x: \Box A;
+                                                    \vdash y: B$}
+\RightLabel{\scriptsize$(\Box I)$}
+\UnaryInfC{$x: \Box (A \supset  B);
+                                               x: \Box A;
+                                                \vdash x: \Box B$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$x: \Box (A \supset  B);  \vdash 
+x: \Box A \supset  \Box B$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$  \vdash x: \Box (
+                                                                    A
+                                                                    \supset 
+                                                                    B
+                                                                    ) \supset  \Box A \supset  \Box B$}
+\end{prooftree}\section{axiom7}
+Relation RT has properties: Reflexivity, \begin{prooftree}\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$
+x: \Box A;
+ \vdash x: \Box A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xRTx;  \vdash xRTx$}
+\RightLabel{\scriptsize$(\Box E)$}
+\BinaryInfC{$x: \Box A; xRTx;  \vdash 
+x: A$}
+\RightLabel{\scriptsize$(R_T)$}
+\UnaryInfC{$x: \Box A;  \vdash x: A$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$  \vdash x: \Box A \supset  A$}
+\end{prooftree}\section{axiom8}
+Relation RB has properties: Symmetry, \begin{prooftree}\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$
+xRBy;
+ \vdash xRBy$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$x: A;  \vdash x: A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$yRBx;  \vdash yRBx$}
+\RightLabel{\scriptsize$(\diamond I)$}
+\BinaryInfC{$x: A; yRBx;  \vdash 
+y: \diamond A$}
+\RightLabel{\scriptsize$(R_B)$}
+\BinaryInfC{$xRBy; x: A;  \vdash y: \diamond A$}
+\RightLabel{\scriptsize$(\Box I)$}
+\UnaryInfC{$x: A;  \vdash x: \Box \diamond A$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$  \vdash x: A \supset  \Box \diamond A$}
+\end{prooftree}\section{axiom9}
+Relation R4 has properties: Transitivity, \begin{prooftree}\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$
+xR4y;
+ \vdash xR4y$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$yR4z;  \vdash yR4z$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$x: \Box A;  \vdash 
+x: \Box A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xR4z;  \vdash xR4z$}
+\RightLabel{\scriptsize$(\Box E)$}
+\BinaryInfC{$x: \Box A; xR4z;  \vdash 
+z: A$}
+\RightLabel{\scriptsize$(R_4)$}
+\TrinaryInfC{$xR4y; yR4z; x: \Box A;  \vdash 
+z: A$}
+\RightLabel{\scriptsize$(\Box I)$}
+\UnaryInfC{$xR4y; x: \Box A;  \vdash 
+y: \Box A$}
+\RightLabel{\scriptsize$(\Box I)$}
+\UnaryInfC{$x: \Box A;  \vdash x: \Box \Box A$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$  \vdash x: \Box A \supset  \Box \Box A$}
+\end{prooftree}\section{axiom6}
+Relation RD has properties: Seriality, \begin{prooftree}\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$
+x: \Box A;
+ \vdash x: \Box A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xRDy;  \vdash xRDy$}
+\RightLabel{\scriptsize$(\Box E)$}
+\BinaryInfC{$x: \Box A; xRDy;  \vdash 
+y: A$}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$xRDy;  \vdash xRDy$}
+\RightLabel{\scriptsize$(\diamond I)$}
+\BinaryInfC{$x: \Box A; xRDy;  \vdash 
+x: \diamond A$}
+\RightLabel{\scriptsize$(R_D)$}
+\UnaryInfC{$x: \Box A;  \vdash x: \diamond A$}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$  \vdash x: \Box A \supset  \diamond A$}
+\end{prooftree}\section{axiom3}
+Relation R has properties: \begin{prooftree}\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$
+x: \diamond \bot ;
+ \vdash x: \diamond \bot $}
+\AxiomC{}
+\RightLabel{\scriptsize$(Hyp)$}
+\UnaryInfC{$y: \bot ;  \vdash 
+y: \bot $}
+\RightLabel{\scriptsize$(\bot E)$}
+\UnaryInfC{$y: \bot ;  \vdash x: \bot $}
+\RightLabel{\scriptsize$(W)$}
+\UnaryInfC{$xRy; y: \bot ;  \vdash x: \bot $}
+\RightLabel{\scriptsize$(\diamond E)$}
+\BinaryInfC{$x: \diamond \bot ;  \vdash 
+x: \bot $}
+\RightLabel{\scriptsize$(\supset I)$}
+\UnaryInfC{$  \vdash x: \diamond \bot  \supset  \bot $}
+\end{prooftree}
+\end{document}

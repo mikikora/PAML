@@ -202,7 +202,7 @@ let load_backup name =
           | name, th ->
               if Core.validate_theorem th && assumptions th = [] then
                 add_theorem_from_backup name th
-              else raise (UnlocatedError ("Theorem" ^ name ^ " isn't true")))
+              else raise (UnlocatedError ("Theorem " ^ name ^ " isn't true")))
         theorem_list;
       match theorem_to_prove with
       | None -> ()
@@ -273,7 +273,7 @@ let create_latex name =
   let header =
     "\n\
      \\documentclass[a4paper,10pt]{article}\n\n\
-     \\usepackage[hdivide={1.25cm,*,1.25cm},vdivide={2cm,*,1.5cm}]{geometry}\n\
+     \\usepackage[hdivide={1.25cm,*,1.25cm},vdivide={2cm,*,1.5cm},landscape]{geometry}\n\
      \\usepackage{bussproofs}\n\
      \\usepackage{latexsym}\n\
      \\begin{document}\n"

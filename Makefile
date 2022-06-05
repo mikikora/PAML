@@ -46,7 +46,7 @@ clean:
 	rm -rdf _build
 
 nuke: clean
-	rm -f $(target)
+	rm -f $(target) *.tex *.bck
 
 install: nuke all 
 
