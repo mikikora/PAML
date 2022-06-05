@@ -57,14 +57,17 @@ let get_apply_hints (r, ctx, jgmt) =
         (List.fold_left
            (fun acc (name, jgmt') ->
              match jgmt' with
-             | J (y, F) -> 
-              let apply = try
-                let _ =
-                  apply_assm None None None name (Empty (r, ctx, jgmt), Root)
-                in [ApplyAssmCmd (None, None, None, name); ContraCmd y]
-              with Error.UnlocatedError _ -> [ContraCmd y]
-              in
-              apply @ acc (* contra *)
+             | J (y, F) ->
+                 let apply =
+                   try
+                     let _ =
+                       apply_assm None None None name
+                         (Empty (r, ctx, jgmt), Root)
+                     in
+                     [ ApplyAssmCmd (None, None, None, name); ContraCmd y ]
+                   with Error.UnlocatedError _ -> [ ContraCmd y ]
+                 in
+                 apply @ acc (* contra *)
              | J (_, Dia p1) ->
                  (* diamond *)
                  let used_worlds = x :: worlds_in_context ctx in

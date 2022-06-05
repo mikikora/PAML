@@ -8,7 +8,12 @@ type command =
   | IntroCmd of string option * world option
   | ApplyCmd of string option * string option * world option * judgement
   | ApplyAssmCmd of string option * string option * world option * string
-  | ApplyThCmd of string option * string option * world option * string * (string * prop) list
+  | ApplyThCmd of
+      string option
+      * string option
+      * world option
+      * string
+      * (string * prop) list
   | SplitCmd
   | LeftCmd
   | RightCmd

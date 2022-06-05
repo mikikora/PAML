@@ -19,7 +19,13 @@ val apply_assm :
   string option -> string option -> world option -> string -> goal -> goal
 
 val apply_th :
-  string option -> string option -> world option -> theorem -> (string * prop) list -> goal -> goal
+  string option ->
+  string option ->
+  world option ->
+  theorem ->
+  (string * prop) list ->
+  goal ->
+  goal
 
 val split : goal -> goal
 val left : goal -> goal

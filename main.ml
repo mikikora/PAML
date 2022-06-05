@@ -75,13 +75,13 @@ let rec interactive () =
       print_current_state !print_hints;
       print_flush ()
   | ShowCmd ->
-    clear_screen ();
-    print_outside_proof_mode ();
-    print_string (String.init 40 (fun n -> if n mod 2 = 1 then '<' else '>'));
-    print_newline ();
-    print_flush ();
-    print_current_state !print_hints;
-    print_flush ()
+      clear_screen ();
+      print_outside_proof_mode ();
+      print_string (String.init 40 (fun n -> if n mod 2 = 1 then '<' else '>'));
+      print_newline ();
+      print_flush ();
+      print_current_state !print_hints;
+      print_flush ()
   | _ -> (
       try
         interpret_statement statement;

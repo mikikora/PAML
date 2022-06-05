@@ -227,39 +227,36 @@ let apply_assm name1 name2 world name (pf, path) =
 let rec convert_prop assignments = function
   | F -> F
   | Var str -> (
-    match List.assoc_opt str assignments with
-    | Some p -> p
-    | None -> Var str
-  )
+      match List.assoc_opt str assignments with Some p -> p | None -> Var str)
   | Con (p1, p2) ->
-    let new_p1 = convert_prop assignments p1
-    and new_p2 = convert_prop assignments p2 in
-    Con (new_p1, new_p2)
+      let new_p1 = convert_prop assignments p1
+      and new_p2 = convert_prop assignments p2 in
+      Con (new_p1, new_p2)
   | Alt (p1, p2) ->
-    let new_p1 = convert_prop assignments p1
-    and new_p2 = convert_prop assignments p2 in
-    Alt (new_p1, new_p2)
+      let new_p1 = convert_prop assignments p1
+      and new_p2 = convert_prop assignments p2 in
+      Alt (new_p1, new_p2)
   | Imp (p1, p2) ->
-    let new_p1 = convert_prop assignments p1
-    and new_p2 = convert_prop assignments p2 in
-    Imp (new_p1, new_p2)
+      let new_p1 = convert_prop assignments p1
+      and new_p2 = convert_prop assignments p2 in
+      Imp (new_p1, new_p2)
   | Box p ->
-    let new_p = convert_prop assignments p in
-    Box new_p
+      let new_p = convert_prop assignments p in
+      Box new_p
   | Dia p ->
-    let new_p = convert_prop assignments p in
-    Dia new_p
+      let new_p = convert_prop assignments p in
+      Dia new_p
 
 let convert_judgement assignments = function
-  | J(x, prop) -> 
-    let world = 
-      match List.assoc_opt "world" assignments with
-      | Some (Var w) -> w
-      | Some _ -> failwith "Name of world not a var"
-      | None -> "x"
-    in
-    let converted_prop = convert_prop assignments prop in
-    J(world, converted_prop)
+  | J (x, prop) ->
+      let world =
+        match List.assoc_opt "world" assignments with
+        | Some (Var w) -> w
+        | Some _ -> failwith "Name of world not a var"
+        | None -> "x"
+      in
+      let converted_prop = convert_prop assignments prop in
+      J (world, converted_prop)
   | _ -> raise (UnlocatedError "can't apply this judgement")
 
 (* Apply already proven theorem *)

@@ -6,27 +6,29 @@ open Ast
 open Error
 
 let pp_print_option fmtr a_fun = function
-  | None -> pp_print_string fmtr "None"
+  | None -> pp_print_string fmtr "^None"
   | Some a ->
-      pp_print_string fmtr "Some ";
+      pp_print_string fmtr "^Some ";
       a_fun fmtr a
 
 let pp_print_assignments fmtr assignments =
-  List.iter (function name, prop -> 
-    pp_print_string fmtr name;
-    pp_print_string fmtr ", ";
-    pp_print_prop ~style:Backup fmtr prop;)
+  List.iter
+    (function
+      | name, prop ->
+          pp_print_string fmtr name;
+          pp_print_string fmtr ", ";
+          pp_print_prop ~style:Backup fmtr prop)
     assignments
 
 let rec pp_print_command fmtr = function
   | UndoCmd | AbandonCmd | QedCmd -> ()
   | IntroCmd (name, world) ->
-      pp_print_string fmtr "IntroCmd ";
+      pp_print_string fmtr "^IntroCmd ";
       pp_print_option fmtr pp_print_string name;
       pp_print_string fmtr ", ";
       pp_print_option fmtr pp_print_string world
   | ApplyCmd (name1, name2, world, jgmt) ->
-      pp_print_string fmtr "ApplyCmd ";
+      pp_print_string fmtr "^ApplyCmd ";
       pp_print_option fmtr pp_print_string name1;
       pp_print_string fmtr ", ";
       pp_print_option fmtr pp_print_string name2;
@@ -35,7 +37,7 @@ let rec pp_print_command fmtr = function
       pp_print_string fmtr ", ";
       pp_print_judgement ~style:Backup fmtr jgmt
   | ApplyAssmCmd (name1, name2, world, name) ->
-      pp_print_string fmtr "ApplyAssmCmd ";
+      pp_print_string fmtr "^ApplyAssmCmd ";
       pp_print_option fmtr pp_print_string name1;
       pp_print_string fmtr ", ";
       pp_print_option fmtr pp_print_string name2;
@@ -43,8 +45,8 @@ let rec pp_print_command fmtr = function
       pp_print_option fmtr pp_print_string world;
       pp_print_string fmtr ", ";
       pp_print_string fmtr name
-    | ApplyThCmd (name1, name2, world, name, assignments) ->
-      pp_print_string fmtr "ApplyThCmd ";
+  | ApplyThCmd (name1, name2, world, name, assignments) ->
+      pp_print_string fmtr "^ApplyThCmd ";
       pp_print_option fmtr pp_print_string name1;
       pp_print_string fmtr ", ";
       pp_print_option fmtr pp_print_string name2;
@@ -54,30 +56,30 @@ let rec pp_print_command fmtr = function
       pp_print_string fmtr name;
       pp_print_string fmtr ", ";
       pp_print_assignments fmtr assignments
-  | SplitCmd -> pp_print_string fmtr "SplitCmd "
-  | LeftCmd -> pp_print_string fmtr "LeftCmd "
-  | RightCmd -> pp_print_string fmtr "RightCmd "
+  | SplitCmd -> pp_print_string fmtr "^SplitCmd "
+  | LeftCmd -> pp_print_string fmtr "^LeftCmd "
+  | RightCmd -> pp_print_string fmtr "^RightCmd "
   | SerialCmd (name, world1, world2) ->
-      pp_print_string fmtr "SerialCmd ";
+      pp_print_string fmtr "^SerialCmd ";
       pp_print_option fmtr pp_print_string name;
       pp_print_string fmtr ", ";
       pp_print_option fmtr pp_print_string world1;
       pp_print_string fmtr ", ";
       pp_print_string fmtr world2
   | ReflCmd (name, world) ->
-      pp_print_string fmtr "ReflCmd ";
+      pp_print_string fmtr "^ReflCmd ";
       pp_print_option fmtr pp_print_string name;
       pp_print_string fmtr ", ";
       pp_print_string fmtr world
   | SymmCmd (name, world1, world2) ->
-      pp_print_string fmtr "SymmCmd ";
+      pp_print_string fmtr "^SymmCmd ";
       pp_print_option fmtr pp_print_string name;
       pp_print_string fmtr ", ";
       pp_print_string fmtr world1;
       pp_print_string fmtr ", ";
       pp_print_string fmtr world2
   | TransCmd (name, world1, world2, world3) ->
-      pp_print_string fmtr "TransCmd ";
+      pp_print_string fmtr "^TransCmd ";
       pp_print_option fmtr pp_print_string name;
       pp_print_string fmtr ", ";
       pp_print_string fmtr world1;
@@ -86,7 +88,7 @@ let rec pp_print_command fmtr = function
       pp_print_string fmtr ", ";
       pp_print_string fmtr world3
   | EuclCmd (name, world1, world2, world3) ->
-      pp_print_string fmtr "EuclCmd ";
+      pp_print_string fmtr "^EuclCmd ";
       pp_print_option fmtr pp_print_string name;
       pp_print_string fmtr ", ";
       pp_print_string fmtr world1;
@@ -95,7 +97,7 @@ let rec pp_print_command fmtr = function
       pp_print_string fmtr ", ";
       pp_print_string fmtr world3
   | DirectCmd (name1, name2, world1, world2, world3, world4) ->
-      pp_print_string fmtr "DirectCmd ";
+      pp_print_string fmtr "^DirectCmd ";
       pp_print_option fmtr pp_print_string name1;
       pp_print_string fmtr ", ";
       pp_print_option fmtr pp_print_string name2;
@@ -107,17 +109,17 @@ let rec pp_print_command fmtr = function
       pp_print_string fmtr world3;
       pp_print_string fmtr ", ";
       pp_print_option fmtr pp_print_string world4
-  | ProofCmd -> pp_print_string fmtr "ProofCmd "
+  | ProofCmd -> pp_print_string fmtr "^ProofCmd "
   | FocusCmd n ->
-      pp_print_string fmtr "FocusCmd ";
+      pp_print_string fmtr "^FocusCmd ";
       pp_print_int fmtr n
-  | UnfocusCmd -> pp_print_string fmtr "UnfocusCmd "
+  | UnfocusCmd -> pp_print_string fmtr "^UnfocusCmd "
   | ContraCmd world ->
-      pp_print_string fmtr "ContraCmd ";
+      pp_print_string fmtr "^ContraCmd ";
       pp_print_string fmtr world
-  | AssumptionCmd -> pp_print_string fmtr "AssumptionCmd "
+  | AssumptionCmd -> pp_print_string fmtr "^AssumptionCmd "
   | ChainCmd (cmd1, cmd2) ->
-      pp_print_string fmtr "ChainCmd ";
+      pp_print_string fmtr "^ChainCmd ";
       pp_open_vbox fmtr 1;
       pp_print_newline fmtr ();
       pp_print_command fmtr cmd1;
@@ -125,10 +127,10 @@ let rec pp_print_command fmtr = function
       pp_print_command fmtr cmd2;
       pp_close_box fmtr ()
   | TryCmd cmd ->
-      pp_print_string fmtr "TryCmd ";
+      pp_print_string fmtr "^TryCmd ";
       pp_print_command fmtr cmd
   | AutoCmd n ->
-      pp_print_string fmtr "AutoCmd ";
+      pp_print_string fmtr "^AutoCmd ";
       pp_print_int fmtr n
 
 let create_backup name =
