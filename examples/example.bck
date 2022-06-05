@@ -1,0 +1,363 @@
+{
+ R4
+ Transitivity
+}
+{
+ R5
+ Euclideanness
+}
+{
+ RB
+ Symmetry
+}
+{
+ R2
+ Directedness
+}
+{
+ R
+}
+{
+ RD
+ Seriality
+}
+{
+ RT
+ Reflexivity
+}
+;;
+{
+axiom5
+^Single 
+ ^ImpI
+ ^Single 
+  ^BoxI
+  ^Single 
+   ^ImpI
+   ^Double 
+    ^BoxE
+    ^Double 
+     ^ImpE
+     ^Assumption 
+      ^Hyp
+      R :: x: <>A -> []B; |- x: <>A -> []B
+     ^Double 
+      ^DiaI
+      ^Assumption 
+       ^Hyp
+       R :: y: A; |- y: A
+      ^Assumption 
+       ^Hyp
+       R :: x R y; |- x R y
+      R :: y: A; x R y; |- x: <>A
+     R :: x: <>A -> []B; y: A; x R y; |- x: []B
+    ^Assumption 
+     ^Hyp
+     R :: x R y; |- x R y
+    R :: x: <>A -> []B; y: A; x R y; |- y: B
+   R :: x: <>A -> []B; x R y; |- y: A -> B
+  R :: x: <>A -> []B; |- x: [](A -> B)
+ R :: @|- x: (<>A -> []B) -> [](A -> B)
+}
+{
+axiom11
+^Single 
+ ^ImpI
+ ^Single 
+  ^BoxI
+  ^Double 
+   ^DiaE z
+   ^Assumption 
+    ^Hyp
+    R2 :: x: <>[]A; |- x: <>[]A
+   ^Triple 
+    ^Two w
+    ^Assumption 
+     ^Hyp
+     R2 :: x R2 y; |- x R2 y
+    ^Assumption 
+     ^Hyp
+     R2 :: x R2 z; |- x R2 z
+    ^Double 
+     ^DiaI
+     ^Double 
+      ^BoxE
+      ^Assumption 
+       ^Hyp
+       R2 :: z: []A; |- z: []A
+      ^Assumption 
+       ^Hyp
+       R2 :: z R2 w; |- z R2 w
+      R2 :: z: []A; z R2 w; |- w: A
+     ^Assumption 
+      ^Hyp
+      R2 :: y R2 w; |- y R2 w
+     R2 :: z: []A; z R2 w; y R2 w; |- y: <>A
+    R2 :: x R2 y; x R2 z; z: []A; |- y: <>A
+   R2 :: x: <>[]A; x R2 y; |- y: <>A
+  R2 :: x: <>[]A; |- x: []<>A
+ R2 :: @|- x: <>[]A -> []<>A
+}
+{
+axiom4
+^Single 
+ ^ImpI
+ ^Double 
+  ^DiaE y
+  ^Assumption 
+   ^Hyp
+   R :: x: <>(A \/ B); |- x: <>(A \/ B)
+  ^Triple 
+   ^AltE
+   ^Assumption 
+    ^Hyp
+    R :: y: A \/ B; |- y: A \/ B
+   ^Single 
+    ^AltI1
+    ^Double 
+     ^DiaI
+     ^Assumption 
+      ^Hyp
+      R :: y: A; |- y: A
+     ^Assumption 
+      ^Hyp
+      R :: x R y; |- x R y
+     R :: y: A; x R y; |- x: <>A
+    R :: y: A; x R y; |- x: <>A \/ <>B
+   ^Single 
+    ^AltI2
+    ^Double 
+     ^DiaI
+     ^Assumption 
+      ^Hyp
+      R :: y: B; |- y: B
+     ^Assumption 
+      ^Hyp
+      R :: x R y; |- x R y
+     R :: y: B; x R y; |- x: <>B
+    R :: y: B; x R y; |- x: <>A \/ <>B
+   R :: y: A \/ B; x R y; |- x: <>A \/ <>B
+  R :: x: <>(A \/ B); |- x: <>A \/ <>B
+ R :: @|- x: <>(A \/ B) -> <>A \/ <>B
+}
+{
+axiom2
+^Single 
+ ^ImpI
+ ^Single 
+  ^ImpI
+  ^Double 
+   ^DiaE y
+   ^Assumption 
+    ^Hyp
+    R :: x: <>A; |- x: <>A
+   ^Double 
+    ^DiaI
+    ^Double 
+     ^ImpE
+     ^Double 
+      ^BoxE
+      ^Assumption 
+       ^Hyp
+       R :: x: [](A -> B); |- x: [](A -> B)
+      ^Assumption 
+       ^Hyp
+       R :: x R y; |- x R y
+      R :: x: [](A -> B); x R y; |- y: A -> B
+     ^Assumption 
+      ^Hyp
+      R :: y: A; |- y: A
+     R :: x: [](A -> B); x R y; y: A; |- y: B
+    ^Assumption 
+     ^Hyp
+     R :: x R y; |- x R y
+    R :: x: [](A -> B); x R y; y: A; |- x: <>B
+   R :: x: <>A; x: [](A -> B); |- x: <>B
+  R :: x: [](A -> B); |- x: <>A -> <>B
+ R :: @|- x: [](A -> B) -> <>A -> <>B
+}
+{
+axiom10
+^Single 
+ ^ImpI
+ ^Single 
+  ^BoxI
+  ^Double 
+   ^DiaE z
+   ^Assumption 
+    ^Hyp
+    R5 :: x: <>A; |- x: <>A
+   ^Triple 
+    ^Five
+    ^Assumption 
+     ^Hyp
+     R5 :: x R5 y; |- x R5 y
+    ^Assumption 
+     ^Hyp
+     R5 :: x R5 z; |- x R5 z
+    ^Double 
+     ^DiaI
+     ^Assumption 
+      ^Hyp
+      R5 :: z: A; |- z: A
+     ^Assumption 
+      ^Hyp
+      R5 :: y R5 z; |- y R5 z
+     R5 :: z: A; y R5 z; |- y: <>A
+    R5 :: x R5 y; x R5 z; z: A; |- y: <>A
+   R5 :: x: <>A; x R5 y; |- y: <>A
+  R5 :: x: <>A; |- x: []<>A
+ R5 :: @|- x: <>A -> []<>A
+}
+{
+axiom1
+^Single 
+ ^ImpI
+ ^Single 
+  ^ImpI
+  ^Single 
+   ^BoxI
+   ^Double 
+    ^ImpE
+    ^Double 
+     ^BoxE
+     ^Assumption 
+      ^Hyp
+      R :: x: [](A -> B); |- x: [](A -> B)
+     ^Assumption 
+      ^Hyp
+      R :: x R y; |- x R y
+     R :: x: [](A -> B); x R y; |- y: A -> B
+    ^Double 
+     ^BoxE
+     ^Assumption 
+      ^Hyp
+      R :: x: []A; |- x: []A
+     ^Assumption 
+      ^Hyp
+      R :: x R y; |- x R y
+     R :: x: []A; x R y; |- y: A
+    R :: x: [](A -> B); x R y; x: []A; |- y: B
+   R :: x: [](A -> B); x: []A; |- x: []B
+  R :: x: [](A -> B); |- x: []A -> []B
+ R :: @|- x: [](A -> B) -> []A -> []B
+}
+{
+axiom7
+^Single 
+ ^ImpI
+ ^Single 
+  ^RT x
+  ^Double 
+   ^BoxE
+   ^Assumption 
+    ^Hyp
+    RT :: x: []A; |- x: []A
+   ^Assumption 
+    ^Hyp
+    RT :: x RT x; |- x RT x
+   RT :: x: []A; x RT x; |- x: A
+  RT :: x: []A; |- x: A
+ RT :: @|- x: []A -> A
+}
+{
+axiom8
+^Single 
+ ^ImpI
+ ^Single 
+  ^BoxI
+  ^Double 
+   ^RB
+   ^Assumption 
+    ^Hyp
+    RB :: x RB y; |- x RB y
+   ^Double 
+    ^DiaI
+    ^Assumption 
+     ^Hyp
+     RB :: x: A; |- x: A
+    ^Assumption 
+     ^Hyp
+     RB :: y RB x; |- y RB x
+    RB :: x: A; y RB x; |- y: <>A
+   RB :: x RB y; x: A; |- y: <>A
+  RB :: x: A; |- x: []<>A
+ RB :: @|- x: A -> []<>A
+}
+{
+axiom9
+^Single 
+ ^ImpI
+ ^Single 
+  ^BoxI
+  ^Single 
+   ^BoxI
+   ^Triple 
+    ^Four
+    ^Assumption 
+     ^Hyp
+     R4 :: x R4 y; |- x R4 y
+    ^Assumption 
+     ^Hyp
+     R4 :: y R4 z; |- y R4 z
+    ^Double 
+     ^BoxE
+     ^Assumption 
+      ^Hyp
+      R4 :: x: []A; |- x: []A
+     ^Assumption 
+      ^Hyp
+      R4 :: x R4 z; |- x R4 z
+     R4 :: x: []A; x R4 z; |- z: A
+    R4 :: x R4 y; y R4 z; x: []A; |- z: A
+   R4 :: x R4 y; x: []A; |- y: []A
+  R4 :: x: []A; |- x: [][]A
+ R4 :: @|- x: []A -> [][]A
+}
+{
+axiom6
+^Single 
+ ^ImpI
+ ^Single 
+  ^RD x y
+  ^Double 
+   ^DiaI
+   ^Double 
+    ^BoxE
+    ^Assumption 
+     ^Hyp
+     RD :: x: []A; |- x: []A
+    ^Assumption 
+     ^Hyp
+     RD :: x RD y; |- x RD y
+    RD :: x: []A; x RD y; |- y: A
+   ^Assumption 
+    ^Hyp
+    RD :: x RD y; |- x RD y
+   RD :: x: []A; x RD y; |- x: <>A
+  RD :: x: []A; |- x: <>A
+ RD :: @|- x: []A -> <>A
+}
+{
+axiom3
+^Single 
+ ^ImpI
+ ^Double 
+  ^DiaE y
+  ^Assumption 
+   ^Hyp
+   R :: x: <>_|_; |- x: <>_|_
+  ^Single 
+   ^Weak
+   ^Single 
+    ^FalseE
+    ^Assumption 
+     ^Hyp
+     R :: y: _|_; |- y: _|_
+    R :: y: _|_; |- x: _|_
+   R :: x R y; y: _|_; |- x: _|_
+  R :: x: <>_|_; |- x: _|_
+ R :: @|- x: <>_|_ -> _|_
+}
+;;
+;;

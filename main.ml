@@ -45,6 +45,7 @@ let rec interactive () =
         load_backup n;
         clear_screen ();
         print_string "Loaded successfully";
+        print_newline ();
         print_current_state !print_hints;
         print_flush ()
       with
@@ -55,6 +56,7 @@ let rec interactive () =
         create_backup n;
         clear_screen ();
         print_string "Saved";
+        print_newline ();
         print_current_state !print_hints;
         print_flush ()
       with UnlocatedError msg -> report_error { v = msg; l = statement.l })

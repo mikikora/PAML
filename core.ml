@@ -382,7 +382,7 @@ let rec validate_theorem th =
               | _ -> absurd_theorem)
           | AltI2 -> (
               match jgmt with
-              | J (_, Alt (prop, _)) -> alti1 prop th1
+              | J (_, Alt (prop, _)) -> alti2 prop th1
               | _ -> absurd_theorem)
           | ImpI -> (
               match jgmt with

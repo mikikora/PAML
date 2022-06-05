@@ -108,7 +108,7 @@
     ("Single", SINGLE);
     ("Double", DOUBLE);
     ("Triple", TRIPLE);
-    ("FalsE", RULE FalseE);
+    ("FalseE", RULE FalseE);
     ("Hyp", RULE Hyp);
     ("ConI", RULE ConI);
     ("ConE1", RULE ConE1);
@@ -167,7 +167,7 @@
 
 let identifier = ['_' 'a'-'z' 'A'-'Z']['_' 'A'-'Z' 'a'-'z' '0'-'9' ''']*
 let number = ['0' - '9']+
-let file_name = identifier | identifier '.' identifier
+let file_name = identifier | (identifier|['.''~'])? ('/' identifier)* '.' identifier
 
 
 rule token = parse
@@ -197,9 +197,9 @@ rule token = parse
     createID id
   }
 
-  | '^' identifier as id
+  | '^' (identifier as id)
   {
-    match Hashtbl.find_opt symbolTable id with
+    match Hashtbl.find_opt backup_symbol_table id with
     | Some token -> token
     | None -> handleError lexbuf "Backup keyworld error"
   }
