@@ -223,15 +223,52 @@ let apply_assm name1 name2 world name (pf, path) =
       (Leaf (hyp rel [ jgmt_to_apply ] jgmt_to_apply), new_path)
   | _ -> raise (UnlocatedError "Not in empty goal")
 
+(* Conversion of judgement for applying theorems  *)
+let rec convert_prop assignments = function
+  | F -> F
+  | Var str -> (
+      match List.assoc_opt str assignments with Some p -> p | None -> Var str)
+  | Con (p1, p2) ->
+      let new_p1 = convert_prop assignments p1
+      and new_p2 = convert_prop assignments p2 in
+      Con (new_p1, new_p2)
+  | Alt (p1, p2) ->
+      let new_p1 = convert_prop assignments p1
+      and new_p2 = convert_prop assignments p2 in
+      Alt (new_p1, new_p2)
+  | Imp (p1, p2) ->
+      let new_p1 = convert_prop assignments p1
+      and new_p2 = convert_prop assignments p2 in
+      Imp (new_p1, new_p2)
+  | Box p ->
+      let new_p = convert_prop assignments p in
+      Box new_p
+  | Dia p ->
+      let new_p = convert_prop assignments p in
+      Dia new_p
+
+let convert_judgement assignments = function
+  | J (x, prop) ->
+      let world =
+        match List.assoc_opt "world" assignments with
+        | Some (Var w) -> w
+        | Some _ -> failwith "Name of world not a var"
+        | None -> "x"
+      in
+      let converted_prop = convert_prop assignments prop in
+      J (world, converted_prop)
+  | _ -> raise (UnlocatedError "can't apply this judgement")
+
 (* Apply already proven theorem *)
-let apply_th name1 name2 world th = function
+let apply_th name1 name2 world th assignments = function
   | pf, path -> (
       match pf with
       | Empty (rel, ctx, jgmt) ->
-          if relation th <> rel then
+          if not (Relation.is_sub_rel (relation th) rel) then
             raise (UnlocatedError "Theorems use different relations")
           else
-            let jgmt_to_apply = consequence th in
+            let jgmt_to_covert = consequence th in
+            let jgmt_to_apply = convert_judgement assignments jgmt_to_covert in
             let _, new_path =
               apply name1 name2 world jgmt_to_apply (pf, path)
             in

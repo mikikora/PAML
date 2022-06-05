@@ -89,27 +89,27 @@ let assumptions_with_world world assumptions =
 type printing_style = LaTeX | Backup | Interactive
 
 let theorem_rule_to_string ?(style = Backup) = function
-  | FalseE -> if style = LaTeX then "(\\bot E)" else "FalseE"
-  | Hyp -> if style = LaTeX then "(Hyp)" else "Hyp"
-  | ConI -> if style = LaTeX then "(\\wedge I)" else "ConI"
-  | ConE1 -> if style = LaTeX then "(\\wedge E1)" else "ConE1"
-  | ConE2 -> if style = LaTeX then "(\\wedge E2)" else "ConE2"
-  | AltI1 -> if style = LaTeX then "(\\vee I1)" else "AltI1"
-  | AltI2 -> if style = LaTeX then "(\\vee I2)" else "AltI2"
-  | AltE -> if style = LaTeX then "(\\vee E)" else "AltE"
-  | ImpI -> if style = LaTeX then "(\\supset I)" else "ImpI"
-  | ImpE -> if style = LaTeX then "(\\supset E)" else "ImpE"
-  | BoxI -> if style = LaTeX then "(\\Box I)" else "BoxI"
-  | BoxE -> if style = LaTeX then "(\\Box E)" else "BoxE"
-  | DiaI -> if style = LaTeX then "(\\diamond I)" else "DiaI"
-  | DiaE x -> if style = LaTeX then "(\\diamond E)" else "DiaE " ^ x
-  | D (x, y) -> if style = LaTeX then "(R_D)" else "RD " ^ x ^ " " ^ y
-  | T x -> if style = LaTeX then "(R_T)" else "RT " ^ x
-  | B -> if style = LaTeX then "(R_B)" else "RB"
-  | Four -> if style = LaTeX then "(R_4)" else "Four"
-  | Five -> if style = LaTeX then "(R_5)" else "Five"
-  | Two x -> if style = LaTeX then "(R_2)" else "Two " ^ x
-  | Weak -> if style = LaTeX then "(W)" else "Weak"
+  | FalseE -> if style = LaTeX then "(\\bot E)" else "^FalseE"
+  | Hyp -> if style = LaTeX then "(Hyp)" else "^Hyp"
+  | ConI -> if style = LaTeX then "(\\wedge I)" else "^ConI"
+  | ConE1 -> if style = LaTeX then "(\\wedge E1)" else "^ConE1"
+  | ConE2 -> if style = LaTeX then "(\\wedge E2)" else "^ConE2"
+  | AltI1 -> if style = LaTeX then "(\\vee I1)" else "^AltI1"
+  | AltI2 -> if style = LaTeX then "(\\vee I2)" else "^AltI2"
+  | AltE -> if style = LaTeX then "(\\vee E)" else "^AltE"
+  | ImpI -> if style = LaTeX then "(\\supset I)" else "^ImpI"
+  | ImpE -> if style = LaTeX then "(\\supset E)" else "^ImpE"
+  | BoxI -> if style = LaTeX then "(\\Box I)" else "^BoxI"
+  | BoxE -> if style = LaTeX then "(\\Box E)" else "^BoxE"
+  | DiaI -> if style = LaTeX then "(\\diamond I)" else "^DiaI"
+  | DiaE x -> if style = LaTeX then "(\\diamond E)" else "^DiaE " ^ x
+  | D (x, y) -> if style = LaTeX then "(R_D)" else "^RD " ^ x ^ " " ^ y
+  | T x -> if style = LaTeX then "(R_T)" else "^RT " ^ x
+  | B -> if style = LaTeX then "(R_B)" else "^RB"
+  | Four -> if style = LaTeX then "(R_4)" else "^Four"
+  | Five -> if style = LaTeX then "(R_5)" else "^Five"
+  | Two x -> if style = LaTeX then "(R_2)" else "^Two " ^ x
+  | Weak -> if style = LaTeX then "(W)" else "^Weak"
 
 let rec pp_print_theorem ?(style = Interactive) fmtr th =
   let print_theorems name rule theorems =
@@ -125,11 +125,11 @@ let rec pp_print_theorem ?(style = Interactive) fmtr th =
   in
   pp_open_vbox fmtr 1;
   (match th with
-  | Assumption (rule, _) -> print_theorems "Assumption " rule []
-  | Single (rule, th1, _) -> print_theorems "Single " rule [ th1 ]
-  | Double (rule, th1, th2, _) -> print_theorems "Double " rule [ th1; th2 ]
+  | Assumption (rule, _) -> print_theorems "^Assumption " rule []
+  | Single (rule, th1, _) -> print_theorems "^Single " rule [ th1 ]
+  | Double (rule, th1, th2, _) -> print_theorems "^Double " rule [ th1; th2 ]
   | Triple (rule, th1, th2, th3, _) ->
-      print_theorems "Triple " rule [ th1; th2; th3 ]);
+      print_theorems "^Triple " rule [ th1; th2; th3 ]);
   pp_print_cut fmtr ();
   pp_close_box fmtr ();
   let r, ass, jgmt = destruct_th th in
@@ -268,4 +268,5 @@ and pp_print_atom_prop ?(style = Interactive) fmtr = function
 
 let print_theorem = pp_print_theorem std_formatter
 let print_judgement = pp_print_judgement std_formatter
-let print_prop = pp_print_imp_prop std_formatter
+let pp_print_prop = pp_print_imp_prop
+let print_prop = pp_print_prop std_formatter

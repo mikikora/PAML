@@ -9,7 +9,7 @@
 %token RELATION
 %token <string>ID
 %token DOT
-%token UNSET // Not relation property 
+%token UNSET // unset property for relation 
 %token ABANDON
 %token QED
 %token THEOREM 
@@ -44,6 +44,9 @@
 %token MODEL
 %token HINT
 %token <bool>ONOFF
+%token SHOW
+%token EQUAL
+%token WHERE
 
 %token SEMICOLON
 %token LBRACE
@@ -61,6 +64,7 @@
 %token INTROCMD
 %token APPLYCMD
 %token APPLYASSMCMD
+%token APPLYTHCMD
 %token SPLITCMD
 %token LEFTCMD
 %token RIGHTCMD
@@ -77,6 +81,7 @@
 %token ASSUMPTIONCMD
 %token CHAINCMD
 %token TRYCMD
+%token AUTOCMD
 %token NONE
 %token SOME
 %token EMPTY_ASSMP
@@ -84,12 +89,16 @@
 %token <string>FILE_NAME
 %token SAVE
 %token LATEX
+%token EQUIV
+%token NEG
+%token TRUE
 
 %type <Ast.statement>statement
 %type <Syntax.prop>alt_prop
 %type <Syntax.prop>atom_prop
 %type <Syntax.prop>con_prop
 %type <Syntax.prop>imp_prop
+%type <Syntax.prop>equiv_prop
 %type <Ast.command>command
 %type <Syntax.judgement>judgement
 %type <string option>option(ID)
@@ -101,6 +110,8 @@
 %type <string option>option(preceded(AS, ID))
 %type <string option>option(preceded(COMMA, ID))
 %type <string option>option(preceded(WITH, ID))
+%type <(string * Syntax.prop) list>assingments_list
+%type <string * Syntax.prop>assingment
 
 %type <Relation.relation list * 
         (string * Syntax.theorem) list * 
@@ -140,7 +151,7 @@ statement_raw:
     { RelRmProperties ($1, $3) }
     | THEOREM id=ID rel=option(preceded(WITH, ID)) COMMA jgmt=judgement
     { TheoremDecl (id, rel, jgmt) }
-    | THEOREM id=ID rel=option(preceded(WITH, ID)) COMMA prop=imp_prop
+    | THEOREM id=ID rel=option(preceded(WITH, ID)) COMMA prop=equiv_prop
     { TheoremDecl (id, rel, J("x", prop)) }
     | LOAD name=FILE_NAME
     { LoadBackup name }
@@ -165,6 +176,7 @@ statement_raw:
     { ExitModel }
     | HINT b=ONOFF
     { ToggleHints b }
+    | SHOW { ShowCmd }
     | command
     { Command $1 }
 
@@ -219,6 +231,10 @@ command:
     { ApplyCmd (None, None, world, jgmt)}
     | APPLY jgmt=judgement world=option(preceded(WITH, ID)) AS name1=ID COMMA name2=ID
     { ApplyCmd (Some name1, Some name2, world, jgmt) }
+    | APPLY th=ID world=option(preceded(WITH, ID)) WHERE assingments=assingments_list
+    { ApplyThCmd (None, None, world, th, assingments) }
+    | APPLY th=ID world=option(preceded(WITH, ID)) AS name1=ID COMMA name2=ID WHERE assingments=assingments_list
+    { ApplyThCmd (Some name1, Some name2, world, th, assingments)}
     | SERIAL WITH world2=ID world1=option(preceded(COMMA, ID)) name=option(preceded(AS, ID))
     { SerialCmd (name, world1, world2) }
     | REFL WITH world=ID name=option(preceded(AS, ID))
@@ -245,9 +261,24 @@ command:
     | AUTO
     { AutoCmd 5 }
 
+assingments_list:
+    | assingment=assingment
+    { [assingment] }
+    | assingment=assingment COMMA tl=assingments_list
+    { assingment :: tl }
+
+assingment:
+    variable=ID COLON EQUAL prop=equiv_prop
+    { variable, prop }
+
 judgement:
-    | world=ID COLON prop=imp_prop
+    | world=ID COLON prop=equiv_prop
     { J (world, prop) }
+
+equiv_prop:
+    | imp_prop EQUIV equiv_prop
+    { Con (Imp ($1, $3), Imp($3, $1)) }
+    | imp_prop { $1 }
 
 imp_prop:
     | alt_prop IMPL imp_prop
@@ -271,7 +302,10 @@ atom_prop:
     { Box $2 }
     | DIA atom_prop
     { Dia $2 }
-    | LPAR imp_prop RPAR
+    | NEG atom_prop
+    { Imp ($2, F) }
+    | TRUE { Imp (F, F) }
+    | LPAR equiv_prop RPAR
     { $2 }
 
 
@@ -356,6 +390,12 @@ proof_command_backup:
       world=option_string COMMA 
       name=ID
     { ApplyAssmCmd (name1, name2, world, name) }
+    | APPLYTHCMD name1=option_string COMMA
+      name2=option_string COMMA
+      world=option_string COMMA
+      name=ID COMMA
+      assingments=assingments_list
+      { ApplyThCmd (name1, name2, world, name, assingments) }
     | SPLITCMD { SplitCmd }
     | LEFTCMD { LeftCmd }
     | RIGHTCMD {RightCmd}
@@ -385,6 +425,8 @@ proof_command_backup:
     { ChainCmd (cmd1, cmd2) }
     | TRYCMD cmd=proof_command_backup
     { TryCmd cmd }
+    | AUTOCMD n=NUM
+    { AutoCmd n }
 
 option_string:
     | NONE

@@ -7,6 +7,10 @@ open File_handler
 
 let print_hints : bool ref = ref false
 
+let clear_screen () =
+  print_string "\o033c";
+  print_flush ()
+
 let rec read_eval () =
   let lexbuf = Lexer.create_from_stdin () in
   let parser_result =
@@ -39,7 +43,7 @@ let rec interactive () =
   | LoadBackup n -> (
       try
         load_backup n;
-        let _ = Sys.command "clear" in
+        clear_screen ();
         print_string "Loaded successfully";
         print_current_state !print_hints;
         print_flush ()
@@ -49,7 +53,7 @@ let rec interactive () =
   | SaveBackup n -> (
       try
         create_backup n;
-        let _ = Sys.command "clear" in
+        clear_screen ();
         print_string "Saved";
         print_current_state !print_hints;
         print_flush ()
@@ -57,7 +61,7 @@ let rec interactive () =
   | GenerateLatex n -> (
       try
         create_latex n;
-        let _ = Sys.command "clear" in
+        clear_screen ();
         print_string "Generated";
         print_newline ();
         print_current_state !print_hints;
@@ -65,22 +69,30 @@ let rec interactive () =
       with UnlocatedError msg -> report_error { v = msg; l = statement.l })
   | ToggleHints b ->
       print_hints := b;
-      let _ = Sys.command "clear" in
+      clear_screen ();
       print_string "Done";
       print_newline ();
+      print_current_state !print_hints;
+      print_flush ()
+  | ShowCmd ->
+      clear_screen ();
+      print_outside_proof_mode ();
+      print_string (String.init 40 (fun n -> if n mod 2 = 1 then '<' else '>'));
+      print_newline ();
+      print_flush ();
       print_current_state !print_hints;
       print_flush ()
   | _ -> (
       try
         interpret_statement statement;
-        let _ = Sys.command "clear" in
+        clear_screen ();
         print_current_state !print_hints;
         print_flush ()
       with Error err -> report_error err));
   interactive ()
 
 let main () =
-  let _ = Sys.command "clear" in
+  clear_screen ();
   print_string
     "Welcome to interactive prover for modal logics\n\
      To turn on hints use \"Hints on\"\n\

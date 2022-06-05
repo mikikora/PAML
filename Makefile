@@ -41,7 +41,8 @@ ast.cmo: ast.mli ast.cmi
 	ocamlc -c -impl ast.mli
 
 clean:
-	rm -f *.cmo *.cmi parser.output parser.conflicts parser.automaton $(obj) lexer.ml parser.ml parser.mli
+	rm -f *.cmo *.cmi parser.output parser.conflicts parser.automaton lexer.ml parser.ml parser.mli
+	rm -f *.log *.aux
 	rm -rdf _build
 
 nuke: clean

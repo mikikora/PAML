@@ -68,6 +68,7 @@
         ("diamond", DIA);
         ("False", FALSE);
         ("F", FALSE);
+        ("True", TRUE);
         ("as", AS);
         ("split", SPLIT);
         ("left", LEFT);
@@ -92,8 +93,15 @@
         ("model", MODEL);
         ("hints", HINT);
         ("on", ONOFF true);
-        ("off", ONOFF false)
+        ("off", ONOFF false);
+        ("show", SHOW);
+        ("where", WHERE)
       ]
+
+  let (symbolTable : (string, Parser.token) Hashtbl.t) = Hashtbl.create 100
+
+  let () =
+    List.iter (function (str, t) -> Hashtbl.add symbolTable str t) reserved_keywords
 
   let backup_reserved_keywords = [
     ("Assumption", ASSUMPTION);
@@ -124,6 +132,7 @@
     ("IntroCmd", INTROCMD);
     ("ApplyCmd", APPLYCMD);
     ("ApplyAssmCmd", APPLYASSMCMD);
+    ("ApplyThCmd", APPLYTHCMD);
     ("SplitCmd", SPLITCMD);
     ("LeftCmd", LEFTCMD);
     ("RightCmd", RIGHTCMD);
@@ -140,24 +149,20 @@
     ("AssumptionCmd", ASSUMPTIONCMD);
     ("ChainCmd", CHAINCMD);
     ("TryCmd", TRYCMD);
+    ("AutoCmd", AUTOCMD);
     ("None", NONE);
     ("Some", SOME);
   ]
 
-  let (symbolTable : (string, Parser.token) Hashtbl.t) = Hashtbl.create 1024
+  let backup_symbol_table : (string, Parser.token) Hashtbl.t = Hashtbl.create 60
 
   let () =
-    List.iter (function (str, t) -> Hashtbl.add symbolTable str t) reserved_keywords
-
-  let () =
-    List.iter (function (str, t) -> Hashtbl.add symbolTable str t) backup_reserved_keywords
+    List.iter (function (str, t) -> Hashtbl.add backup_symbol_table str t) backup_reserved_keywords
     
   let createID str =
-    match (Hashtbl.find_opt symbolTable str,
-           Hashtbl.find_opt symbolTable (String.lowercase_ascii str)) with
-    | Some token, _ 
-    | None, Some token -> token
-    | None, None -> ID str
+    match Hashtbl.find_opt symbolTable (String.lowercase_ascii str) with
+    | Some token -> token
+    | None -> ID str
 }
 
 let identifier = ['_' 'a'-'z' 'A'-'Z']['_' 'A'-'Z' 'a'-'z' '0'-'9' ''']*
@@ -192,6 +197,13 @@ rule token = parse
     createID id
   }
 
+  | '^' identifier as id
+  {
+    match Hashtbl.find_opt symbolTable id with
+    | Some token -> token
+    | None -> handleError lexbuf "Backup keyworld error"
+  }
+
   | '"' (file_name as name) '"'
   {FILE_NAME name}
 
@@ -201,9 +213,12 @@ rule token = parse
   | ';' {SEMICOLON}
   | '{' {LBRACE}
   | '}' {RBRACE}
+  | '~' {NEG}
   | "|-" {VDASH}
   | "_|_" {FALSE}
+  | "^|^" {TRUE}
   | '@' {EMPTY_ASSMP}
+  | '=' {EQUAL}
 
   | '('
   | '['
@@ -214,6 +229,7 @@ rule token = parse
   {RPAR}
 
   | "->" {IMPL}
+  | "<->" {EQUIV}
   | "[]" {BOX}
   | "<>" {DIA}
   | "/\\" {AND}
