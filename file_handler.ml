@@ -11,6 +11,13 @@ let pp_print_option fmtr a_fun = function
       pp_print_string fmtr "Some ";
       a_fun fmtr a
 
+let pp_print_assignments fmtr assignments =
+  List.iter (function name, prop -> 
+    pp_print_string fmtr name;
+    pp_print_string fmtr ", ";
+    pp_print_prop ~style:Backup fmtr prop;)
+    assignments
+
 let rec pp_print_command fmtr = function
   | UndoCmd | AbandonCmd | QedCmd -> ()
   | IntroCmd (name, world) ->
@@ -26,7 +33,7 @@ let rec pp_print_command fmtr = function
       pp_print_string fmtr ", ";
       pp_print_option fmtr pp_print_string world;
       pp_print_string fmtr ", ";
-      pp_print_judgement fmtr jgmt
+      pp_print_judgement ~style:Backup fmtr jgmt
   | ApplyAssmCmd (name1, name2, world, name) ->
       pp_print_string fmtr "ApplyAssmCmd ";
       pp_print_option fmtr pp_print_string name1;
@@ -36,6 +43,17 @@ let rec pp_print_command fmtr = function
       pp_print_option fmtr pp_print_string world;
       pp_print_string fmtr ", ";
       pp_print_string fmtr name
+    | ApplyThCmd (name1, name2, world, name, assignments) ->
+      pp_print_string fmtr "ApplyThCmd ";
+      pp_print_option fmtr pp_print_string name1;
+      pp_print_string fmtr ", ";
+      pp_print_option fmtr pp_print_string name2;
+      pp_print_string fmtr ", ";
+      pp_print_option fmtr pp_print_string world;
+      pp_print_string fmtr ", ";
+      pp_print_string fmtr name;
+      pp_print_string fmtr ", ";
+      pp_print_assignments fmtr assignments
   | SplitCmd -> pp_print_string fmtr "SplitCmd "
   | LeftCmd -> pp_print_string fmtr "LeftCmd "
   | RightCmd -> pp_print_string fmtr "RightCmd "
@@ -109,6 +127,9 @@ let rec pp_print_command fmtr = function
   | TryCmd cmd ->
       pp_print_string fmtr "TryCmd ";
       pp_print_command fmtr cmd
+  | AutoCmd n ->
+      pp_print_string fmtr "AutoCmd ";
+      pp_print_int fmtr n
 
 let create_backup name =
   let ch_out =

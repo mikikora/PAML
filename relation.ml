@@ -101,6 +101,13 @@ let has_property property relation =
 
 let relation_exists = Hashtbl.mem relation_map
 
+let is_sub_rel r1 r2 =
+  if r1 = r2 then true
+  else 
+    let r1 = get_relation r1
+    and r2 = get_relation r2 in
+    List.fold_left (fun acc prop -> List.mem prop r2.properties && acc) true r1.properties
+
 let pp_print_relation fmtr relation =
   pp_open_vbox fmtr 1;
   pp_print_string fmtr "{";

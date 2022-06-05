@@ -68,6 +68,7 @@
         ("diamond", DIA);
         ("False", FALSE);
         ("F", FALSE);
+        ("True", TRUE);
         ("as", AS);
         ("split", SPLIT);
         ("left", LEFT);
@@ -92,7 +93,9 @@
         ("model", MODEL);
         ("hints", HINT);
         ("on", ONOFF true);
-        ("off", ONOFF false)
+        ("off", ONOFF false);
+        ("show", SHOW);
+        ("where", WHERE)
       ]
 
   let backup_reserved_keywords = [
@@ -124,6 +127,7 @@
     ("IntroCmd", INTROCMD);
     ("ApplyCmd", APPLYCMD);
     ("ApplyAssmCmd", APPLYASSMCMD);
+    ("ApplyThCmd", APPLYTHCMD);
     ("SplitCmd", SPLITCMD);
     ("LeftCmd", LEFTCMD);
     ("RightCmd", RIGHTCMD);
@@ -140,6 +144,7 @@
     ("AssumptionCmd", ASSUMPTIONCMD);
     ("ChainCmd", CHAINCMD);
     ("TryCmd", TRYCMD);
+    ("AutoCmd", AUTOCMD);
     ("None", NONE);
     ("Some", SOME);
   ]
@@ -201,9 +206,12 @@ rule token = parse
   | ';' {SEMICOLON}
   | '{' {LBRACE}
   | '}' {RBRACE}
+  | '~' {NEG}
   | "|-" {VDASH}
   | "_|_" {FALSE}
+  | "^|^" {TRUE}
   | '@' {EMPTY_ASSMP}
+  | '=' {EQUAL}
 
   | '('
   | '['
@@ -214,6 +222,7 @@ rule token = parse
   {RPAR}
 
   | "->" {IMPL}
+  | "<->" {EQUIV}
   | "[]" {BOX}
   | "<>" {DIA}
   | "/\\" {AND}

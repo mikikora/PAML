@@ -57,6 +57,7 @@ val theorem_rule_to_string : ?style:printing_style -> theorem_rule -> string
 val pp_print_theorem : ?style:printing_style -> formatter -> theorem -> unit
 val pp_print_assumptions : ?style:printing_style -> formatter -> theorem -> unit
 
+val pp_print_prop : ?style:printing_style -> formatter -> prop -> unit
 val pp_print_judgement :
   ?style:printing_style -> formatter -> ?r:string -> judgement -> unit
 

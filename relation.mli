@@ -27,4 +27,5 @@ val get_declared_relations : unit -> relation Seq.t
 val make_relation_unmutable : relation_name -> unit
 val has_property : rel_property -> relation_name -> bool
 val relation_exists : relation_name -> bool
+val is_sub_rel : relation_name -> relation_name -> bool
 val pp_print_relation : Format.formatter -> relation -> unit

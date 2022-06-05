@@ -27,7 +27,7 @@ let rec cmd_to_proof_function : command -> goal -> goal = function
       fun goal ->
         try apply_assm name1 name2 world name goal
         with Not_found -> (
-          try apply_th name1 name2 world (Hashtbl.find theorem_map name) goal
+          try apply_th name1 name2 world (Hashtbl.find theorem_map name) [] goal
           with Not_found -> raise (UnlocatedError (name ^ " not found"))))
   | SplitCmd -> split
   | LeftCmd -> left
@@ -121,12 +121,18 @@ let interpret_statement statement =
       try
         match statement.v with
         | RelDecl (name, properties) ->
+            if !current_system = None then begin
             Relation.add_new_relation name properties;
-            last_declared_relation := Some name
+            last_declared_relation := Some name end
+            else raise (Error {v="Can't declare new relation in set model"; l=statement.l})
         | RelProperties (name, properties) ->
-            Relation.add_properties name properties
+            if !current_system = None then begin
+            Relation.add_properties name properties end
+          else raise (Error {v="Can't modify relation in set model"; l=statement.l})
         | RelRmProperties (name, properties) ->
-            Relation.remove_properties name properties
+            if !current_system = None then begin
+            Relation.remove_properties name properties end
+          else raise (Error {v="Can't modify relation in set model"; l=statement.l})
         | TheoremDecl (name, rel_opt, jgmt) ->
             let rel_name =
               match rel_opt with
@@ -134,7 +140,7 @@ let interpret_statement statement =
                   match !last_declared_relation with
                   | None ->
                       raise
-                        (Error { v = "No relation declared"; l = statement.l })
+                        (Error { v = "No relation given"; l = statement.l })
                   | Some rel -> rel)
               | Some rel ->
                   if Relation.relation_exists rel then rel
@@ -182,6 +188,42 @@ let interpret_statement statement =
       | _ ->
           raise (Error { v = "Can't use that in open proof"; l = statement.l }))
 
+let print_outside_proof_mode () =
+  if !current_proof <> [] then () else
+    open_vbox (-100);
+    print_string "Declared relations:";
+    print_newline ();
+    Seq.iter
+      (fun (relation : Relation.relation) ->
+        print_string relation.name;
+        if relation.properties = [] then () else print_string " : ";
+        open_hbox ();
+        List.iter
+          (fun (property : Relation.rel_property) ->
+            print_string @@ Relation.property_to_string property;
+            print_string ",";
+            print_space ())
+          relation.properties;
+        close_box ();
+        print_newline ())
+      (Relation.get_declared_relations ());
+    print_string (String.make 40 '-');
+    print_newline ();
+    print_string "Complited theorems:";
+    print_newline ();
+    Hashtbl.iter
+      (fun name th ->
+        match Syntax.consequence th with
+        | J (_, prop) ->
+            open_hbox ();
+            print_string (name ^ " [" ^ Syntax.relation th ^ "] : ");
+            Syntax.print_prop prop;
+            close_box ();
+            print_newline ()
+        | _ -> failwith "Absurd")
+      theorem_map;
+    close_box ()
+
 let print_current_state print_hints =
   let print_command_prompt () =
     print_newline ();
@@ -194,12 +236,11 @@ let print_current_state print_hints =
   | None -> ()
   | Some sys ->
       print_endline ("Active model: " ^ Relation.system_to_string sys ^ "\n"));
-  try
-    match List.hd !current_proof with
-    | P pf ->
+    match !current_proof with
+    | P pf :: _ ->
         print_unfocused_proof pf;
         print_command_prompt ()
-    | G gl ->
+    | G gl :: _ ->
         print_current_goal gl;
         if print_hints then (
           print_newline ();
@@ -213,38 +254,6 @@ let print_current_state print_hints =
           print_endline "Hints:\n";
           print_string (Hint.get_hint_string goal_desc));
         print_command_prompt ()
-  with Failure _ ->
-    open_vbox 0;
-    print_string "Declared relations:";
-    print_cut ();
-    Seq.iter
-      (fun (relation : Relation.relation) ->
-        print_string relation.name;
-        if relation.properties = [] then () else print_string " : ";
-        open_hbox ();
-        List.iter
-          (fun (property : Relation.rel_property) ->
-            print_string @@ Relation.property_to_string property;
-            print_string ",";
-            print_space ())
-          relation.properties;
-        close_box ();
-        print_cut ())
-      (Relation.get_declared_relations ());
-    print_string (String.make 40 '-');
-    print_cut ();
-    print_string "Complited theorems:";
-    print_cut ();
-    Hashtbl.iter
-      (fun name th ->
-        match Syntax.consequence th with
-        | J (_, prop) ->
-            open_hbox ();
-            print_string (name ^ " [" ^ Syntax.relation th ^ "] : ");
-            Syntax.print_prop prop;
-            close_box ();
-            print_cut ()
-        | _ -> failwith "Absurd")
-      theorem_map;
-    close_box ();
-    print_command_prompt ()
+    | [] ->
+    print_outside_proof_mode ();
+    print_command_prompt () 

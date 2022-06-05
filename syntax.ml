@@ -268,4 +268,5 @@ and pp_print_atom_prop ?(style = Interactive) fmtr = function
 
 let print_theorem = pp_print_theorem std_formatter
 let print_judgement = pp_print_judgement std_formatter
-let print_prop = pp_print_imp_prop std_formatter
+let pp_print_prop = pp_print_imp_prop 
+let print_prop = pp_print_prop std_formatter
