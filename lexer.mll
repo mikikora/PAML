@@ -2,8 +2,8 @@
   (* Based on tapl - fullsimple *)
   open Parser
   open Lexing
-  open Ast
   open Relation
+  open Error
 
   exception Eof
 
@@ -32,7 +32,7 @@
     let loc = get_location () in
     {v=x; l=loc}
 
-  exception InvalidToken of string Ast.located * string
+  exception InvalidToken of string Error.located * string
 
   let handleError lexbuf msg =
     let token = Lexing.lexeme lexbuf in

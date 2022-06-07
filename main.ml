@@ -41,16 +41,19 @@ let rec interactive () =
   let statement = read_eval () in
   (match statement.v with
   | LoadBackup n -> (
-      try
-        load_backup n;
-        clear_screen ();
-        print_string "Loaded successfully";
-        print_newline ();
-        print_current_state !print_hints;
-        print_flush ()
-      with
-      | Error err -> report_error err
-      | UnlocatedError msg -> report_error { v = msg; l = statement.l })
+      if is_in_prove_mode () then
+        report_error { v = "Can't use it while proving"; l = statement.l }
+      else
+        try
+          load_backup n;
+          clear_screen ();
+          print_string "Loaded successfully";
+          print_newline ();
+          print_current_state !print_hints;
+          print_flush ()
+        with
+        | Error err -> report_error err
+        | UnlocatedError msg -> report_error { v = msg; l = statement.l })
   | SaveBackup n -> (
       try
         create_backup n;
@@ -61,14 +64,17 @@ let rec interactive () =
         print_flush ()
       with UnlocatedError msg -> report_error { v = msg; l = statement.l })
   | GenerateLatex n -> (
-      try
-        create_latex n;
-        clear_screen ();
-        print_string "Generated";
-        print_newline ();
-        print_current_state !print_hints;
-        print_flush ()
-      with UnlocatedError msg -> report_error { v = msg; l = statement.l })
+      if is_in_prove_mode () then
+        report_error { v = "Can't use it while proving"; l = statement.l }
+      else
+        try
+          create_latex n;
+          clear_screen ();
+          print_string "Generated";
+          print_newline ();
+          print_current_state !print_hints;
+          print_flush ()
+        with UnlocatedError msg -> report_error { v = msg; l = statement.l })
   | ToggleHints b ->
       print_hints := b;
       clear_screen ();
@@ -78,7 +84,7 @@ let rec interactive () =
       print_flush ()
   | ShowCmd ->
       clear_screen ();
-      print_outside_proof_mode ();
+      if is_in_prove_mode () then print_outside_proof_mode ();
       print_string (String.init 40 (fun n -> if n mod 2 = 1 then '<' else '>'));
       print_newline ();
       print_flush ();

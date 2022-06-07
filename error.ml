@@ -1,6 +1,7 @@
-open Ast
+type location = { loc_file : string; loc_char : int; loc_line : int }
+type 'a located = { v : 'a; l : location }
 
-exception Error of string Ast.located
+exception Error of string located
 exception UnlocatedError of string
 
 let report_error err =

@@ -18,7 +18,11 @@ let command_history : command list ref = ref []
 let theorem_map : (string * Syntax.theorem) list ref = ref []
 let get_proven_theorems () = List.rev !theorem_map
 let get_current_proof_for_backup () = (!theorem_to_prove, !command_history)
-let add_theorem_from_backup name theorem = theorem_map := (name, theorem) :: !theorem_map
+
+let add_theorem_from_backup name theorem =
+  theorem_map := (name, theorem) :: List.remove_assoc name !theorem_map
+
+let is_in_prove_mode () = !current_proof_name <> None
 
 let rec cmd_to_proof_function : command -> goal -> goal = function
   | IntroCmd (name, world) -> intro name world
@@ -71,7 +75,8 @@ let interpret_command cmd =
         | P pf -> qed pf
         | G _ -> raise (UnlocatedError "Proof is not complete")
       in
-      theorem_map := ((Option.get !current_proof_name), complete_theorem) :: !theorem_map;
+      theorem_map :=
+        (Option.get !current_proof_name, complete_theorem) :: !theorem_map;
       Relation.make_relation_unmutable (Syntax.relation complete_theorem);
       current_proof := [];
       current_proof_name := None;
@@ -176,12 +181,8 @@ let interpret_statement statement =
             raise
               (Error
                  { v = "Can't use that outsite proof mode"; l = statement.l })
-      with
-      | Relation.RelationDoesNotExist msg ->
-          raise (Error { v = msg; l = statement.l })
-      | Relation.Error (name, msg) ->
-          let new_msg = name ^ " : " ^ msg in
-          raise (Error { v = new_msg; l = statement.l }))
+      with Error.UnlocatedError msg ->
+        raise (Error { v = msg; l = statement.l }))
   | _ -> (
       match statement.v with
       | Command c -> (
@@ -220,15 +221,16 @@ let print_outside_proof_mode () =
   print_string "Complited theorems:";
   print_newline ();
   List.iter
-    (function name, th ->
-      match Syntax.consequence th with
-      | J (_, prop) ->
-          open_hbox ();
-          print_string (name ^ " [" ^ Syntax.relation th ^ "] : ");
-          Syntax.print_prop prop;
-          close_box ();
-          print_newline ()
-      | _ -> failwith "Absurd")
+    (function
+      | name, th -> (
+          match Syntax.consequence th with
+          | J (_, prop) ->
+              open_hbox ();
+              print_string (name ^ " [" ^ Syntax.relation th ^ "] : ");
+              Syntax.print_prop prop;
+              close_box ();
+              print_newline ()
+          | _ -> failwith "Absurd"))
     !theorem_map;
   close_box ()
 

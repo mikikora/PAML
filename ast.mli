@@ -1,8 +1,6 @@
 open Syntax
 open Relation
-
-type location = { loc_file : string; loc_char : int; loc_line : int }
-type 'a located = { v : 'a; l : location }
+open Error
 
 type command =
   | IntroCmd of string option * world option

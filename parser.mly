@@ -130,11 +130,14 @@
 %type <Syntax.judgement>extended_judgement
 %type <Syntax.theorem_rule>rule
 
+%type <bool>answer
+
 %left SEMICOLON
 %right TRY
 
 %start statement
 %start backup
+%start answer
 
 %%
 
@@ -223,18 +226,18 @@ command:
     { FocusCmd 1 }
     | APPLY asm=ID world=option(preceded(WITH, ID))
     { ApplyAssmCmd (None, None, world, asm) }
-    | APPLY asm=ID world=option(preceded(WITH, ID)) AS name1=ID COMMA name2=ID
-    { ApplyAssmCmd (Some name1, Some name2, world, asm) }
+    | APPLY asm=ID world=option(preceded(WITH, ID)) AS name1=ID name2=option(preceded(COMMA, ID))
+    { ApplyAssmCmd (Some name1, name2, world, asm) }
     | INTRO name=option(ID) world=option(preceded(WITH, ID))
     { IntroCmd (name, world) }
     | APPLY jgmt=judgement world=option(preceded(WITH, ID))
     { ApplyCmd (None, None, world, jgmt)}
-    | APPLY jgmt=judgement world=option(preceded(WITH, ID)) AS name1=ID COMMA name2=ID
-    { ApplyCmd (Some name1, Some name2, world, jgmt) }
+    | APPLY jgmt=judgement world=option(preceded(WITH, ID)) AS name1=ID name2=option(preceded(COMMA, ID))
+    { ApplyCmd (Some name1, name2, world, jgmt) }
     | APPLY th=ID world=option(preceded(WITH, ID)) WHERE assingments=assingments_list
     { ApplyThCmd (None, None, world, th, assingments) }
-    | APPLY th=ID world=option(preceded(WITH, ID)) AS name1=ID COMMA name2=ID WHERE assingments=assingments_list
-    { ApplyThCmd (Some name1, Some name2, world, th, assingments)}
+    | APPLY th=ID world=option(preceded(WITH, ID)) AS name1=ID name2=option(preceded(COMMA, ID)) WHERE assingments=assingments_list
+    { ApplyThCmd (Some name1, name2, world, th, assingments)}
     | SERIAL WITH world2=ID world1=option(preceded(COMMA, ID)) name=option(preceded(AS, ID))
     { SerialCmd (name, world1, world2) }
     | REFL WITH world=ID name=option(preceded(AS, ID))
@@ -439,3 +442,12 @@ extended_judgement:
     { R(world1, world2) }
     | judgement
     { $1 }
+
+
+answer:
+    | id=ID
+    {
+        if id = "yes" || id = "y" then true
+        else if id = "no" || id = "n" then false
+        else raise (Lexer.InvalidToken (locate id, "Not an answer"))
+    }

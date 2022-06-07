@@ -15,10 +15,8 @@ val system_to_string : system -> string
 type relation_name = string
 type relation = { name : relation_name; properties : rel_property list }
 
-exception Error of relation_name * string
-exception RelationDoesNotExist of string
-
 val add_new_relation : relation_name -> rel_property list -> unit
+val replace_relation : relation -> unit
 val create_relation_for_system : relation_name option -> system -> relation_name
 val add_properties : relation_name -> rel_property list -> unit
 val remove_properties : relation_name -> rel_property list -> unit

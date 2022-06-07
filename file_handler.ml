@@ -184,6 +184,23 @@ let create_backup name =
   pp_print_flush fmtr ();
   close_out ch_out
 
+let ask_to_replace tp name =
+  let lexbuf = Lexer.create_from_stdin () in
+  let rec expect_answer () =
+    try
+      let answer = Parser.answer Lexer.token lexbuf in
+      answer
+    with
+    | Lexer.Eof -> raise (UnlocatedError "Unexpected EOF")
+    | Parser.Error | Lexer.InvalidToken _ ->
+        print_string "Type yes or no";
+        expect_answer ()
+  in
+  print_string
+    (tp ^ name ^ " already exists. Replace existing one with new one?\ny/n >");
+  print_flush ();
+  expect_answer ()
+
 let load_backup name =
   let ch_in =
     try open_in name with _ -> raise (UnlocatedError "Failed to open file")
@@ -195,14 +212,25 @@ let load_backup name =
         Parser.backup Lexer.token lexbuf
       in
       List.iter
-        (function rel -> add_new_relation rel.name rel.properties)
+        (function
+          | rel ->
+              if relation_exists rel.name then
+                if ask_to_replace "Relation " rel.name then replace_relation rel
+                else ()
+              else add_new_relation rel.name rel.properties)
         relation_list;
+      let theorem_names =
+        List.map (function name, _ -> name) (get_proven_theorems ())
+      in
       List.iter
         (function
           | name, th ->
-              if Core.validate_theorem th && assumptions th = [] then
-                add_theorem_from_backup name th
-              else raise (UnlocatedError ("Theorem " ^ name ^ " isn't true")))
+              let exists = List.mem name theorem_names in
+              if (not exists) || (exists && ask_to_replace "Theorem " name) then
+                if Core.validate_theorem th && assumptions th = [] then
+                  add_theorem_from_backup name th
+                else raise (UnlocatedError ("Theorem " ^ name ^ " isn't true"))
+              else ())
         theorem_list;
       match theorem_to_prove with
       | None -> ()
