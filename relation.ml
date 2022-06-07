@@ -1,4 +1,5 @@
 open Format
+open Error
 
 type rel_property =
   | Seriality
@@ -39,9 +40,6 @@ let system_to_properties =
 type relation_name = string
 type relation = { name : relation_name; properties : rel_property list }
 
-exception Error of relation_name * string
-exception RelationDoesNotExist of string
-
 let relation_map : (string, relation) Hashtbl.t = Hashtbl.create 5
 let used_relations : relation_name list ref = ref []
 
@@ -50,15 +48,18 @@ let make_relation_unmutable name =
     if List.mem name !used_relations then
       used_relations := name :: !used_relations
     else ()
-  else raise (RelationDoesNotExist name)
+  else raise (UnlocatedError (name ^ " already exists"))
 
 let is_relation_unmutable name = List.mem name !used_relations
 let create_relation name properties = { name; properties }
 
 let add_new_relation name properties =
   match Hashtbl.find_opt relation_map name with
-  | Some r -> raise (Error (r.name, "Relation already exists"))
+  | Some r -> raise (UnlocatedError (r.name ^ " relation already exists"))
   | None -> Hashtbl.add relation_map name (create_relation name properties)
+
+let replace_relation relation =
+  Hashtbl.replace relation_map relation.name relation
 
 let create_relation_name () =
   let rec generate_name acc =
@@ -77,7 +78,9 @@ let get_relation = Hashtbl.find relation_map
 
 let add_properties name properties =
   if is_relation_unmutable name then
-    raise (Error (name, "Relation is used in a theorem and can't be modified"))
+    raise
+      (UnlocatedError
+         (name ^ "  is already used in a theorem and can't be modified"))
   else
     let r = Hashtbl.find relation_map name in
     let new_r = { name = r.name; properties = properties @ r.properties } in
@@ -85,7 +88,9 @@ let add_properties name properties =
 
 let remove_properties name properties =
   if is_relation_unmutable name then
-    raise (Error (name, "Relation is used in a theorem and can't be modified"))
+    raise
+      (UnlocatedError
+         (name ^ "  is already used in a theorem and can't be modified"))
   else
     let r = Hashtbl.find relation_map name in
     let new_properties =

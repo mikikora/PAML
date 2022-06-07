@@ -1,5 +1,5 @@
 obj = \
-      relation.cmo syntax.cmo ast.cmo error.cmo lexer.cmo parser.cmo core.cmo \
+      error.cmo relation.cmo syntax.cmo ast.cmo lexer.cmo parser.cmo core.cmo \
 	  proof_syntax.cmo proof.cmo hint.cmo auto.cmo commands.cmo file_handler.cmo main.cmo 
 target = modal_proover
 SOURCES = \

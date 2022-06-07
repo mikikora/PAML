@@ -129,7 +129,7 @@ let intro name world = function
           | _ -> raise (UnlocatedError "Nothing to intro"))
       | _ -> raise (UnlocatedError "Not in empty goal"))
 
-(* implication, conjunction and box elimination *)
+(* implication, conjunction, alternative, box and diamond elimination *)
 let rec apply name1 name2 world f (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) -> (
@@ -167,12 +167,12 @@ let rec apply name1 name2 world f (pf, path) =
               | Some n1, Some n2 ->
                   ( add_to_ctx ~name:n1 ctx (J (x, p1)),
                     add_to_ctx ~name:n2 ctx (J (x, p2)) )
+              | Some n, None ->
+                  ( add_to_ctx ~name:n ctx (J (x, p1)),
+                    add_to_ctx ~name:n ctx (J (x, p2)) )
               | None, None ->
                   (add_to_ctx ctx (J (x, p1)), add_to_ctx ctx (J (x, p2)))
-              | _ ->
-                  raise
-                    (UnlocatedError
-                       "Two assumptions will be added. Not enugh names.")
+              | _ -> failwith "Absurd"
             in
             ( Empty (rel, ctx, f),
               Left3
