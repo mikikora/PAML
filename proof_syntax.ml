@@ -19,7 +19,7 @@ type path =
   | Mid of path * (theorem -> theorem)
   (*
      In 3 node proofs always goes: left, mid, right (without the one from the constructor)
-     Sof of example in Left3 it goes: mid, right and in Right3: left, mid
+     For example in Left3 it goes: mid, right and in Right3: left, mid
   *)
   | Left3 of path * proof * proof * (theorem -> theorem -> theorem -> theorem)
   | Mid3 of path * proof * proof * (theorem -> theorem -> theorem -> theorem)
