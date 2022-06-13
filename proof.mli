@@ -50,3 +50,4 @@ val direct :
 val assumption : goal -> goal
 val chain_tactic : (goal -> goal) -> (goal -> goal) -> goal -> goal
 val try_tactic : (goal -> goal) -> goal -> goal
+val unfocus_to_starting_point : path -> goal -> goal

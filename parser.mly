@@ -39,7 +39,7 @@
 %token UNDO
 %token ASS
 %token TRY
-%token AUTO
+%token <bool>AUTO
 %token EXIT
 %token MODEL
 %token HINT
@@ -92,6 +92,7 @@
 %token EQUIV
 %token NEG
 %token TRUE
+%token <bool>BOOL
 
 %type <Ast.statement>statement
 %type <Syntax.prop>alt_prop
@@ -259,10 +260,10 @@ command:
     { ChainCmd (cmd1, cmd2) }
     | TRY cmd=command
     { TryCmd cmd }
-    | AUTO n=NUM
-    { AutoCmd n }
-    | AUTO
-    { AutoCmd 5 }
+    | tp=AUTO n=NUM
+    { AutoCmd (tp, n) }
+    | tp=AUTO
+    { AutoCmd (tp, 5) }
 
 assingments_list:
     | assingment=assingment
@@ -428,8 +429,8 @@ proof_command_backup:
     { ChainCmd (cmd1, cmd2) }
     | TRYCMD cmd=proof_command_backup
     { TryCmd cmd }
-    | AUTOCMD n=NUM
-    { AutoCmd n }
+    | AUTOCMD tp=BOOL COMMA n=NUM
+    { AutoCmd (tp, n) }
 
 option_string:
     | NONE

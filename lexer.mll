@@ -88,7 +88,8 @@
         ("Save", SAVE);
         ("Generate", LATEX);
         ("try", TRY);
-        ("auto", AUTO);
+        ("auto", AUTO false);
+        ("fauto", AUTO true);
         ("exit", EXIT);
         ("model", MODEL);
         ("hints", HINT);
@@ -152,6 +153,8 @@
     ("AutoCmd", AUTOCMD);
     ("None", NONE);
     ("Some", SOME);
+    ("true", BOOL true);
+    ("false", BOOL false)
   ]
 
   let backup_symbol_table : (string, Parser.token) Hashtbl.t = Hashtbl.create 60

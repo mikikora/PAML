@@ -7,6 +7,10 @@ open File_handler
 
 let print_hints : bool ref = ref false
 
+exception SigInt
+
+let () = Sys.set_signal Sys.sigint (Sys.Signal_handle (fun _ -> raise SigInt))
+
 let clear_screen () =
   print_string "\o033c";
   print_flush ()
@@ -99,6 +103,13 @@ let rec interactive () =
       with Error err -> report_error err));
   interactive ()
 
+let rec run_interactive () =
+  try interactive ()
+  with SigInt ->
+    print_string "^C\n";
+    print_flush ();
+    run_interactive ()
+
 let main () =
   clear_screen ();
   print_string
@@ -106,6 +117,6 @@ let main () =
      To turn on hints use \"Hints on\"\n\
      To enter specific modal model type \"Model name_of_model\"\n\n";
   print_current_state !print_hints;
-  interactive ()
+  run_interactive ()
 
 let () = main ()

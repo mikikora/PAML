@@ -129,8 +129,10 @@ let rec pp_print_command fmtr = function
   | TryCmd cmd ->
       pp_print_string fmtr "^TryCmd ";
       pp_print_command fmtr cmd
-  | AutoCmd n ->
+  | AutoCmd (tp, n) ->
       pp_print_string fmtr "^AutoCmd ";
+      pp_print_bool fmtr tp;
+      pp_print_string fmtr ", ";
       pp_print_int fmtr n
 
 let create_backup name =

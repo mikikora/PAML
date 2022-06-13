@@ -428,6 +428,13 @@ let direct name1 name2 x y z world (pf, path) =
 
 (* Automatic tactics *)
 
+let rec unfocus_to_starting_point path (res_pf, res_path) =
+  if are_paths_equal res_path path then (res_pf, res_path)
+  else
+    match res_path with
+    | Root -> failwith "No common father"
+    | _ -> unfocus_to_starting_point path @@ get_father (res_pf, res_path)
+
 let assumption (pf, path) =
   match pf with
   | Empty (rel, ctx, jgmt) -> (
@@ -438,7 +445,8 @@ let assumption (pf, path) =
             else
               try
                 let applied = apply_assm None None None (fst elem) (pf, path) in
-                if no_goals (fst @@ get_father applied) = 0 then Proof applied
+                if no_goals (fst @@ unfocus_to_starting_point path applied) = 0
+                then Proof applied
                 else Dummy
               with _ -> Dummy)
           Dummy ctx
@@ -450,20 +458,17 @@ let assumption (pf, path) =
 
 let chain_tactic tactic1 tactic2 (pf, path) =
   let rec apply_second_tactic acc pf =
+    let () =
+      print_string "siema";
+      Format.print_flush ()
+    in
     if no_goals pf < acc + 1 then pf
     else
-      let new_pf, path = get_father @@ tactic2 (focus (acc + 1) pf) in
-      let new_goals = no_goals new_pf in
-      apply_second_tactic (acc + new_goals) (unfocus (new_pf, path))
+      let new_pf = unfocus @@ tactic2 (focus (acc + 1) pf) in
+      let new_goals = no_goals new_pf - no_goals pf + 1 in
+      apply_second_tactic (acc + new_goals) new_pf
   in
-  let rec unfocus_to_starting_point (res_pf, res_path) =
-    if are_paths_equal res_path path then (res_pf, res_path)
-    else
-      match res_path with
-      | Root -> failwith "No common father"
-      | _ -> unfocus_to_starting_point @@ get_father (res_pf, res_path)
-  in
-  let new_pf, new_path = unfocus_to_starting_point @@ tactic1 (pf, path) in
+  let new_pf, new_path = unfocus_to_starting_point path @@ tactic1 (pf, path) in
   let result_pf = apply_second_tactic 0 new_pf in
   (result_pf, new_path)
 

@@ -50,6 +50,11 @@ let rec cmd_to_proof_function : command -> goal -> goal = function
       and translate_cmd2 = cmd_to_proof_function cmd2 in
       chain_tactic translate_cmd1 translate_cmd2
   | TryCmd cmd -> try_tactic @@ cmd_to_proof_function cmd
+  | AutoCmd (tp, n) ->
+      let auto_fun = if tp then Auto.fauto else Auto.auto in
+      fun goal ->
+        let new_pf, new_path = auto_fun cmd_to_proof_function n goal in
+        if no_goals new_pf = 0 then (new_pf, new_path) else goal
   | _ -> raise (UnlocatedError "This is not a tactic")
 
 let interpret_command cmd =
@@ -101,15 +106,15 @@ let interpret_command cmd =
       | [] -> raise (UnlocatedError "Nothing to unfocus from"))
   | UndoCmd -> (
       try current_proof := List.tl !current_proof with Failure _ -> ())
-  | AutoCmd n ->
+  (* | AutoCmd n ->
       let new_pf, new_path = Auto.auto cmd_to_proof_function n (get_goal ()) in
       if no_goals new_pf = 0 then
         let res = unfocus (new_pf, new_path) in
         if no_goals res = 1 then
           current_proof := G (focus 1 res) :: !current_proof
         else current_proof := P res :: !current_proof
-      else ()
-  | ApplyAssmCmd _ | AssumptionCmd | ChainCmd _ ->
+      else () *)
+  | ApplyAssmCmd _ | AssumptionCmd | ChainCmd _ | AutoCmd _ ->
       let res = unfocus @@ (cmd_to_proof_function cmd) (get_goal ()) in
       if no_goals res = 1 then
         current_proof := G (focus 1 res) :: !current_proof

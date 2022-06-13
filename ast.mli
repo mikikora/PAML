@@ -32,7 +32,8 @@ type command =
   | AssumptionCmd
   | ChainCmd of command * command
   | TryCmd of command
-  | AutoCmd of int
+  (* bool value in auto means type of auto; true -> fauto, false -> auto*)
+  | AutoCmd of bool * int
 
 type statement_raw =
   | RelDecl of string * rel_property list
