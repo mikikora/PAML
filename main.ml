@@ -114,7 +114,7 @@ let main () =
   clear_screen ();
   print_string
     "Welcome to interactive prover for modal logics\n\
-     To turn on hints use \"Hints on\"\n\
+     To turn hints on use \"Hints on\"\n\
      To enter specific modal model type \"Model name_of_model\"\n\n";
   print_current_state !print_hints;
   run_interactive ()
