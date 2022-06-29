@@ -24,44 +24,29 @@ let auto cmd_to_proof_function depth goal =
           if intro_hints <> [] then
             (* intro phase *)
             match intro_hints with
-            | [ SplitCmd ] ->
+            | [ SplitCmd ] -> (
                 let new_pf, new_path =
                   get_father @@ (cmd_to_proof_function SplitCmd) (pf, path)
                 in
-                let new_pf, new_path =
-                  get_father @@ auto_tactic depth (focus 1 new_pf)
-                in
-                if no_goals new_pf <> 1 then (pf, path)
-                else
-                  let new_pf, new_path =
-                    get_father @@ auto_tactic depth (focus 1 new_pf)
-                  in
-                  if no_goals new_pf = 0 then (new_pf, new_path) else (pf, path)
-            | [ LeftCmd; RightCmd ] ->
+                try (use_auto_on_all_subgoals new_pf, new_path)
+                with CouldNotProove -> (pf, path))
+            | [ LeftCmd; RightCmd ] -> (
                 let left_pf, left_path =
                   (cmd_to_proof_function LeftCmd) (pf, path)
                 in
-                let left_pf, left_path =
-                  get_father @@ auto_tactic depth (left_pf, left_path)
-                in
-                if no_goals left_pf = 0 then (left_pf, left_path)
-                else
+                try (use_auto_on_all_subgoals left_pf, left_path)
+                with CouldNotProove -> (
                   let right_pf, right_path =
                     (cmd_to_proof_function RightCmd) (pf, path)
                   in
-                  let right_pf, right_path =
-                    get_father @@ auto_tactic depth (right_pf, right_path)
-                  in
-                  if no_goals right_pf = 0 then (right_pf, right_path)
-                  else (pf, path)
-            | [ intro_cmd ] ->
+                  try (use_auto_on_all_subgoals right_pf, right_path)
+                  with CouldNotProove -> (pf, path)))
+            | [ intro_cmd ] -> (
                 let new_pf, new_path =
                   (cmd_to_proof_function intro_cmd) (pf, path)
                 in
-                let new_pf, new_path =
-                  get_father @@ auto_tactic depth (new_pf, new_path)
-                in
-                if no_goals new_pf = 0 then (new_pf, new_path) else (pf, path)
+                try (use_auto_on_all_subgoals new_pf, new_path)
+                with CouldNotProove -> (pf, path))
             | _ -> failwith "absurd"
           else
             (* apply phase *)

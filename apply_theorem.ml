@@ -3,9 +3,25 @@ open Proof_syntax
 open Proof
 open Error
 
+(* FOr debbuging *)
+let print_assignments lst =
+  if lst = [] then print_string "Empty\n"
+  else
+    List.iter
+      (function
+        | name, prop ->
+            Format.print_string name;
+            Format.print_string " - ";
+            print_prop prop;
+            Format.print_string "; ")
+      lst;
+  Format.print_string "\n";
+  Format.print_flush ()
+
 (* Try match appling theorem *)
 let match_jgmt_to_goal jgmt_to_convert jgmt =
   let is_proper_assignment lst =
+    let () = print_assignments lst in
     let rec aux lst =
       match lst with
       | [] -> true
@@ -18,21 +34,21 @@ let match_jgmt_to_goal jgmt_to_convert jgmt =
   let rec match_props prop1 prop2 =
     match (prop1, prop2) with
     | F, F -> []
-    | Var x, Var y -> [ (x, Var y) ]
+    | Var x, prop -> [ (x, prop) ]
     | Con (p1, p2), Con (p1', p2') | Alt (p1, p2), Alt (p1', p2') ->
         match_props p1 p1' @ match_props p2 p2'
     | Box p1, Box p2 | Dia p1, Dia p2 -> match_props p1 p2
-    | Imp (p1, p2), Imp (p1', p2') ->
-        let try_convert = match_props p2 p2' in
-        if is_proper_assignment try_convert then
-          let p1_converted = match_props p1 p1' in
-          try_convert @ p1_converted
-        else
-          let try_convert = match_props p2 prop2 in
-          if is_proper_assignment try_convert then
-            let p1_converted = match_props p1 p1' in
-            try_convert @ p1_converted
-          else [ ("", F) ]
+    | Imp _, _ ->
+        let rec match_imp_props prop1 prop2 =
+          match (prop1, prop2) with
+          | Imp (p1, p2), Imp (p1', p2') ->
+              let assignment = match_props p1 p1' @ match_props p2 p2' in
+              if is_proper_assignment assignment then assignment
+              else match_imp_props p2 prop2
+          | Imp (p1, p2), _ -> match_props p2 prop2
+          | _ -> match_props prop1 prop2
+        in
+        match_imp_props prop1 prop2
     | _ -> [ ("", F) ]
   in
   match (jgmt_to_convert, jgmt) with
@@ -71,15 +87,15 @@ let convert_judgement assignments = function
       let world =
         match List.assoc_opt x assignments with
         | Some (Var w) -> w
-        | _ -> failwith ("No world name for " ^ x)
+        | _ -> raise (UnlocatedError ("No assignment for world " ^ x))
       in
       let converted_prop = convert_prop assignments prop in
       J (world, converted_prop)
   | R (x, y) -> (
       match (List.assoc_opt x assignments, List.assoc_opt y assignments) with
       | Some (Var x'), Some (Var y') -> R (x', y')
-      | Some _, None -> failwith ("No world name for " ^ y)
-      | _, _ -> failwith ("No world name for " ^ x))
+      | Some _, None -> raise (UnlocatedError ("No assignment for world " ^ y))
+      | _, _ -> raise (UnlocatedError ("No assignment for world " ^ x)))
 
 let create_fresh_world_name world ass ctx assignments =
   let world_in_ass world ass =
@@ -153,14 +169,19 @@ let apply_th name1 name2 world th assignments = function
             let full_assignments =
               assignments @ match_jgmt_to_goal jgmt_to_covert jgmt
             in
-            let jgmt_to_apply =
-              convert_judgement full_assignments jgmt_to_covert
-            in
-            let _, new_path =
-              apply name1 name2 world jgmt_to_apply (pf, path)
-            in
-            let converted_theorem =
-              convert_theorem rel full_assignments ctx th
-            in
-            (Leaf converted_theorem, new_path)
+            if full_assignments = [] then
+              raise
+                (UnlocatedError "couldn't find proper match for current goal")
+            else
+              let () = print_assignments full_assignments in
+              let jgmt_to_apply =
+                convert_judgement full_assignments jgmt_to_covert
+              in
+              let _, new_path =
+                apply name1 name2 world jgmt_to_apply (pf, path)
+              in
+              let converted_theorem =
+                convert_theorem rel full_assignments ctx th
+              in
+              (Leaf converted_theorem, new_path)
       | _ -> raise (UnlocatedError "Not in empty goal"))

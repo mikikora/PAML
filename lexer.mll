@@ -83,6 +83,7 @@
         ("contra", CONTRA);
         ("undo", UNDO);
         ("unset", UNSET);
+        ("not", UNSET);
         ("Assumption", ASS);
         ("Load", LOAD);
         ("Save", SAVE);

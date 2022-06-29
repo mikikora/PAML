@@ -218,7 +218,7 @@ let print_outside_proof_mode () =
     (Relation.get_declared_relations ());
   print_string (String.make 40 '-');
   print_newline ();
-  print_string "Complited theorems:";
+  print_string "Completed theorems:";
   print_newline ();
   List.iter
     (function
