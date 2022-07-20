@@ -67,7 +67,6 @@
         ("dia", DIA);
         ("diamond", DIA);
         ("False", FALSE);
-        ("F", FALSE);
         ("True", TRUE);
         ("as", AS);
         ("split", SPLIT);

@@ -247,7 +247,7 @@ let load_backup name =
     | Lexer.Eof -> raise (UnlocatedError "Unexpected EOF")
     | Parser.Error ->
         let l = Lexer.get_location () in
-        raise (Error { v = "Parse fds error"; l })
+        raise (Error { v = "Parse error"; l })
     | Lexer.InvalidToken (ch, msg) ->
         let l = ch.l in
         raise (Error { v = msg; l })

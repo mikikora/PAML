@@ -205,7 +205,7 @@ let print_outside_proof_mode () =
   Seq.iter
     (fun (relation : Relation.relation) ->
       print_string relation.name;
-      if relation.properties = [] then () else print_string " : ";
+      if relation.properties = [] then () else print_string " :: ";
       open_hbox ();
       List.iter
         (fun (property : Relation.rel_property) ->

@@ -9,11 +9,12 @@ exception CouldNotProove
 
 let auto cmd_to_proof_function depth goal =
   let rec auto_tactic depth (pf, path) =
-    let rec use_auto_on_all_subgoals new_pf =
+    let rec use_auto_on_all_subgoals depth new_pf =
       let no_goals_start = no_goals new_pf in
-      let new_pf = unfocus @@ auto_tactic (depth - 1) (focus 1 new_pf) in
+      let new_pf = unfocus @@ auto_tactic depth (focus 1 new_pf) in
       if no_goals new_pf = no_goals_start - 1 then
-        if no_goals new_pf = 0 then new_pf else use_auto_on_all_subgoals new_pf
+        if no_goals new_pf = 0 then new_pf
+        else use_auto_on_all_subgoals depth new_pf
       else raise CouldNotProove
     in
     if depth = 0 then (pf, path)
@@ -24,28 +25,25 @@ let auto cmd_to_proof_function depth goal =
           if intro_hints <> [] then
             (* intro phase *)
             match intro_hints with
-            | [ SplitCmd ] -> (
-                let new_pf, new_path =
-                  get_father @@ (cmd_to_proof_function SplitCmd) (pf, path)
-                in
-                try (use_auto_on_all_subgoals new_pf, new_path)
-                with CouldNotProove -> (pf, path))
             | [ LeftCmd; RightCmd ] -> (
                 let left_pf, left_path =
-                  (cmd_to_proof_function LeftCmd) (pf, path)
+                  unfocus_to_starting_point path
+                  @@ (cmd_to_proof_function LeftCmd) (pf, path)
                 in
-                try (use_auto_on_all_subgoals left_pf, left_path)
+                try (use_auto_on_all_subgoals depth left_pf, left_path)
                 with CouldNotProove -> (
                   let right_pf, right_path =
-                    (cmd_to_proof_function RightCmd) (pf, path)
+                    unfocus_to_starting_point path
+                    @@ (cmd_to_proof_function RightCmd) (pf, path)
                   in
-                  try (use_auto_on_all_subgoals right_pf, right_path)
+                  try (use_auto_on_all_subgoals depth right_pf, right_path)
                   with CouldNotProove -> (pf, path)))
             | [ intro_cmd ] -> (
                 let new_pf, new_path =
-                  (cmd_to_proof_function intro_cmd) (pf, path)
+                  unfocus_to_starting_point path
+                  @@ (cmd_to_proof_function intro_cmd) (pf, path)
                 in
-                try (use_auto_on_all_subgoals new_pf, new_path)
+                try (use_auto_on_all_subgoals depth new_pf, new_path)
                 with CouldNotProove -> (pf, path))
             | _ -> failwith "absurd"
           else
@@ -60,7 +58,7 @@ let auto cmd_to_proof_function depth goal =
                   in
                   if no_goals new_pf = 0 then (new_pf, new_path)
                   else
-                    try (use_auto_on_all_subgoals new_pf, new_path)
+                    try (use_auto_on_all_subgoals (depth - 1) new_pf, new_path)
                     with CouldNotProove -> evaluate_apply_hints tl)
             in
             evaluate_apply_hints apply_hints

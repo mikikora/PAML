@@ -159,6 +159,8 @@ statement_raw:
     { TheoremDecl (id, rel, J("x", prop)) }
     | LOAD name=FILE_NAME
     { LoadBackup name }
+    | LOAD
+    { LoadBackup "backup.bck" }
     | SAVE name=FILE_NAME
     { SaveBackup name }
     | LATEX name=FILE_NAME
@@ -276,7 +278,7 @@ assingment:
     { variable, prop }
 
 judgement:
-    | world=ID COLON prop=equiv_prop
+    | world=ID COLON COLON prop=equiv_prop
     { J (world, prop) }
 
 equiv_prop:

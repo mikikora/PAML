@@ -59,28 +59,41 @@ let match_jgmt_to_goal jgmt_to_convert jgmt =
       else []
   | _ -> failwith "judgements in theorems are not J type"
 
+let create_new_var_name name assignments =
+  let rec aux acc =
+    let new_name = name ^ String.make acc '\'' in
+    if List.exists (function _, var -> var = Var new_name) assignments then
+      aux @@ succ acc
+    else new_name
+  in
+  aux 0
+
 let rec convert_prop assignments = function
-  | F -> F
+  | F -> (F, assignments)
   | Var str -> (
-      match List.assoc_opt str assignments with Some p -> p | None -> Var str)
+      match List.assoc_opt str assignments with
+      | Some p -> (p, assignments)
+      | None ->
+          let new_name = create_new_var_name str assignments in
+          (Var new_name, (str, Var new_name) :: assignments))
   | Con (p1, p2) ->
-      let new_p1 = convert_prop assignments p1
-      and new_p2 = convert_prop assignments p2 in
-      Con (new_p1, new_p2)
+      let new_p1, assignments = convert_prop assignments p1 in
+      let new_p2, assignments = convert_prop assignments p2 in
+      (Con (new_p1, new_p2), assignments)
   | Alt (p1, p2) ->
-      let new_p1 = convert_prop assignments p1
-      and new_p2 = convert_prop assignments p2 in
-      Alt (new_p1, new_p2)
+      let new_p1, assignments = convert_prop assignments p1 in
+      let new_p2, assignments = convert_prop assignments p2 in
+      (Alt (new_p1, new_p2), assignments)
   | Imp (p1, p2) ->
-      let new_p1 = convert_prop assignments p1
-      and new_p2 = convert_prop assignments p2 in
-      Imp (new_p1, new_p2)
+      let new_p1, assignments = convert_prop assignments p1 in
+      let new_p2, assignments = convert_prop assignments p2 in
+      (Imp (new_p1, new_p2), assignments)
   | Box p ->
-      let new_p = convert_prop assignments p in
-      Box new_p
+      let new_p, assignments = convert_prop assignments p in
+      (Box new_p, assignments)
   | Dia p ->
-      let new_p = convert_prop assignments p in
-      Dia new_p
+      let new_p, assignments = convert_prop assignments p in
+      (Dia new_p, assignments)
 
 let convert_judgement assignments = function
   | J (x, prop) ->
@@ -89,11 +102,11 @@ let convert_judgement assignments = function
         | Some (Var w) -> w
         | _ -> raise (UnlocatedError ("No assignment for world " ^ x))
       in
-      let converted_prop = convert_prop assignments prop in
-      J (world, converted_prop)
+      let converted_prop, assignments = convert_prop assignments prop in
+      (J (world, converted_prop), assignments)
   | R (x, y) -> (
       match (List.assoc_opt x assignments, List.assoc_opt y assignments) with
-      | Some (Var x'), Some (Var y') -> R (x', y')
+      | Some (Var x'), Some (Var y') -> R (x', y'), assignments
       | Some _, None -> raise (UnlocatedError ("No assignment for world " ^ y))
       | _, _ -> raise (UnlocatedError ("No assignment for world " ^ x)))
 
@@ -111,7 +124,7 @@ let create_fresh_world_name world ass ctx assignments =
     world_in_ass world ass || world_in_context world ctx
   in
   let rec generate_name n acc =
-    let name = n ^ string_of_int acc in
+    let name = n ^ String.make acc '\'' in
     if world_in_ass_or_ctx name then generate_name n (succ acc) else name
   in
   let name = generate_name world 0 in
@@ -127,14 +140,26 @@ let rec convert_theorem rel assignments ctx th =
     match jgmt with
     | J (x, _) ->
         let assignments = world_in_assignments x assignments ass in
-        let new_jgmt = convert_judgement assignments jgmt in
-        let new_ass = List.map (convert_judgement assignments) ass in
+        let new_jgmt, assignments = convert_judgement assignments jgmt in
+        let new_ass, assignments =
+          List.fold_right
+            (fun elem (lst, assignments) ->
+              let new_jgmt, assignments = convert_judgement assignments elem in
+              (new_jgmt :: lst, assignments))
+            ass ([], assignments)
+        in
         ((rel, new_ass, new_jgmt), assignments)
     | R (x, y) ->
         let assignments = world_in_assignments x assignments ass in
         let assignments = world_in_assignments y assignments ass in
-        let new_jgmt = convert_judgement assignments jgmt in
-        let new_ass = List.map (convert_judgement assignments) ass in
+        let new_jgmt, assignments = convert_judgement assignments jgmt in
+        let new_ass, assignments =
+          List.fold_right
+            (fun elem (lst, assignments) ->
+              let new_jgmt, assignments = convert_judgement assignments elem in
+              (new_jgmt :: lst, assignments))
+            ass ([], assignments)
+        in
         ((rel, new_ass, new_jgmt), assignments)
   in
 
@@ -174,7 +199,7 @@ let apply_th name1 name2 world th assignments = function
                 (UnlocatedError "couldn't find proper match for current goal")
             else
               let () = print_assignments full_assignments in
-              let jgmt_to_apply =
+              let jgmt_to_apply, full_assignments =
                 convert_judgement full_assignments jgmt_to_covert
               in
               let _, new_path =

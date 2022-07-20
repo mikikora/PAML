@@ -90,7 +90,7 @@ type printing_style = LaTeX | Backup | Interactive
 
 let theorem_rule_to_string ?(style = Backup) = function
   | FalseE -> if style = LaTeX then "(\\bot E)" else "^FalseE"
-  | Hyp -> if style = LaTeX then "(Hyp)" else "^Hyp"
+  | Hyp -> if style = LaTeX then "(Ass)" else "^Hyp"
   | ConI -> if style = LaTeX then "(\\wedge I)" else "^ConI"
   | ConE1 -> if style = LaTeX then "(\\wedge E1)" else "^ConE1"
   | ConE2 -> if style = LaTeX then "(\\wedge E2)" else "^ConE2"
@@ -179,7 +179,8 @@ and pp_print_judgement ?(style = Interactive) fmtr ?r = function
   | J (world, p) ->
       pp_open_hbox fmtr ();
       pp_print_string fmtr world;
-      pp_print_string fmtr ":";
+      pp_print_space fmtr ();
+      pp_print_string fmtr "::";
       pp_print_space fmtr ();
       pp_print_imp_prop ~style fmtr p;
       pp_close_box fmtr ()
