@@ -106,7 +106,7 @@ let convert_judgement assignments = function
       (J (world, converted_prop), assignments)
   | R (x, y) -> (
       match (List.assoc_opt x assignments, List.assoc_opt y assignments) with
-      | Some (Var x'), Some (Var y') -> R (x', y'), assignments
+      | Some (Var x'), Some (Var y') -> (R (x', y'), assignments)
       | Some _, None -> raise (UnlocatedError ("No assignment for world " ^ y))
       | _, _ -> raise (UnlocatedError ("No assignment for world " ^ x)))
 
