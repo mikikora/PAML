@@ -254,7 +254,7 @@ and pp_print_atom_prop ?(style = Interactive) fmtr = function
         match style with
         | Interactive -> "◇"
         | Backup -> "<>"
-        | LaTeX -> "\\diamond "
+        | LaTeX -> "\\Diamond "
       in
       pp_print_string fmtr dia;
       pp_print_atom_prop ~style fmtr p

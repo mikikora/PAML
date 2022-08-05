@@ -2,7 +2,7 @@ obj = \
       error.cmo relation.cmo syntax.cmo ast.cmo lexer.cmo parser.cmo core.cmo \
 	  proof_syntax.cmo proof.cmo apply_theorem.cmo hint.cmo auto.cmo \
 	  commands.cmo file_handler.cmo main.cmo 
-target = modal_proover
+target = PAML
 SOURCES = \
 	syntax.ml syntax.mli core.ml core.mli proof.ml proof.mli proof_syntax.ml proof_syntax.mli \
 	ast.mli commands.ml commands.mli main.ml relation.ml relation.mli lexer.mli error.ml error.mli \

@@ -50,8 +50,8 @@ x :: \Box A \supset  \Box B$}
 Relation R has properties: \begin{prooftree}\AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$
-x :: \diamond A;
- \vdash x :: \diamond A$}
+x :: \Diamond A;
+ \vdash x :: \Diamond A$}
 \AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$x :: \Box (
@@ -87,26 +87,26 @@ y :: A$}
 \BinaryInfC{$x :: \Box (A \supset  B);
                                                     xRy;
                                                     y :: A;
-                                                     \vdash x :: \diamond B$}
+                                                     \vdash x :: \Diamond B$}
 \RightLabel{\scriptsize$(\diamond E)$}
-\BinaryInfC{$x :: \diamond A;
+\BinaryInfC{$x :: \Diamond A;
                                                     x :: \Box (A \supset  B);
-                                                     \vdash x :: \diamond B$}
+                                                     \vdash x :: \Diamond B$}
 \RightLabel{\scriptsize$(\supset I)$}
 \UnaryInfC{$x :: \Box (A \supset  B);  \vdash 
-x :: \diamond A \supset  \diamond B$}
+x :: \Diamond A \supset  \Diamond B$}
 \RightLabel{\scriptsize$(\supset I)$}
 \UnaryInfC{$  \vdash x :: \Box (
                                                                     A
                                                                     \supset 
                                                                     B
-                                                                    ) \supset  \diamond A \supset  \diamond B$}
+                                                                    ) \supset  \Diamond A \supset  \Diamond B$}
 \end{prooftree}\section{axiom3}
 Relation R has properties: \begin{prooftree}\AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$
-x :: \diamond \bot ;
- \vdash x :: \diamond \bot $}
+x :: \Diamond \bot ;
+ \vdash x :: \Diamond \bot $}
 \AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$y :: \bot ;  \vdash 
@@ -116,16 +116,16 @@ y :: \bot $}
 \RightLabel{\scriptsize$(W)$}
 \UnaryInfC{$xRy; y :: \bot ;  \vdash x :: \bot $}
 \RightLabel{\scriptsize$(\diamond E)$}
-\BinaryInfC{$x :: \diamond \bot ;  \vdash 
+\BinaryInfC{$x :: \Diamond \bot ;  \vdash 
 x :: \bot $}
 \RightLabel{\scriptsize$(\supset I)$}
-\UnaryInfC{$  \vdash x :: \diamond \bot  \supset  \bot $}
+\UnaryInfC{$  \vdash x :: \Diamond \bot  \supset  \bot $}
 \end{prooftree}\section{axiom4}
 Relation R has properties: \begin{prooftree}\AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$
-x :: \diamond (A \vee  B);
- \vdash x :: \diamond (A \vee  B)$}
+x :: \Diamond (A \vee  B);
+ \vdash x :: \Diamond (A \vee  B)$}
 \AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$y :: A \vee  B;  \vdash 
@@ -139,10 +139,10 @@ y :: A$}
 \UnaryInfC{$xRy;  \vdash xRy$}
 \RightLabel{\scriptsize$(\diamond I)$}
 \BinaryInfC{$y :: A; xRy;  \vdash 
-x :: \diamond A$}
+x :: \Diamond A$}
 \RightLabel{\scriptsize$(\vee I1)$}
 \UnaryInfC{$y :: A; xRy;  \vdash 
-x :: \diamond A \vee  \diamond B$}
+x :: \Diamond A \vee  \Diamond B$}
 \AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$y :: B;  \vdash 
@@ -152,28 +152,28 @@ y :: B$}
 \UnaryInfC{$xRy;  \vdash xRy$}
 \RightLabel{\scriptsize$(\diamond I)$}
 \BinaryInfC{$y :: B; xRy;  \vdash 
-x :: \diamond B$}
+x :: \Diamond B$}
 \RightLabel{\scriptsize$(\vee I2)$}
 \UnaryInfC{$y :: B; xRy;  \vdash 
-x :: \diamond A \vee  \diamond B$}
+x :: \Diamond A \vee  \Diamond B$}
 \RightLabel{\scriptsize$(\vee E)$}
 \TrinaryInfC{$y :: A \vee  B; xRy;  \vdash 
-x :: \diamond A \vee  \diamond B$}
+x :: \Diamond A \vee  \Diamond B$}
 \RightLabel{\scriptsize$(\diamond E)$}
-\BinaryInfC{$x :: \diamond (A \vee  B);
-                                                     \vdash x :: \diamond A \vee  \diamond B$}
+\BinaryInfC{$x :: \Diamond (A \vee  B);
+                                                     \vdash x :: \Diamond A \vee  \Diamond B$}
 \RightLabel{\scriptsize$(\supset I)$}
-\UnaryInfC{$  \vdash x :: \diamond (
+\UnaryInfC{$  \vdash x :: \Diamond (
                                                                     A
                                                                     \vee 
                                                                     B
-                                                                    ) \supset  \diamond A \vee  \diamond B$}
+                                                                    ) \supset  \Diamond A \vee  \Diamond B$}
 \end{prooftree}\section{axiom5}
 Relation R has properties: \begin{prooftree}\AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$
-x :: \diamond A \supset  \Box B;
- \vdash x :: \diamond A \supset  \Box B$}
+x :: \Diamond A \supset  \Box B;
+ \vdash x :: \Diamond A \supset  \Box B$}
 \AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$y :: A;  \vdash 
@@ -183,9 +183,9 @@ y :: A$}
 \UnaryInfC{$xRy;  \vdash xRy$}
 \RightLabel{\scriptsize$(\diamond I)$}
 \BinaryInfC{$y :: A; xRy;  \vdash 
-x :: \diamond A$}
+x :: \Diamond A$}
 \RightLabel{\scriptsize$(\supset E)$}
-\BinaryInfC{$x :: \diamond A \supset  \Box B;
+\BinaryInfC{$x :: \Diamond A \supset  \Box B;
                                                    y :: A;
                                                    xRy;
                                                     \vdash x :: \Box B$}
@@ -193,16 +193,16 @@ x :: \diamond A$}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$xRy;  \vdash xRy$}
 \RightLabel{\scriptsize$(\Box E)$}
-\BinaryInfC{$x :: \diamond A \supset  \Box B;
+\BinaryInfC{$x :: \Diamond A \supset  \Box B;
                                                 y :: A;
                                                 xRy;
                                                  \vdash y :: B$}
 \RightLabel{\scriptsize$(\supset I)$}
-\UnaryInfC{$x :: \diamond A \supset  \Box B;
+\UnaryInfC{$x :: \Diamond A \supset  \Box B;
                                                   xRy;
                                                    \vdash y :: A \supset  B$}
 \RightLabel{\scriptsize$(\Box I)$}
-\UnaryInfC{$x :: \diamond A \supset  \Box B;
+\UnaryInfC{$x :: \Diamond A \supset  \Box B;
                                                 \vdash x :: \Box (
                                                                   A
                                                                   \supset 
@@ -210,7 +210,7 @@ x :: \diamond A$}
                                                                   )$}
 \RightLabel{\scriptsize$(\supset I)$}
 \UnaryInfC{$  \vdash x :: (
-                                                                 \diamond A
+                                                                 \Diamond A
                                                                  \supset 
                                                                  \Box B
                                                                  ) \supset  \Box (
@@ -235,11 +235,11 @@ y :: A$}
 \UnaryInfC{$xRDy;  \vdash xRDy$}
 \RightLabel{\scriptsize$(\diamond I)$}
 \BinaryInfC{$x :: \Box A; xRDy;  \vdash 
-x :: \diamond A$}
+x :: \Diamond A$}
 \RightLabel{\scriptsize$(R_D)$}
-\UnaryInfC{$x :: \Box A;  \vdash x :: \diamond A$}
+\UnaryInfC{$x :: \Box A;  \vdash x :: \Diamond A$}
 \RightLabel{\scriptsize$(\supset I)$}
-\UnaryInfC{$  \vdash x :: \Box A \supset  \diamond A$}
+\UnaryInfC{$  \vdash x :: \Box A \supset  \Diamond A$}
 \end{prooftree}\section{axiom7}
 Relation RT has properties: Reflexivity, \begin{prooftree}\AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
@@ -271,13 +271,13 @@ x :: A$}
 \UnaryInfC{$yRBx;  \vdash yRBx$}
 \RightLabel{\scriptsize$(\diamond I)$}
 \BinaryInfC{$x :: A; yRBx;  \vdash 
-y :: \diamond A$}
+y :: \Diamond A$}
 \RightLabel{\scriptsize$(R_B)$}
-\BinaryInfC{$xRBy; x :: A;  \vdash y :: \diamond A$}
+\BinaryInfC{$xRBy; x :: A;  \vdash y :: \Diamond A$}
 \RightLabel{\scriptsize$(\Box I)$}
-\UnaryInfC{$x :: A;  \vdash x :: \Box \diamond A$}
+\UnaryInfC{$x :: A;  \vdash x :: \Box \Diamond A$}
 \RightLabel{\scriptsize$(\supset I)$}
-\UnaryInfC{$  \vdash x :: A \supset  \Box \diamond A$}
+\UnaryInfC{$  \vdash x :: A \supset  \Box \Diamond A$}
 \end{prooftree}\section{axiom9}
 Relation R4 has properties: Transitivity, \begin{prooftree}\AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
@@ -311,8 +311,8 @@ y :: \Box A$}
 Relation R5 has properties: Euclideanness, \begin{prooftree}\AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$
-x :: \diamond A;
- \vdash x :: \diamond A$}
+x :: \Diamond A;
+ \vdash x :: \Diamond A$}
 \AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$xR5y;  \vdash xR5y$}
@@ -328,24 +328,24 @@ z :: A$}
 \UnaryInfC{$yR5z;  \vdash yR5z$}
 \RightLabel{\scriptsize$(\diamond I)$}
 \BinaryInfC{$z :: A; yR5z;  \vdash 
-y :: \diamond A$}
+y :: \Diamond A$}
 \RightLabel{\scriptsize$(R_5)$}
 \TrinaryInfC{$xR5y; xR5z; z :: A;  \vdash 
-y :: \diamond A$}
+y :: \Diamond A$}
 \RightLabel{\scriptsize$(\diamond E)$}
-\BinaryInfC{$x :: \diamond A; xR5y;  \vdash 
-y :: \diamond A$}
+\BinaryInfC{$x :: \Diamond A; xR5y;  \vdash 
+y :: \Diamond A$}
 \RightLabel{\scriptsize$(\Box I)$}
-\UnaryInfC{$x :: \diamond A;  \vdash 
-x :: \Box \diamond A$}
+\UnaryInfC{$x :: \Diamond A;  \vdash 
+x :: \Box \Diamond A$}
 \RightLabel{\scriptsize$(\supset I)$}
-\UnaryInfC{$  \vdash x :: \diamond A \supset  \Box \diamond A$}
+\UnaryInfC{$  \vdash x :: \Diamond A \supset  \Box \Diamond A$}
 \end{prooftree}\section{axiom11}
 Relation R2 has properties: Directedness, \begin{prooftree}\AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$
-x :: \diamond \Box A;
- \vdash x :: \diamond \Box A$}
+x :: \Diamond \Box A;
+ \vdash x :: \Diamond \Box A$}
 \AxiomC{}
 \RightLabel{\scriptsize$(Ass)$}
 \UnaryInfC{$xR2y;  \vdash xR2y$}
@@ -367,18 +367,18 @@ w :: A$}
 \UnaryInfC{$yR2w;  \vdash yR2w$}
 \RightLabel{\scriptsize$(\diamond I)$}
 \BinaryInfC{$z :: \Box A; zR2w; yR2w;  \vdash 
-y :: \diamond A$}
+y :: \Diamond A$}
 \RightLabel{\scriptsize$(R_2)$}
 \TrinaryInfC{$xR2y; xR2z; z :: \Box A;  \vdash 
-y :: \diamond A$}
+y :: \Diamond A$}
 \RightLabel{\scriptsize$(\diamond E)$}
-\BinaryInfC{$x :: \diamond \Box A;
+\BinaryInfC{$x :: \Diamond \Box A;
                                                     xR2y;
-                                                     \vdash y :: \diamond A$}
+                                                     \vdash y :: \Diamond A$}
 \RightLabel{\scriptsize$(\Box I)$}
-\UnaryInfC{$x :: \diamond \Box A;  \vdash 
-x :: \Box \diamond A$}
+\UnaryInfC{$x :: \Diamond \Box A;  \vdash 
+x :: \Box \Diamond A$}
 \RightLabel{\scriptsize$(\supset I)$}
-\UnaryInfC{$  \vdash x :: \diamond \Box A \supset  \Box \diamond A$}
+\UnaryInfC{$  \vdash x :: \Diamond \Box A \supset  \Box \Diamond A$}
 \end{prooftree}
 \end{document}
