@@ -16,7 +16,7 @@ let pp_print_assignments fmtr assignments =
     (function
       | name, prop ->
           pp_print_string fmtr name;
-          pp_print_string fmtr ", ";
+          pp_print_string fmtr ":= ";
           pp_print_prop ~style:Backup fmtr prop)
     assignments
 

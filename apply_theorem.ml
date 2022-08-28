@@ -3,7 +3,7 @@ open Proof_syntax
 open Proof
 open Error
 
-(* FOr debbuging *)
+(* For debbuging *)
 let print_assignments lst =
   if lst = [] then print_string "Empty\n"
   else
@@ -21,7 +21,7 @@ let print_assignments lst =
 (* Try match appling theorem *)
 let match_jgmt_to_goal jgmt_to_convert jgmt =
   let is_proper_assignment lst =
-    let () = print_assignments lst in
+    (* let () = print_assignments lst in *)
     let rec aux lst =
       match lst with
       | [] -> true
@@ -198,7 +198,7 @@ let apply_th name1 name2 world th assignments = function
               raise
                 (UnlocatedError "couldn't find proper match for current goal")
             else
-              let () = print_assignments full_assignments in
+              (* let () = print_assignments full_assignments in *)
               let jgmt_to_apply, full_assignments =
                 convert_judgement full_assignments jgmt_to_covert
               in

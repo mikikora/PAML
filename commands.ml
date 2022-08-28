@@ -36,6 +36,13 @@ let rec cmd_to_proof_function : command -> goal -> goal = function
               (List.assoc name !theorem_map)
               [] goal
           with Not_found -> raise (UnlocatedError (name ^ " not found"))))
+  | ApplyThCmd (name1, name2, world, name, asgn_list) -> (
+      fun goal ->
+        try
+          Apply_theorem.apply_th name1 name2 world
+            (List.assoc name !theorem_map)
+            asgn_list goal
+        with Not_found -> raise (UnlocatedError (name ^ " not found")))
   | SplitCmd -> split
   | LeftCmd -> left
   | RightCmd -> right
@@ -109,7 +116,7 @@ let interpret_command cmd =
       | [] -> raise (UnlocatedError "Nothing to unfocus from"))
   | UndoCmd -> (
       try current_proof := List.tl !current_proof with Failure _ -> ())
-  | ApplyAssmCmd _ | AssumptionCmd | ChainCmd _ | AutoCmd _ ->
+  | ApplyThCmd _ | ApplyAssmCmd _ | AssumptionCmd | ChainCmd _ | AutoCmd _ ->
       let res = unfocus @@ (cmd_to_proof_function cmd) (get_goal ()) in
       if no_goals res = 1 then
         current_proof := G (focus 1 res) :: !current_proof
